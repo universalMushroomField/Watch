@@ -29,7 +29,18 @@ func find_pattern_positions(pattern: Array[Symbol]) -> Array[int]:
 	return _find_pattern(pattern)
 
 
-## A start of -1 selects the first match.
+## 检查序列顶是否匹配子序列，从下标 0 开始比较。
+func has_pattern_at_top(pattern: Array[Symbol]) -> bool:
+	return can_consume(pattern, 0)
+
+
+## 检查序列尾是否匹配子序列，要求匹配恰好在序列末尾结束。
+func has_pattern_at_tail(pattern: Array[Symbol]) -> bool:
+	var start := _symbols.size() - pattern.size()
+	return start >= 0 and can_consume(pattern, start)
+
+
+## 传入 -1表示检查序列的任意位置。
 func can_consume(pattern: Array[Symbol], start: int = -1) -> bool:
 	if start == -1:
 		return pattern.is_empty() or not _find_pattern(pattern, true).is_empty()
