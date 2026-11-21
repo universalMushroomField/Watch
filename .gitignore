@@ -2,3 +2,6 @@
 .godot/
 /android/
 .vscode
+# 地图布局目检输出
+map/tests/*.png
+map/tests/*.png.import

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="MapEventData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://map/content/map_event_data.gd" id="1_event"]
+[ext_resource type="Script" path="res://map/content/map_event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Resource_search"]
+script = ExtResource("2_choice")
+label = "翻找营地"
+result_text = "你找到一些散落的金币，但被碎木划伤了。"
+gold_delta = 15
+health_delta = -5
+
+[sub_resource type="Resource" id="Resource_rest"]
+script = ExtResource("2_choice")
+label = "在余烬旁歇一会"
+result_text = "你借着余温恢复了一点体力。"
+health_delta = 6
+
+[resource]
+script = ExtResource("1_event")
+id = &"abandoned_camp"
+title = "废弃营地"
+body = "营火早已熄灭，帐篷被风吹得破破烂烂。这里也许还留着能用的东西。"
+choices = Array[ExtResource("2_choice")]([SubResource("Resource_search"), SubResource("Resource_rest")])

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MapConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://map/map_config.gd" id="1_config"]
+
+[resource]
+script = ExtResource("1_config")
+band_count = 7
+min_nodes_per_band = 3
+max_nodes_per_band = 5
+ring_link_chance = 0.55
+elite_count = 2
+shop_count = 1
+rest_count = 1
+treasure_count = 1
+event_ratio = 0.5

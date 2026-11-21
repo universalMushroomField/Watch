@@ -8,8 +8,8 @@
 
 ### 代码
 
-* [ ] 实现基础战斗的逻辑 
-* [ ] 实现地图系统包括事件，战斗等节点，崩解度机制 <- chen-craft 在此，见开发分支feature/map-system
+* [ ] 实现基础战斗的逻辑
+* [x] 实现地图系统包括事件，战斗等节点，崩解度机制（见 `docs/地图系统.md`） <- chen-craft，开发分支 feature/map-system
 * [ ] 实现收集品系统 <-宇宙霸主在此，见开发分支develop_usomf
 * [ ] 人物系统设计 <-宇宙霸主在此，见开发分支develop_usomf
 * [ ] 敌人设计 <-宇宙霸主在此，见开发分支develop_usomf
