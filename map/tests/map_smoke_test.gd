@@ -31,10 +31,12 @@ func _init() -> void:
 			if node.type == MapNode.Type.SHOP and (node.id == graph.start_id or node.id == graph.boss_id):
 				failures.append(label + "商店占用了起点或 Boss")
 
-		if run.get_visited_count() != 1:
-			failures.append(label + "初始访问数不是 1")
-		if run.get_decay_ratio() <= 0.0 or run.get_decay_ratio() > 1.0:
-			failures.append(label + "初始崩解度异常")
+		if run.get_visited_count() != 1 or run.get_decay_visited_count() != 0:
+			failures.append(label + "初始访问数异常")
+		if not is_zero_approx(run.get_decay_ratio()):
+			failures.append(label + "起点计入了崩解度")
+		if run.get_decay_total_count() != graph.get_node_count() - 1:
+			failures.append(label + "崩解度总数未排除起点")
 
 		var path := _find_path(graph, graph.start_id, graph.boss_id)
 		if path.is_empty():
@@ -63,7 +65,9 @@ func _init() -> void:
 			failures.append(label + "到达 Boss 后未判定本幕结束")
 		if run.get_visited_count() != path.size():
 			failures.append(label + "访问数 %d 与路径长度 %d 不符" % [run.get_visited_count(), path.size()])
-		if not is_equal_approx(run.get_decay_ratio(), float(path.size()) / float(graph.get_node_count())):
+		if run.get_decay_visited_count() != path.size() - 1:
+			failures.append(label + "崩解度访问数未排除起点")
+		if not is_equal_approx(run.get_decay_ratio(), float(path.size() - 1) / float(graph.get_node_count() - 1)):
 			failures.append(label + "崩解度计算不符")
 		if run.can_travel_to(graph.start_id):
 			failures.append(label + "本幕结束后仍可移动")
@@ -72,7 +76,7 @@ func _init() -> void:
 		run.advance_act()
 		if run.act_index != 1:
 			failures.append(label + "进入下一幕失败")
-		if run.graph == old_graph or run.get_visited_count() != 1:
+		if run.graph == old_graph or run.get_visited_count() != 1 or not is_zero_approx(run.get_decay_ratio()):
 			failures.append(label + "下一幕未重置")
 
 		var signature := _signature(run.graph)

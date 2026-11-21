@@ -54,7 +54,7 @@ func _refresh() -> void:
 	_gold_label.text = "金币 %d" % run.player.gold
 	_deck_label.text = "卡组 %d 张" % run.player.get_deck_size()
 	var percent := roundi(run.get_decay_ratio() * 100.0)
-	_decay_label.text = "崩解度 %d%%（%d/%d）" % [percent, run.get_visited_count(), run.get_total_node_count()]
+	_decay_label.text = "崩解度 %d%%（%d/%d）" % [percent, run.get_decay_visited_count(), run.get_decay_total_count()]
 	_decay_bar.value = run.get_decay_ratio()
 	_canvas.queue_redraw()
 
@@ -211,10 +211,10 @@ func _buy_heal(stock: ShopStockData) -> void:
 
 
 func _open_boss() -> void:
-	_open_panel("关底 Boss", "本幕探索结束。\n崩解度 %d%%，已探索 %d/%d 个节点。" % [
+	_open_panel("关底 Boss", "本幕探索结束。\n崩解度 %d%%，已探索 %d/%d 个节点（不含起点）。" % [
 		roundi(run.get_decay_ratio() * 100.0),
-		run.get_visited_count(),
-		run.get_total_node_count()])
+		run.get_decay_visited_count(),
+		run.get_decay_total_count()])
 	_add_action("进入下一幕", _advance_act)
 
 

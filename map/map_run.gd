@@ -131,12 +131,25 @@ func get_total_node_count() -> int:
 	return graph.get_node_count() if graph != null else 0
 
 
-## 崩解度，范围 0~1。
+## 参与崩解度计算的已访问节点数，起点不计入。
+func get_decay_visited_count() -> int:
+	var count := get_visited_count()
+	if graph != null and _visited_ids.has(graph.start_id):
+		count -= 1
+	return maxi(count, 0)
+
+
+## 参与崩解度计算的节点总数，起点不计入。
+func get_decay_total_count() -> int:
+	return maxi(get_total_node_count() - 1, 0)
+
+
+## 崩解度，范围 0~1。起点不参与计算，因此开局为 0。
 func get_decay_ratio() -> float:
-	var total := get_total_node_count()
+	var total := get_decay_total_count()
 	if total <= 0:
 		return 0.0
-	return float(get_visited_count()) / float(total)
+	return float(get_decay_visited_count()) / float(total)
 
 
 func _mark_visited(node_id: int) -> void:

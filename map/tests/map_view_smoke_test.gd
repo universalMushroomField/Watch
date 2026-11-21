@@ -25,7 +25,7 @@ func _run() -> void:
 		_finish()
 		return
 	_check(view.run.get_visited_count() == 1, "开局只访问了起点")
-	_check(is_equal_approx(view.run.get_decay_ratio(), 1.0 / view.run.get_total_node_count()), "开局崩解度为 1/节点数")
+	_check(is_zero_approx(view.run.get_decay_ratio()), "开局崩解度为 0")
 	_check(view.content_pool.events.size() > 0, "内容池包含事件")
 	_check(view.content_pool.shop_stock != null, "内容池包含商店库存")
 
@@ -47,7 +47,7 @@ func _run() -> void:
 	_check(view.run.act_index == first_act + 1, "进入下一幕")
 	_check(view.run.current_id == view.run.graph.start_id, "新一幕从起点开始")
 	_check(view.run.get_visited_count() == 1, "新一幕只访问了起点")
-	_check(is_equal_approx(view.run.get_decay_ratio(), 1.0 / view.run.get_total_node_count()), "新一幕崩解度重置")
+	_check(is_zero_approx(view.run.get_decay_ratio()), "新一幕崩解度重置")
 
 	view.queue_free()
 	await process_frame
