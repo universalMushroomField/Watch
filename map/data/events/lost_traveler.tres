@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="MapEventData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://map/content/map_event_data.gd" id="1_event"]
+[ext_resource type="Script" path="res://map/content/map_event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Resource_help"]
+script = ExtResource("2_choice")
+label = "帮他一把"
+result_text = "旅人留下一些金币，匆匆离开。"
+gold_delta = 20
+health_delta = -8
+
+[sub_resource type="Resource" id="Resource_leave"]
+script = ExtResource("2_choice")
+label = "继续赶路"
+result_text = "你没有停下脚步。"
+
+[resource]
+script = ExtResource("1_event")
+id = &"lost_traveler"
+title = "迷路的旅人"
+body = "一个神色慌张的旅人拦住你，说自己在雾里绕了很久。帮他找路会耽误时间，也许还会遇到危险。"
+choices = Array[ExtResource("2_choice")]([SubResource("Resource_help"), SubResource("Resource_leave")])
