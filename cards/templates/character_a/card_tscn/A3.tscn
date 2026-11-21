@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://tav6xlj1710v"]
+
+[ext_resource type="Script" uid="uid://ukx8jb2jklvw" path="res://cards/scripts/card_instance.gd" id="1_86agb"]
+[ext_resource type="Resource" path="res://cards/templates/character_a/card_tres/A3.tres" id="2_oc8ej"]
+
+[node name="A3" type="Node" unique_id=1230066286]
+script = ExtResource("1_86agb")
+card = ExtResource("2_oc8ej")

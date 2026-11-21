@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://dsaumr1e41l4p"]
+
+[node name="Gui" type="Control" unique_id=202914131]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="OverRoundButton" type="Button" parent="." unique_id=1140631776]
+layout_mode = 0
+offset_left = 804.0
+offset_top = 447.0
+offset_right = 1034.0
+offset_bottom = 519.0
+text = "结束回合"
+
+[node name="RoundCount" type="Label" parent="." unique_id=2102971871]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 94.0
+offset_right = 193.0
+offset_bottom = 188.0
+text = "回合数"

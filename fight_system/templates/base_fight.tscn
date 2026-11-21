@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://cdmv3ktqm0c36"]
+
+[ext_resource type="Script" uid="uid://jmht2x7qx37l" path="res://fight_system/script/base_fight.gd" id="1_685ei"]
+[ext_resource type="PackedScene" uid="uid://dsaumr1e41l4p" path="res://ui/GUI/GUI.tscn" id="2_a6gbt"]
+
+[node name="BaseFight" type="Node2D" unique_id=1541558387 node_paths=PackedStringArray("fight_ui")]
+script = ExtResource("1_685ei")
+fight_ui = NodePath("Gui")
+
+[node name="Gui" parent="." unique_id=202914131 instance=ExtResource("2_a6gbt")]
