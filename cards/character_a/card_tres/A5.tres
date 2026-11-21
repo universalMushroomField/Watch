@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3 uid="uid://b6tfs4bly1nr"]
+
+[ext_resource type="Script" uid="uid://sspp6hiu7tk5" path="res://cards/card_data.gd" id="1"]
+[ext_resource type="Script" uid="uid://bffkkoks4odyo" path="res://cards/card_effect.gd" id="1_4je38"]
+
+[resource]
+script = ExtResource("1")
+id = &"A5"
+display_name = "灵活"
+description = "消耗序列顶的攻或守，在该位置生成一个 YI。"
+sequence_cost = Array[int]([2])
+cost_at_top = true
+sequence_replacement = Array[int]([2])

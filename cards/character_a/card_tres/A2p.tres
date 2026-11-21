@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CardData" format=3 uid="uid://ugss6os7q7d8"]
+
+[ext_resource type="Script" uid="uid://sspp6hiu7tk5" path="res://cards/card_data.gd" id="1"]
+[ext_resource type="Script" uid="uid://cj8bv3haq5bo7" path="res://cards/combat_card_effect.gd" id="2"]
+[ext_resource type="Script" uid="uid://bffkkoks4odyo" path="res://cards/card_effect.gd" id="3"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+operation = 3
+
+[resource]
+script = ExtResource("1")
+id = &"A2p"
+display_name = "卸力"
+description = "消耗任意位置的守守，令指定敌人本回合对你的下一次伤害无效。"
+sequence_cost = Array[int]([1, 1])
+effects = Array[ExtResource("3")]([SubResource("Effect")])

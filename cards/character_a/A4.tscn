@@ -1,8 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" path="res://cards/card_instance.gd" id="1"]
-[ext_resource type="Resource" path="res://cards/character_a/A4.tres" id="2"]
-
-[node name="A4" type="Node"]
-script = ExtResource("1")
-card = ExtResource("2")
