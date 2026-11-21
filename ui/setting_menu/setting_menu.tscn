@@ -1,0 +1,112 @@
+[gd_scene format=3 uid="uid://ckci00i0jxm63"]
+
+[ext_resource type="Script" uid="uid://c8fdkr3h3tp42" path="res://ui/setting_menu/setting_menu.gd" id="1_settings"]
+
+[node name="SettingMenu" type="Control" unique_id=1746715776 node_paths=PackedStringArray("custom_settings_container", "master_volume_slider", "fullscreen_toggle", "display_mode_option", "close_button")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings")
+custom_settings_container = NodePath("Overlay/Panel/Margin/VBox/CustomSettings")
+master_volume_slider = NodePath("Overlay/Panel/Margin/VBox/GeneralSection/MasterVolume")
+fullscreen_toggle = NodePath("Overlay/Panel/Margin/VBox/GeneralSection/Fullscreen")
+display_mode_option = NodePath("Overlay/Panel/Margin/VBox/GeneralSection/DisplayMode")
+close_button = NodePath("Overlay/Panel/Margin/VBox/Buttons/Close")
+
+[node name="Overlay" type="ColorRect" parent="." unique_id=1574944583]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.65)
+
+[node name="Panel" type="PanelContainer" parent="Overlay" unique_id=846171353]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -250.0
+offset_right = 260.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Overlay/Panel" unique_id=1666931780]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/Panel/Margin" unique_id=1013921538]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Overlay/Panel/Margin/VBox" unique_id=1989286131]
+layout_mode = 2
+text = "设置"
+horizontal_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="Overlay/Panel/Margin/VBox" unique_id=1423519131]
+layout_mode = 2
+
+[node name="GeneralSection" type="VBoxContainer" parent="Overlay/Panel/Margin/VBox" unique_id=879793115]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SectionTitle" type="Label" parent="Overlay/Panel/Margin/VBox/GeneralSection" unique_id=1560497160]
+layout_mode = 2
+text = "通用"
+
+[node name="MasterVolumeLabel" type="Label" parent="Overlay/Panel/Margin/VBox/GeneralSection" unique_id=1441924939]
+layout_mode = 2
+text = "主音量"
+
+[node name="MasterVolume" type="HSlider" parent="Overlay/Panel/Margin/VBox/GeneralSection" unique_id=89668309]
+layout_mode = 2
+tooltip_text = "调整所有游戏声音的音量"
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="Fullscreen" type="CheckButton" parent="Overlay/Panel/Margin/VBox/GeneralSection" unique_id=540567109]
+layout_mode = 2
+text = "全屏显示"
+
+[node name="DisplayMode" type="OptionButton" parent="Overlay/Panel/Margin/VBox/GeneralSection" unique_id=1102471207]
+layout_mode = 2
+selected = 0
+item_count = 3
+popup/item_0/text = "1280 × 720"
+popup/item_0/id = 0
+popup/item_1/text = "1600 × 900"
+popup/item_1/id = 1
+popup/item_2/text = "1920 × 1080"
+popup/item_2/id = 2
+
+[node name="CustomLabel" type="Label" parent="Overlay/Panel/Margin/VBox" unique_id=1652597568]
+layout_mode = 2
+text = "etc.."
+
+[node name="CustomSettings" type="VBoxContainer" parent="Overlay/Panel/Margin/VBox" unique_id=532629411]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Buttons" type="HBoxContainer" parent="Overlay/Panel/Margin/VBox" unique_id=1356421605]
+layout_mode = 2
+alignment = 2
+
+[node name="Close" type="Button" parent="Overlay/Panel/Margin/VBox/Buttons" unique_id=2001390797]
+custom_minimum_size = Vector2(100, 38)
+layout_mode = 2
+text = "关闭"
