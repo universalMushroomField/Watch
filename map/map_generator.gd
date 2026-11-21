@@ -1,4 +1,4 @@
-## 生成自由网状地图：分层摆放节点，再按距离连边并修补连通性。
+## 生成放射状地图：Boss 在中心，其余节点按层环绕，连线不会交叉。
 class_name MapGenerator
 extends RefCounted
 
@@ -22,146 +22,104 @@ func generate(seed_value: int = -1) -> MapGraph:
 	var graph := MapGraph.new()
 	var bands: Array[Array] = []
 
-	var start := graph.add_node(MapNode.Type.START, 0, Vector2(0.5, 0.0))
+	# 先建节点，角度和位置稍后统一计算。
+	var start := graph.add_node(MapNode.Type.START, 0, Vector2.ZERO)
 	bands.append([start])
 	for band in range(1, band_count - 1):
-		bands.append(_create_band(graph, band, band_count))
-	var boss := graph.add_node(MapNode.Type.BOSS, band_count - 1, Vector2(0.5, 1.0))
+		bands.append(_create_band(graph, band))
+	var boss := graph.add_node(MapNode.Type.BOSS, band_count - 1, Vector2.ZERO)
 	bands.append([boss])
 
-	for band in range(0, band_count - 1):
-		for node: MapNode in bands[band]:
-			for target in _nearest_nodes(bands[band + 1], node.position, config.links_per_node):
-				graph.link(node.id, target.id)
+	var angles := _assign_angles(bands, band_count)
+	var parents := _assign_parents(graph, bands, angles)
+	_apply_positions(graph, angles, band_count)
 
-	_ensure_inbound_links(graph, bands)
-	_add_skip_links(graph, bands)
-	_add_extra_links(graph)
-	_repair_connectivity(graph)
+	# 同层相邻节点之间补弧线边，增加可绕行的路线。
+	for band in range(1, band_count - 1):
+		_add_ring_links(graph, bands[band], angles)
+
 	_assign_types(graph)
 	return graph
 
 
-## 在指定层随机摆放节点。
-func _create_band(graph: MapGraph, band: int, band_count: int) -> Array:
+## 在指定层随机摆放节点，位置稍后按角度计算。
+func _create_band(graph: MapGraph, band: int) -> Array:
 	var min_count := clampi(config.min_nodes_per_band, 1, 6)
 	var max_count := maxi(clampi(config.max_nodes_per_band, 1, 6), min_count)
 	var count := _rng.randi_range(min_count, max_count)
+	# 最外圈固定 4 个节点，保证起点四周有一圈完整的环，而不是一条孤立的长边。
+	if band == 1:
+		count = clampi(4, min_count, max_count)
 	var nodes: Array = []
-	var y := float(band) / float(band_count - 1)
-	for index in range(count):
-		var base_x := (float(index) + 1.0) / (float(count) + 1.0)
-		var x := clampf(base_x + _rng.randf_range(-config.horizontal_jitter, config.horizontal_jitter), 0.05, 0.95)
-		nodes.append(graph.add_node(MapNode.Type.BATTLE, band, Vector2(x, y)))
+	for _index in range(count):
+		nodes.append(graph.add_node(MapNode.Type.BATTLE, band, Vector2.ZERO))
 	return nodes
 
 
-## 返回距离 from 最近的若干个节点。
-func _nearest_nodes(nodes: Array, from: Vector2, count: int) -> Array[MapNode]:
-	var sorted: Array[MapNode] = []
-	for node: MapNode in nodes:
-		sorted.append(node)
-	sorted.sort_custom(func(a: MapNode, b: MapNode) -> bool:
-		return a.position.distance_squared_to(from) < b.position.distance_squared_to(from))
-	var result: Array[MapNode] = []
-	for index in range(mini(count, sorted.size())):
-		result.append(sorted[index])
-	return result
+## 每层节点沿圆周等距分布，起点固定在 0 度。
+func _assign_angles(bands: Array[Array], band_count: int) -> Dictionary:
+	var angles := {}
+	for band in range(bands.size()):
+		var nodes: Array = bands[band]
+		if band == band_count - 1:
+			angles[nodes[0].id] = 0.0
+			continue
+		var step := TAU / float(nodes.size())
+		# 最外两层保持 0 度对齐，让起点到门节点的连线最短；更内层错开半个间隔。
+		var offset := 0.0 if band <= 1 or band % 2 == 0 else step * 0.5
+		for index in range(nodes.size()):
+			angles[nodes[index].id] = offset + step * float(index)
+	return angles
 
 
-## 保证每个非起点层节点都有来自上一层的入边。
-func _ensure_inbound_links(graph: MapGraph, bands: Array[Array]) -> void:
-	for band in range(1, bands.size()):
+## 每个节点连向角度最近的内层节点，保证同一扇区内的连线不会交叉。
+func _assign_parents(graph: MapGraph, bands: Array[Array], angles: Dictionary) -> Dictionary:
+	var parents := {}
+	for band in range(bands.size() - 1):
+		var candidates: Array = bands[band + 1]
 		for node: MapNode in bands[band]:
-			var has_inbound := false
-			for neighbor_id in node.neighbor_ids:
-				var neighbor := graph.get_node_by_id(neighbor_id)
-				if neighbor != null and neighbor.band < node.band:
-					has_inbound = true
-					break
-			if has_inbound:
-				continue
-			var previous := _nearest_nodes(bands[band - 1], node.position, 1)
-			if not previous.is_empty():
-				graph.link(node.id, previous[0].id)
+			var parent: MapNode = candidates[0]
+			var best_distance := INF
+			for candidate: MapNode in candidates:
+				var distance := absf(wrapf(angles[candidate.id] - angles[node.id], -PI, PI))
+				if distance < best_distance:
+					best_distance = distance
+					parent = candidate
+			parents[node.id] = parent.id
+			graph.link(node.id, parent.id)
+	return parents
 
 
-## 随机添加隔层连边，形成可绕行的回路。
-func _add_skip_links(graph: MapGraph, bands: Array[Array]) -> void:
-	for band in range(0, bands.size() - 2):
-		for node: MapNode in bands[band]:
-			if _rng.randf() >= config.skip_band_link_chance:
-				continue
-			var target := _pick_near_node(bands[band + 2], node.position, 0.4)
-			if target != null:
-				graph.link(node.id, target.id)
-
-
-## 随机添加近距离的额外连边，包含同层和回头路。
-func _add_extra_links(graph: MapGraph) -> void:
+## 把角度和层数换算成归一化坐标，Boss 固定在正中心。
+func _apply_positions(graph: MapGraph, angles: Dictionary, band_count: int) -> void:
+	var outer := float(band_count - 1)
 	for node in graph.nodes:
-		if _rng.randf() >= config.extra_link_chance:
+		if node.type == MapNode.Type.BOSS:
+			node.position = Vector2(0.5, 0.5)
 			continue
-		var pool: Array[MapNode] = []
-		for other in graph.nodes:
-			if other.id == node.id or node.neighbor_ids.has(other.id):
-				continue
-			if absi(other.band - node.band) > 2:
-				continue
-			if other.position.distance_to(node.position) > 0.35:
-				continue
-			pool.append(other)
-		if not pool.is_empty():
-			graph.link(node.id, pool[_rng.randi_range(0, pool.size() - 1)].id)
+		var radius := 0.5 * float(band_count - 1 - node.band) / outer
+		var angle: float = angles.get(node.id, 0.0)
+		node.position = Vector2(0.5 + cos(angle) * radius, 0.5 + sin(angle) * radius)
 
 
-## 在指定层附近的节点中随机挑一个。
-func _pick_near_node(nodes: Array, from: Vector2, max_distance: float) -> MapNode:
-	var pool: Array[MapNode] = []
-	for node: MapNode in nodes:
-		if node.position.distance_to(from) <= max_distance:
-			pool.append(node)
-	if pool.is_empty():
-		return null
-	return pool[_rng.randi_range(0, pool.size() - 1)]
-
-
-## 把无法从起点到达的节点接到最近的已连通节点上。
-func _repair_connectivity(graph: MapGraph) -> void:
-	var reachable := graph.collect_reachable_ids()
-	var guard := graph.get_node_count() + 1
-	while guard > 0:
-		guard -= 1
-		var unreachable_id := -1
-		for node in graph.nodes:
-			if not reachable.has(node.id):
-				unreachable_id = node.id
-				break
-		if unreachable_id < 0:
-			return
-		var target := _find_nearest_reachable(graph, graph.get_node_by_id(unreachable_id), reachable)
-		if target == null:
-			return
-		graph.link(unreachable_id, target.id)
-		reachable = graph.collect_reachable_ids()
-
-
-## 在已连通的节点中找距离最近的一个，优先选择相近的层。
-func _find_nearest_reachable(graph: MapGraph, node: MapNode, reachable: Dictionary) -> MapNode:
-	var best: MapNode = null
-	var best_distance := INF
-	for other in graph.nodes:
-		if not reachable.has(other.id) or absi(other.band - node.band) > 2:
+## 同一层角度相邻的节点之间按概率补一条弧线边。
+func _add_ring_links(graph: MapGraph, nodes: Array, angles: Dictionary) -> void:
+	# 节点太少时环向弧线会横跨半张地图，只给至少 4 个节点的层加捷径。
+	if nodes.size() < 4:
+		return
+	var ring: Array = nodes.duplicate()
+	ring.sort_custom(func(a: MapNode, b: MapNode) -> bool:
+		return angles[a.id] < angles[b.id])
+	var max_gap := TAU / 4.0 + 0.001
+	for index in range(ring.size()):
+		var next_index := (index + 1) % ring.size()
+		var gap := absf(angles[ring[next_index].id] - angles[ring[index].id])
+		if gap > PI:
+			gap = TAU - gap
+		if gap > max_gap:
 			continue
-		var distance := other.position.distance_squared_to(node.position)
-		if distance < best_distance:
-			best_distance = distance
-			best = other
-	if best == null:
-		for other in graph.nodes:
-			if reachable.has(other.id):
-				return other
-	return best
+		if _rng.randf() < config.ring_link_chance:
+			graph.link_ring(ring[index].id, ring[next_index].id)
 
 
 ## 随机分配节点类型，保证各类节点数量符合配置。

@@ -1,7 +1,7 @@
 extends Control
 ## 地图调试界面。
 ##
-## 显示当前幕的自由网状地图和崩解度，点击相邻节点前进；节点内容以占位面板
+## 显示当前幕的放射状地图和崩解度，点击已探索节点的未探索邻居前进；节点内容以占位面板
 ## 呈现，战斗节点暂时用「视为胜利」跳过，方便先跑通地图流程。
 
 ## 地图生成参数，留空时使用默认配置。
@@ -42,7 +42,6 @@ func _ready() -> void:
 	run = MapRun.new(map_config, MapPlayerState.new(70, 50, starting_deck))
 	run.act_started.connect(_on_act_started)
 	run.node_entered.connect(_on_node_entered)
-	run.node_revisited.connect(_on_node_revisited)
 	run.node_travel_rejected.connect(_on_node_travel_rejected)
 	_canvas.node_pressed.connect(_on_canvas_node_pressed)
 	_canvas.set_run(run)
@@ -86,13 +85,8 @@ func _on_node_entered(node: MapNode) -> void:
 			_add_action("继续", _close_panel)
 
 
-func _on_node_revisited(node: MapNode) -> void:
-	_show_status("回到了「%s」，这里已经探索过了。" % node.get_type_label())
-	_refresh()
-
-
 func _on_node_travel_rejected(_node_id: int) -> void:
-	_show_status("只能移动到相连的节点。")
+	_show_status("只能前往已探索节点的未探索邻居。")
 
 
 func _on_canvas_node_pressed(node: MapNode) -> void:

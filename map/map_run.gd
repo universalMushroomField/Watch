@@ -12,9 +12,7 @@ signal act_started(act_index: int, graph: MapGraph)
 signal act_completed(act_index: int, decay_ratio: float)
 ## 第一次进入某个节点。
 signal node_entered(node: MapNode)
-## 回到已经探索过的节点。
-signal node_revisited(node: MapNode)
-## 目标节点与当前位置不相连，或本幕已经结束。
+## 目标节点不可前往：已被探索、不是已探索节点的邻居，或本幕已经结束。
 signal node_travel_rejected(node_id: int)
 ## 崩解度变化。
 signal decay_changed(ratio: float)
@@ -69,32 +67,48 @@ func get_current_node() -> MapNode:
 	return graph.get_node_by_id(current_id)
 
 
-## 当前可以前往的相邻节点。本幕结束后返回空数组。
+## 当前可以前往的节点：所有已探索节点的未探索邻居。本幕结束后返回空数组。
 func get_reachable_nodes() -> Array[MapNode]:
+	var result: Array[MapNode] = []
 	if graph == null or is_act_cleared():
-		return []
-	return graph.get_neighbor_nodes(current_id)
+		return result
+	var seen := {}
+	for visited_id in _visited_ids:
+		var visited_node := graph.get_node_by_id(visited_id)
+		if visited_node == null:
+			continue
+		for neighbor_id in visited_node.neighbor_ids:
+			if seen.has(neighbor_id):
+				continue
+			var neighbor := graph.get_node_by_id(neighbor_id)
+			if neighbor == null or neighbor.visited:
+				continue
+			seen[neighbor_id] = true
+			result.append(neighbor)
+	return result
 
 
-## 目标节点是否与当前位置相连。
+## 目标节点是否可以从某个已探索节点前往。已探索的节点不能再次进入。
 func can_travel_to(node_id: int) -> bool:
-	if graph == null or is_act_cleared() or current_id < 0:
+	if graph == null or is_act_cleared():
 		return false
-	var current := graph.get_node_by_id(current_id)
-	return current != null and current.neighbor_ids.has(node_id)
+	var node := graph.get_node_by_id(node_id)
+	if node == null or node.visited:
+		return false
+	for visited_id in _visited_ids:
+		var visited_node := graph.get_node_by_id(visited_id)
+		if visited_node != null and visited_node.neighbor_ids.has(node_id):
+			return true
+	return false
 
 
-## 移动到相邻节点。新节点会触发 node_entered 并提高崩解度，
-## 已探索节点只会触发 node_revisited。
+## 移动到某个已探索节点的相邻节点。新节点会触发 node_entered 并提高崩解度。
 func travel_to(node_id: int) -> bool:
 	if not can_travel_to(node_id):
 		node_travel_rejected.emit(node_id)
 		return false
 	current_id = node_id
 	var node := graph.get_node_by_id(node_id)
-	if node.visited:
-		node_revisited.emit(node)
-		return true
 	_mark_visited(node_id)
 	decay_changed.emit(get_decay_ratio())
 	node_entered.emit(node)

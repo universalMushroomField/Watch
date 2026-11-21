@@ -1,4 +1,4 @@
-## 一张自由网状地图：节点集合、无向连边和起终点。
+## 一张放射状地图：节点集合、无向连边、环向捷径和起终点。
 class_name MapGraph
 extends RefCounted
 
@@ -8,6 +8,8 @@ var nodes: Array[MapNode] = []
 var start_id: int = -1
 ## Boss 节点编号。
 var boss_id: int = -1
+## 同层弧线边的键集合，键为 "较小编号:较大编号"。
+var ring_links: Dictionary = {}
 
 
 ## 创建并加入一个新节点，返回该节点。
@@ -40,6 +42,32 @@ func link(node_a: int, node_b: int) -> void:
 		a.neighbor_ids.append(node_b)
 	if not b.neighbor_ids.has(node_a):
 		b.neighbor_ids.append(node_a)
+
+
+## 连接同层相邻节点，并标记为弧线边。
+func link_ring(node_a: int, node_b: int) -> void:
+	if node_a == node_b:
+		return
+	link(node_a, node_b)
+	ring_links[_edge_key(node_a, node_b)] = true
+
+
+## 判断一条边是否应画成同层弧线。
+func is_ring_link(node_a: int, node_b: int) -> bool:
+	return ring_links.has(_edge_key(node_a, node_b))
+
+
+## 地图的层数，含起点层和 Boss 层。
+func get_band_count() -> int:
+	var result := 0
+	for node in nodes:
+		result = maxi(result, node.band + 1)
+	return result
+
+
+## 边的无序键。
+func _edge_key(node_a: int, node_b: int) -> String:
+	return "%d:%d" % [mini(node_a, node_b), maxi(node_a, node_b)]
 
 
 ## 返回指定节点的相邻节点。

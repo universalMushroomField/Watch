@@ -19,6 +19,8 @@ func _init() -> void:
 		if not graph.is_fully_connected():
 			failures.append(label + "存在不可达节点 %s" % [graph.find_unreachable_ids()])
 
+		_check_layout(graph, label, failures)
+
 		for node in graph.nodes:
 			for neighbor_id in node.neighbor_ids:
 				var neighbor := graph.get_node_by_id(neighbor_id)
@@ -43,17 +45,20 @@ func _init() -> void:
 			failures.append(label + "无法移动到第二个节点")
 			continue
 
-		# 回到已探索的起点不应提高崩解度。
-		var visited_before := run.get_visited_count()
-		if not run.travel_to(graph.start_id):
-			failures.append(label + "无法回头")
-		if run.get_visited_count() != visited_before:
-			failures.append(label + "回头也提高了崩解度")
+		# 已探索的节点不能再次进入。
+		if run.can_travel_to(graph.start_id) or run.travel_to(graph.start_id):
+			failures.append(label + "允许回到已探索节点")
+		if run.current_id != path[1]:
+			failures.append(label + "拒绝移动后位置被改变")
+		if not _reachable_matches(run):
+			failures.append(label + "可前往集合与已探索节点的邻居不一致")
 
-		for index in range(1, path.size()):
+		for index in range(2, path.size()):
 			if not run.travel_to(path[index]):
 				failures.append(label + "路径移动失败于第 %d 步" % index)
 				break
+			if not _reachable_matches(run):
+				failures.append(label + "第 %d 步后可前往集合不正确" % index)
 		if not run.is_act_cleared():
 			failures.append(label + "到达 Boss 后未判定本幕结束")
 		if run.get_visited_count() != path.size():
@@ -117,8 +122,129 @@ func _find_path(graph: MapGraph, from_id: int, to_id: int) -> Array[int]:
 	return []
 
 
+## 可前往集合应等于所有已探索节点的未探索邻居。
+func _reachable_matches(run: MapRun) -> bool:
+	if run.is_act_cleared():
+		return run.get_reachable_nodes().is_empty()
+	var expected := {}
+	for node in run.graph.nodes:
+		if not node.visited:
+			continue
+		for neighbor_id in node.neighbor_ids:
+			var neighbor := run.graph.get_node_by_id(neighbor_id)
+			if neighbor != null and not neighbor.visited:
+				expected[neighbor_id] = true
+	var actual := {}
+	for node in run.get_reachable_nodes():
+		actual[node.id] = true
+	if expected.size() != actual.size():
+		return false
+	for node_id in expected:
+		if not actual.has(node_id):
+			return false
+	return true
+
+
 func _signature(graph: MapGraph) -> String:
 	var parts: Array[String] = []
 	for node in graph.nodes:
 		parts.append("%d:%d:%s:%s" % [node.id, node.type, node.position, node.neighbor_ids])
 	return "|".join(parts)
+
+
+## 检查放射布局的结构约束：Boss 居中、每个节点只有一个内层父节点、环边只连相邻角度。
+func _check_layout(graph: MapGraph, label: String, failures: Array[String]) -> void:
+	var band_count := graph.get_band_count()
+	if band_count < 3:
+		failures.append(label + "层数异常")
+		return
+
+	var boss := graph.get_node_by_id(graph.boss_id)
+	if boss == null or not boss.position.is_equal_approx(Vector2(0.5, 0.5)):
+		failures.append(label + "Boss 不在中心")
+
+	var start := graph.get_node_by_id(graph.start_id)
+	if start != null and start.neighbor_ids.size() != 1:
+		failures.append(label + "起点度数不是 1")
+
+	for node in graph.nodes:
+		if node.id == graph.boss_id:
+			continue
+		var inward := 0
+		for neighbor_id in node.neighbor_ids:
+			var neighbor := graph.get_node_by_id(neighbor_id)
+			if neighbor != null and neighbor.band == node.band + 1:
+				inward += 1
+		if inward != 1:
+			failures.append(label + "节点 %d 的内层父节点数为 %d" % [node.id, inward])
+		var expected_radius := 0.5 * float(band_count - 1 - node.band) / float(band_count - 1)
+		var actual_radius := node.position.distance_to(Vector2(0.5, 0.5))
+		if absf(actual_radius - expected_radius) > 0.0001:
+			failures.append(label + "节点 %d 的环半径异常" % node.id)
+
+	var inner_band_count := 0
+	for node in graph.nodes:
+		if node.band == band_count - 2:
+			inner_band_count += 1
+	if boss != null and boss.neighbor_ids.size() != inner_band_count:
+		failures.append(label + "Boss 没有连到所有内层节点")
+
+	# 环边只能连接同层角度相邻的节点。
+	for band in range(1, band_count - 1):
+		var ring: Array[MapNode] = []
+		for node in graph.nodes:
+			if node.band == band:
+				ring.append(node)
+		ring.sort_custom(func(a: MapNode, b: MapNode) -> bool:
+			return _node_angle(a) < _node_angle(b))
+		var index_of := {}
+		for index in range(ring.size()):
+			index_of[ring[index].id] = index
+			if index > 0 and absf(_node_angle(ring[index]) - _node_angle(ring[index - 1])) < 0.0001:
+				failures.append(label + "同层节点角度重复")
+		for node in ring:
+			for neighbor_id in node.neighbor_ids:
+				var neighbor := graph.get_node_by_id(neighbor_id)
+				if neighbor == null or neighbor.band != band or not graph.is_ring_link(node.id, neighbor_id):
+					continue
+				var index_gap := absi(index_of[node.id] - index_of[neighbor_id])
+				if index_gap != 1 and index_gap != ring.size() - 1:
+					failures.append(label + "环边跳过了相邻节点")
+
+	# 树边必须是直线，且除共享端点外不能相交。
+	var tree_edges: Array = []
+	for node in graph.nodes:
+		for neighbor_id in node.neighbor_ids:
+			if neighbor_id < node.id or graph.is_ring_link(node.id, neighbor_id):
+				continue
+			var neighbor := graph.get_node_by_id(neighbor_id)
+			if neighbor == null:
+				continue
+			if absi(neighbor.band - node.band) != 1:
+				failures.append(label + "树边跨了多层")
+			tree_edges.append([node.id, neighbor_id, node.position, neighbor.position])
+	for i in range(tree_edges.size()):
+		for j in range(i + 1, tree_edges.size()):
+			var edge_a: Array = tree_edges[i]
+			var edge_b: Array = tree_edges[j]
+			if edge_a[0] == edge_b[0] or edge_a[0] == edge_b[1] or edge_a[1] == edge_b[0] or edge_a[1] == edge_b[1]:
+				continue
+			if _segments_intersect(edge_a[2], edge_a[3], edge_b[2], edge_b[3]):
+				failures.append(label + "树边交叉")
+
+
+func _node_angle(node: MapNode) -> float:
+	return atan2(node.position.y - 0.5, node.position.x - 0.5)
+
+
+func _segments_intersect(a: Vector2, b: Vector2, c: Vector2, d: Vector2) -> bool:
+	var d1 := _cross(c, d, a)
+	var d2 := _cross(c, d, b)
+	var d3 := _cross(a, b, c)
+	var d4 := _cross(a, b, d)
+	return ((d1 > 0.0 and d2 < 0.0) or (d1 < 0.0 and d2 > 0.0)) \
+		and ((d3 > 0.0 and d4 < 0.0) or (d3 < 0.0 and d4 > 0.0))
+
+
+func _cross(origin: Vector2, target: Vector2, point: Vector2) -> float:
+	return (target.x - origin.x) * (point.y - origin.y) - (target.y - origin.y) * (point.x - origin.x)

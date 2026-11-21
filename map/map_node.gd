@@ -1,4 +1,4 @@
-## 自由网状地图中的一个节点。
+## 放射状地图中的一个节点。
 class_name MapNode
 extends RefCounted
 
@@ -35,9 +35,9 @@ var id: int
 var type: Type = Type.BATTLE
 ## 节点所在的层，起点为 0，Boss 层为最后一层。
 var band: int = 0
-## 归一化坐标，y 轴 0 为起点层、1 为 Boss 层。
+## 归一化坐标，Boss 在 (0.5, 0.5)，其余节点按层环绕。
 var position := Vector2.ZERO
-## 相连节点的编号。边没有方向，因此可以回头。
+## 相连节点的编号。边没有方向，但已探索节点不能再次进入。
 var neighbor_ids: Array[int] = []
 ## 玩家是否到过该节点。
 var visited := false

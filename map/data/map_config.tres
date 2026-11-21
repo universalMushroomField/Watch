@@ -5,11 +5,9 @@
 [resource]
 script = ExtResource("1_config")
 band_count = 7
-min_nodes_per_band = 2
-max_nodes_per_band = 4
-links_per_node = 2
-skip_band_link_chance = 0.18
-extra_link_chance = 0.15
+min_nodes_per_band = 3
+max_nodes_per_band = 5
+ring_link_chance = 0.55
 elite_count = 2
 shop_count = 1
 rest_count = 1
