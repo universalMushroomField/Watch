@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CardDeck" format=3 uid="uid://d4bjheop27cpm"]
+
+[ext_resource type="Resource" uid="uid://cu03wbm5gwtrq" path="res://cards/instances/character_a/card_tres/A1.tres" id="A1"]
+[ext_resource type="Resource" uid="uid://bvrmkjdhflked" path="res://cards/instances/character_a/card_tres/A1p.tres" id="A1p"]
+[ext_resource type="Resource" uid="uid://0lscuo3a38x8" path="res://cards/instances/character_a/card_tres/A2.tres" id="A2"]
+[ext_resource type="Resource" uid="uid://ugss6os7q7d8" path="res://cards/instances/character_a/card_tres/A2p.tres" id="A2p"]
+[ext_resource type="Resource" path="res://cards/instances/character_a/card_tres/A3.tres" id="A3"]
+[ext_resource type="Resource" path="res://cards/instances/character_a/card_tres/A4.tres" id="A4"]
+[ext_resource type="Resource" uid="uid://b6tfs4bly1nr" path="res://cards/instances/character_a/card_tres/A5.tres" id="A5"]
+[ext_resource type="Resource" uid="uid://d2ccla8bfjfuu" path="res://cards/instances/character_a/card_tres/attack.tres" id="attack"]
+[ext_resource type="Script" uid="uid://sspp6hiu7tk5" path="res://cards/scripts/card_data.gd" id="Card"]
+[ext_resource type="Script" uid="uid://byl6mlhifwc67" path="res://cards/scripts/card_deck.gd" id="Deck"]
+[ext_resource type="Resource" uid="uid://dflukcna5v1sd" path="res://cards/instances/character_a/card_tres/defense.tres" id="defense"]
+
+[resource]
+script = ExtResource("Deck")
+turn_draw_count = 8
+sequence_limit = 6
+cards = Array[ExtResource("Card")]([ExtResource("attack"), ExtResource("attack"), ExtResource("attack"), ExtResource("attack"), ExtResource("defense"), ExtResource("defense"), ExtResource("defense"), ExtResource("defense"), ExtResource("A1"), ExtResource("A1p"), ExtResource("A2"), ExtResource("A2p"), ExtResource("A3"), ExtResource("A4"), ExtResource("A5"), ExtResource("A5")])
+reward_pool = Array[ExtResource("Card")]([ExtResource("attack"), ExtResource("defense"), ExtResource("A1"), ExtResource("A1p"), ExtResource("A2"), ExtResource("A2p"), ExtResource("A3"), ExtResource("A4"), ExtResource("A5")])
