@@ -5,8 +5,11 @@ extends RefCounted
 ## Index 0 is the top of the sequence (the most recently added symbol).
 
 
-## 目前的两类符号，可以扩展
-enum Symbol { ATTACK, DEFENSE }
+## YI 可代替攻击或防守符号。
+enum Symbol { ATTACK, DEFENSE, YI }
+
+## 最大序列长度，-1 表示不限。
+var max_length: int = -1
 
 
 ## 序列数组
@@ -16,9 +19,23 @@ var _symbols: Array[Symbol] = []
 func get_symbols() -> Array[Symbol]:
 	return _symbols.duplicate()
 
-## 向序列尾部追加一个symbol
+## 向序列顶加入符号，超出长度时从序列尾移除。
 func push(symbol: Symbol) -> void:
 	_symbols.push_front(symbol)
+	_trim_to_limit()
+
+
+## 从已消耗的位置插入新符号，保持传入顺序。
+func insert_symbols(start: int, symbols: Array[Symbol]) -> void:
+	for offset in range(symbols.size()):
+		_symbols.insert(start + offset, symbols[offset])
+	_trim_to_limit()
+
+
+## 优先保留最靠近序列顶的符号。
+func _trim_to_limit() -> void:
+	if max_length >= 0 and _symbols.size() > max_length:
+		_symbols.resize(max_length)
 
 ## 清除序列
 func clear() -> void:
@@ -27,6 +44,12 @@ func clear() -> void:
 ## 返回所有对应子序列的下标
 func find_pattern_positions(pattern: Array[Symbol]) -> Array[int]:
 	return _find_pattern(pattern)
+
+
+## 返回最靠近序列顶的匹配位置，找不到时返回 -1。
+func find_first_pattern_position(pattern: Array[Symbol]) -> int:
+	var positions := _find_pattern(pattern, true)
+	return -1 if positions.is_empty() else positions[0]
 
 
 ## 检查序列顶是否匹配子序列，从下标 0 开始比较。
@@ -47,7 +70,9 @@ func can_consume(pattern: Array[Symbol], start: int = -1) -> bool:
 	if start < 0 or start > _symbols.size() - pattern.size():
 		return false
 	for offset in range(pattern.size()):
-		if _symbols[start + offset] != pattern[offset]:
+		var actual := _symbols[start + offset]
+		var expected := pattern[offset]
+		if actual != expected and actual != Symbol.YI and expected != Symbol.YI:
 			return false
 	return true
 
@@ -74,6 +99,15 @@ func _find_pattern(pattern: Array[Symbol], first_only: bool = false) -> Array[in
 			positions.append(start)
 		return positions
 	if last_start < 0:
+		return positions
+
+	# 万用符号的匹配关系不满足 Two-Way 的跳转条件，逐位置检查。
+	if Symbol.YI in pattern or Symbol.YI in _symbols:
+		for start in range(last_start + 1):
+			if can_consume(pattern, start):
+				positions.append(start)
+				if first_only:
+					break
 		return positions
 
 	# The later of the two maximal suffixes gives the critical split.

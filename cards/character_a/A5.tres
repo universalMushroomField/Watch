@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"A5"
+display_name = "化一"
+description = "消耗序列顶的攻或守，在该位置生成一个 YI。"
+kind = 2
+sequence_cost = Array[int]([2])
+cost_at_top = true
+sequence_replacement = Array[int]([2])

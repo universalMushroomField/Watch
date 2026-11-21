@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CardDeck" format=3]
+
+[ext_resource type="Script" path="res://cards/card_deck.gd" id="Deck"]
+[ext_resource type="Script" path="res://cards/card_data.gd" id="Card"]
+[ext_resource type="Resource" path="res://cards/character_a/attack.tres" id="attack"]
+[ext_resource type="Resource" path="res://cards/character_a/defense.tres" id="defense"]
+[ext_resource type="Resource" path="res://cards/character_a/A1.tres" id="A1"]
+[ext_resource type="Resource" path="res://cards/character_a/A1p.tres" id="A1p"]
+[ext_resource type="Resource" path="res://cards/character_a/A2.tres" id="A2"]
+[ext_resource type="Resource" path="res://cards/character_a/A2p.tres" id="A2p"]
+[ext_resource type="Resource" path="res://cards/character_a/A3.tres" id="A3"]
+[ext_resource type="Resource" path="res://cards/character_a/A4.tres" id="A4"]
+[ext_resource type="Resource" path="res://cards/character_a/A5.tres" id="A5"]
+
+[resource]
+script = ExtResource("Deck")
+turn_draw_count = 8
+sequence_limit = 6
+cards = Array[ExtResource("Card")]([ExtResource("attack"), ExtResource("attack"), ExtResource("attack"), ExtResource("attack"), ExtResource("defense"), ExtResource("defense"), ExtResource("defense"), ExtResource("defense"), ExtResource("A1"), ExtResource("A1p"), ExtResource("A2"), ExtResource("A2p"), ExtResource("A3"), ExtResource("A4"), ExtResource("A5"), ExtResource("A5")])
+reward_pool = Array[ExtResource("Card")]([ExtResource("attack"), ExtResource("defense"), ExtResource("A1"), ExtResource("A1p"), ExtResource("A2"), ExtResource("A2p"), ExtResource("A3"), ExtResource("A4"), ExtResource("A5")])

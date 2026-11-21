@@ -15,6 +15,12 @@ enum Kind { ATTACK, DEFENSE, SPECIAL }
 @export var kind: Kind = Kind.SPECIAL
 ## 出牌时消耗的连续子序列，按从序列顶到序列尾的方向填写。
 @export var sequence_cost: Array[CardSequence.Symbol] = []
+## 启用后费用只能从序列顶消耗。
+@export var cost_at_top: bool = false
+## 消耗后在原位置插入的符号。
+@export var sequence_replacement: Array[CardSequence.Symbol] = []
+## 结算时额外抽取的牌数。
+@export var extra_draw: int = 0
 ## 启用后，卡牌打出并结算完效果后进入除外堆。
 @export var exhaust_on_play: bool = false
 ## 打出时按数组顺序执行的卡牌效果。

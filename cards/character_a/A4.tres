@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" path="res://cards/card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"A4"
+display_name = "整备"
+description = "消耗序列顶的守，抽两张牌。"
+kind = 2
+sequence_cost = Array[int]([1])
+cost_at_top = true
+extra_draw = 2
