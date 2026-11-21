@@ -47,20 +47,20 @@ func draw(count: int = 1) -> Array[CardData]:
 	return drawn
 
 
-func can_play(hand_index: int) -> bool:
+func can_play(hand_index: int, sequence_start: int = -1) -> bool:
 	return (
 		hand_index >= 0
 		and hand_index < _hand.size()
-		and sequence.can_consume(_hand[hand_index].sequence_cost)
+		and sequence.can_consume(_hand[hand_index].sequence_cost, sequence_start)
 	)
 
 
-func play(hand_index: int, context: Dictionary = {}) -> bool:
-	if not can_play(hand_index):
+func play(hand_index: int, context: Dictionary = {}, sequence_start: int = -1) -> bool:
+	if not can_play(hand_index, sequence_start):
 		return false
 
 	var card: CardData = _hand.pop_at(hand_index)
-	sequence.consume(card.sequence_cost)
+	sequence.consume(card.sequence_cost, sequence_start)
 	match card.kind:
 		CardData.Kind.ATTACK:
 			sequence.push(CardSequence.Symbol.ATTACK)
