@@ -2,6 +2,10 @@
 class_name CardDeck
 extends Resource
 
+## 回合开始时的抽牌数量。
+@export var turn_draw_count: int = 0
+## 战斗的序列长度上限，-1 表示不限。
+@export var sequence_limit: int = -1
 
 ## 进入战斗时使用的卡牌列表，允许同一张牌出现多次。
 @export var cards: Array[CardData] = []
