@@ -4,13 +4,16 @@ extends Node2D
 
 class_name BaseFightScene
 
-#玩家
-@export var player:Node
+##玩家角色
+@export var player_character:CharacterSelectable
 
-#enemies从头到尾轮流行动
-@export var enemies:Array[Node] = []
+##卡牌管理器（发牌员（
+@export var card_manager:CardManager
 
-#GUI 
+##enemies 从array头到尾轮流行动
+@export var enemies:Array[Character] = []
+
+##GUI 
 @export var fight_ui:Control
 
 #回合数
@@ -18,10 +21,17 @@ var round_count:int =0
 
 #回合的阶段
 enum stage{
-	PLAYER = 0,
-	ENEMY  = 1
+	START,
+	DRAW,
+	PLAYER,
+	END,  
+	ENEMYTURN,
 }
-var cur_stage:stage =stage.PLAYER
+var cur_stage:stage =stage.START
 
 func _ready() -> void:
+	pass
+	
+##在回合的阶段间切换，回合数控制
+func _process(delta: float) -> void:
 	pass

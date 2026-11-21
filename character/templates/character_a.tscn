@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://c3ig7sckmndqf"]
+
+[ext_resource type="Script" uid="uid://b73i3n7qwx06n" path="res://character/scripts/character_selectable.gd" id="1_r1ich"]
+[ext_resource type="Resource" uid="uid://d4bjheop27cpm" path="res://cards/templates/character_a/deck.tres" id="2_tepe0"]
+
+[node name="CharacterA" type="Node" unique_id=147786586]
+script = ExtResource("1_r1ich")
+deck = ExtResource("2_tepe0")
+turn_draw_count = 8
+sequence_limit = 6
+character_id = "a_1_t"
+character_name = "A"
+metadata/_custom_type_script = "uid://b73i3n7qwx06n"

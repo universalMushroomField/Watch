@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ShopStockData" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="ShopStockData" format=3 uid="uid://lsq7s8dclnmv"]
 
-[ext_resource type="Script" path="res://map/content/shop_stock_data.gd" id="1_stock"]
-[ext_resource type="Script" path="res://map/content/shop_entry.gd" id="2_entry"]
+[ext_resource type="Script" uid="uid://n4ltm7pjpebb" path="res://map/content/shop_stock_data.gd" id="1_stock"]
+[ext_resource type="Script" uid="uid://cq1g1lyenqu3y" path="res://map/content/shop_entry.gd" id="2_entry"]
 [ext_resource type="Resource" uid="uid://cu03wbm5gwtrq" path="res://cards/templates/character_a/card_tres/A1.tres" id="3_card_a1"]
 [ext_resource type="Resource" uid="uid://0lscuo3a38x8" path="res://cards/templates/character_a/card_tres/A2.tres" id="4_card_a2"]
 
@@ -9,16 +9,12 @@
 script = ExtResource("2_entry")
 card = ExtResource("3_card_a1")
 price = 45
-stock = 1
 
 [sub_resource type="Resource" id="Resource_entry_a2"]
 script = ExtResource("2_entry")
 card = ExtResource("4_card_a2")
 price = 55
-stock = 1
 
 [resource]
 script = ExtResource("1_stock")
 entries = Array[ExtResource("2_entry")]([SubResource("Resource_entry_a1"), SubResource("Resource_entry_a2")])
-heal_price = 30
-heal_amount = 20
