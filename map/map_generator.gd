@@ -31,7 +31,6 @@ func generate(seed_value: int = -1) -> MapGraph:
 	bands.append([boss])
 
 	var angles := _assign_angles(bands, band_count)
-	# 只需要副作用（连边），返回值不再使用。
 	_assign_parents(graph, bands, angles)
 	_apply_positions(graph, angles, band_count)
 
@@ -74,8 +73,7 @@ func _assign_angles(bands: Array[Array], band_count: int) -> Dictionary:
 
 
 ## 每个节点连向角度最近的内层节点，保证同一扇区内的连线不会交叉。
-func _assign_parents(graph: MapGraph, bands: Array[Array], angles: Dictionary) -> Dictionary:
-	var parents := {}
+func _assign_parents(graph: MapGraph, bands: Array[Array], angles: Dictionary) -> void:
 	for band in range(bands.size() - 1):
 		var candidates: Array = bands[band + 1]
 		for node: MapNode in bands[band]:
@@ -86,9 +84,7 @@ func _assign_parents(graph: MapGraph, bands: Array[Array], angles: Dictionary) -
 				if distance < best_distance:
 					best_distance = distance
 					parent = candidate
-			parents[node.id] = parent.id
 			graph.link(node.id, parent.id)
-	return parents
 
 
 ## 把角度和层数换算成归一化坐标，Boss 固定在正中心。
