@@ -1,12 +1,12 @@
-[gd_resource type="Resource" script_class="CardData" format=3]
+[gd_resource type="Resource" script_class="CardData" format=3 uid="uid://drteruykw82xq"]
 
 [ext_resource type="Script" uid="uid://sspp6hiu7tk5" path="res://cards/scripts/card_data.gd" id="1"]
+[ext_resource type="Script" uid="uid://bffkkoks4odyo" path="res://cards/scripts/card_effect.gd" id="1_r5n40"]
 
 [resource]
 script = ExtResource("1")
 id = &"A3"
 display_name = "转守"
 description = "消耗任意位置的攻，在原位置生成两个守。"
-kind = 2
 sequence_cost = Array[int]([0])
 sequence_replacement = Array[int]([1, 1])
