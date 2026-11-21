@@ -31,7 +31,8 @@ func generate(seed_value: int = -1) -> MapGraph:
 	bands.append([boss])
 
 	var angles := _assign_angles(bands, band_count)
-	var parents := _assign_parents(graph, bands, angles)
+	# 只需要副作用（连边），返回值不再使用。
+	_assign_parents(graph, bands, angles)
 	_apply_positions(graph, angles, band_count)
 
 	# 同层相邻节点之间补弧线边，增加可绕行的路线。
