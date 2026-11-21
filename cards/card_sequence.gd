@@ -51,7 +51,7 @@ func can_consume(pattern: Array[Symbol], start: int = -1) -> bool:
 			return false
 	return true
 
-
+## 消费掉列，传入-1表示从队头的第一个匹配位置
 func consume(pattern: Array[Symbol], start: int = -1) -> bool:
 	if start == -1:
 		var positions := _find_pattern(pattern, true)
@@ -64,7 +64,7 @@ func consume(pattern: Array[Symbol], start: int = -1) -> bool:
 		_symbols.remove_at(start)
 	return true
 
-
+###################采用了较为复杂的算法，如看不懂不要改 ######################
 func _find_pattern(pattern: Array[Symbol], first_only: bool = false) -> Array[int]:
 	var positions: Array[int] = []
 	var length := pattern.size()
