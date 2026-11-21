@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://xma62qay5r7o"]
+
+[ext_resource type="Script" uid="uid://ukx8jb2jklvw" path="res://cards/scripts/card_instance.gd" id="1_v2xku"]
+[ext_resource type="Resource" uid="uid://ugss6os7q7d8" path="res://cards/templates/character_a/card_tres/A2p.tres" id="2_xdspu"]
+
+[node name="A2p" type="Node" unique_id=199408954]
+script = ExtResource("1_v2xku")
+card = ExtResource("2_xdspu")
