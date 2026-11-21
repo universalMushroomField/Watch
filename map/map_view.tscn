@@ -154,6 +154,7 @@ text = "节点"
 
 [node name="PanelBody" type="Label" parent="Overlay/Panel/PanelMargin/PanelVBox"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(1, 0)
 layout_mode = 2
 size_flags_vertical = 3
 autowrap_mode = 2

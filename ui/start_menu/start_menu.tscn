@@ -83,6 +83,7 @@ text = "退出游戏"
 
 [node name="StatusLabel" type="Label" parent="."]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(1, 0)
 modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 12
