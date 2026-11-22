@@ -3,15 +3,40 @@
 [ext_resource type="Script" uid="uid://jmht2x7qx37l" path="res://fight_system/script/base_fight.gd" id="1_685ei"]
 [ext_resource type="PackedScene" uid="uid://dsaumr1e41l4p" path="res://ui/GUI/GUI_fighting.tscn" id="2_a6gbt"]
 [ext_resource type="Script" uid="uid://ctot6ggi73n7b" path="res://cards/scripts/card_manager.gd" id="3_p2c5i"]
+[ext_resource type="PackedScene" uid="uid://c3ig7sckmndqf" path="res://character/templates/character_a.tscn" id="4_plm6p"]
+[ext_resource type="PackedScene" uid="uid://cebrcqnln3nxu" path="res://character/templates/test_enemy.tscn" id="5_1hogq"]
 
-[node name="BaseFight" type="Node2D" unique_id=1541558387 node_paths=PackedStringArray("card_manager", "fight_ui")]
+[node name="BaseFight" type="Node2D" unique_id=1541558387 node_paths=PackedStringArray("card_manager", "player_character", "enemies", "fight_ui", "enemy_pos", "player_pos")]
 script = ExtResource("1_685ei")
 card_manager = NodePath("CardManager")
-fight_ui = NodePath("Gui")
+player_character = NodePath("CharacterA")
+enemies = [NodePath("TestEnemy"), NodePath("TestEnemy2"), NodePath("TestEnemy3")]
+fight_ui = NodePath("UILayer/Gui")
+enemy_pos = NodePath("EnemyPosition")
+player_pos = NodePath("PlayerPosition")
 
-[node name="Gui" parent="." unique_id=202914131 instance=ExtResource("2_a6gbt")]
-visible = false
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=631134591]
+
+[node name="Gui" parent="UILayer" unique_id=202914131 instance=ExtResource("2_a6gbt")]
 
 [node name="CardManager" type="Node" parent="." unique_id=590390513]
 script = ExtResource("3_p2c5i")
 metadata/_custom_type_script = "uid://ctot6ggi73n7b"
+
+[node name="PlayerPosition" type="Node2D" parent="." unique_id=868441030]
+visible = false
+position = Vector2(225, 354)
+
+[node name="EnemyPosition" type="Node2D" parent="." unique_id=591698675]
+visible = false
+position = Vector2(877, 205)
+
+[node name="CharacterA" parent="." unique_id=147786586 instance=ExtResource("4_plm6p")]
+
+[node name="TestEnemy" parent="." unique_id=1144898570 instance=ExtResource("5_1hogq")]
+character_id = "e_t"
+character_name = "test_enemy"
+
+[node name="TestEnemy2" parent="." unique_id=1929864211 instance=ExtResource("5_1hogq")]
+
+[node name="TestEnemy3" parent="." unique_id=1521195439 instance=ExtResource("5_1hogq")]
