@@ -1,0 +1,88 @@
+[gd_scene format=3 uid="uid://vr3wbp1durv7"]
+
+[ext_resource type="AnimationLibrary" uid="uid://csqmfeasdf7b6" path="res://cards/animation/card_animation.tres" id="2_fbw7b"]
+[ext_resource type="Script" uid="uid://b0y4anj681ef5" path="res://cards/scripts/card_sprite_hover.gd" id="3_hover"]
+
+[sub_resource type="StyleBoxFlat" id="CardFace"]
+bg_color = Color(0.09, 0.14, 0.19, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.53, 0.62, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="Animation" id="Animation_wnsqu"]
+length = 0.001
+tracks/0/type = "bezier"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Artwork:position:x")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+tracks/1/type = "bezier"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Artwork:position:y")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_j5bbo"]
+_data = {
+&"RESET": SubResource("Animation_wnsqu")
+}
+
+[node name="DefaultCardSprite" type="Control" unique_id=473818863]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 128.0
+offset_bottom = 128.0
+mouse_filter = 2
+script = ExtResource("3_hover")
+
+[node name="Artwork" type="Panel" parent="." unique_id=682080452]
+layout_mode = 0
+offset_right = 128.0
+offset_bottom = 128.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("CardFace")
+
+[node name="CardName" type="Label" parent="Artwork" unique_id=1814081258]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 120.0
+offset_bottom = 34.0
+theme_override_colors/font_color = Color(0.85, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+text_overrun_behavior = 3
+
+[node name="Description" type="Label" parent="Artwork" unique_id=809476577]
+layout_mode = 0
+offset_left = 9.0
+offset_top = 37.0
+offset_right = 119.0
+offset_bottom = 119.0
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 3
+text_overrun_behavior = 3
+max_lines_visible = 5
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=940528677]
+libraries/ = SubResource("AnimationLibrary_j5bbo")
+libraries/card_animation = ExtResource("2_fbw7b")

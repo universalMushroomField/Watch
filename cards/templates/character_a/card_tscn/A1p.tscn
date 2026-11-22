@@ -2,7 +2,21 @@
 
 [ext_resource type="Script" uid="uid://ukx8jb2jklvw" path="res://cards/scripts/card_instance.gd" id="1_xy83d"]
 [ext_resource type="Resource" uid="uid://bvrmkjdhflked" path="res://cards/templates/character_a/card_tres/A1p.tres" id="2_31121"]
+[ext_resource type="PackedScene" uid="uid://vr3wbp1durv7" path="res://cards/templates/sprite_tscn/default_card_sprite.tscn" id="3_sprite"]
 
-[node name="A1p" type="Node" unique_id=573539853]
+[node name="A1p" type="Control" unique_id=573539853 node_paths=PackedStringArray("sprite")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 128.0
+offset_bottom = 128.0
+mouse_filter = 2
 script = ExtResource("1_xy83d")
 card = ExtResource("2_31121")
+sprite = NodePath("DefaultCardSprite")
+
+[node name="DefaultCardSprite" parent="." unique_id=791038354 instance=ExtResource("3_sprite")]
+layout_mode = 0
+tooltip_text = "横扫
+消耗任意位置的攻守，对每个敌人造成1点伤害。"
+mouse_filter = 1
