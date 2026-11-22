@@ -14,5 +14,7 @@
 
 [resource]
 script = ExtResource("Deck")
+turn_draw_count = 8
+sequence_carryover = 2
 cards = Array[ExtResource("Card")]([ExtResource("attack"), ExtResource("attack"), ExtResource("attack"), ExtResource("attack"), ExtResource("defense"), ExtResource("defense"), ExtResource("defense"), ExtResource("defense"), ExtResource("A1"), ExtResource("A1p"), ExtResource("A2"), ExtResource("A2p"), ExtResource("A3"), ExtResource("A4"), ExtResource("A5"), ExtResource("A5")])
 reward_pool = Array[ExtResource("Card")]([ExtResource("A1"), ExtResource("A1p"), ExtResource("A2"), ExtResource("A2p"), ExtResource("A3"), ExtResource("A4"), ExtResource("A5")])

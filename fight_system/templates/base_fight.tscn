@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://jmht2x7qx37l" path="res://fight_system/script/base_fight.gd" id="1_685ei"]
 [ext_resource type="PackedScene" uid="uid://dsaumr1e41l4p" path="res://ui/GUI/GUI_fighting.tscn" id="2_a6gbt"]
-[ext_resource type="Script" uid="uid://ctot6ggi73n7b" path="res://fight_system/script/card_manager.gd" id="3_p2c5i"]
+[ext_resource type="Script" uid="uid://ctot6ggi73n7b" path="res://cards/scripts/card_manager.gd" id="3_p2c5i"]
 
 [node name="BaseFight" type="Node2D" unique_id=1541558387 node_paths=PackedStringArray("card_manager", "fight_ui")]
 script = ExtResource("1_685ei")

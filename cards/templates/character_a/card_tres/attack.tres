@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="CardData" format=3 uid="uid://d2ccla8bfjfuu"]
 
 [ext_resource type="Script" uid="uid://sspp6hiu7tk5" path="res://cards/scripts/card_data.gd" id="1"]
-[ext_resource type="Script" uid="uid://cj8bv3haq5bo7" path="res://cards/scripts/combat_card_effect.gd" id="2"]
-[ext_resource type="Script" uid="uid://bffkkoks4odyo" path="res://cards/scripts/card_effect.gd" id="3"]
+[ext_resource type="Script" uid="uid://bffkkoks4odyo" path="res://effect/effect.gd" id="1_qhlbi"]
+[ext_resource type="Script" uid="uid://cmuto234tnna5" path="res://effect/damage_effect.gd" id="2_54vy7"]
 
 [sub_resource type="Resource" id="Effect"]
-script = ExtResource("2")
+script = ExtResource("2_54vy7")
 amount = 1
 
 [resource]
@@ -14,4 +14,4 @@ id = &"attack"
 display_name = "攻"
 description = "造成1点伤害。"
 kind = 0
-effects = Array[ExtResource("3")]([SubResource("Effect")])
+effects = Array[ExtResource("1_qhlbi")]([SubResource("Effect")])
