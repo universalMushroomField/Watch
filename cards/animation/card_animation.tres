@@ -1,0 +1,10 @@
+[gd_resource type="AnimationLibrary" format=3 uid="uid://csqmfeasdf7b6"]
+
+[ext_resource type="Animation" uid="uid://btx3djsjrwq65" path="res://cards/animation/card_down_move.tres" id="1_s5rn0"]
+[ext_resource type="Animation" uid="uid://c0j2i8tjnjlek" path="res://cards/animation/card_up_move.tres" id="2_ktysd"]
+
+[resource]
+_data = {
+&"card_down_move": ExtResource("1_s5rn0"),
+&"card_up_move": ExtResource("2_ktysd")
+}

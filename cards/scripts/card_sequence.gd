@@ -2,6 +2,8 @@
 
 class_name CardSequence
 extends RefCounted
+
+signal changed
 ## Index 0 is the top of the sequence (the most recently added symbol).
 
 
@@ -23,6 +25,7 @@ func get_symbols() -> Array[Symbol]:
 func push(symbol: Symbol) -> void:
 	_symbols.push_front(symbol)
 	_trim_to_limit()
+	changed.emit()
 
 
 ## 从已消耗的位置插入新符号，保持传入顺序。
@@ -30,6 +33,7 @@ func insert_symbols(start: int, symbols: Array[Symbol]) -> void:
 	for offset in range(symbols.size()):
 		_symbols.insert(start + offset, symbols[offset])
 	_trim_to_limit()
+	changed.emit()
 
 
 ## 优先保留最靠近序列顶的符号。
@@ -40,6 +44,15 @@ func _trim_to_limit() -> void:
 ## 清除序列
 func clear() -> void:
 	_symbols.clear()
+	changed.emit()
+
+## 从序列顶移除符号，只保留指定数量的尾部符号。
+func keep_tail(count: int) -> void:
+	var remove_count := _symbols.size() - maxi(0, count)
+	if remove_count > 0:
+		_symbols = _symbols.slice(remove_count)
+		changed.emit()
+
 
 ## 返回所有对应子序列的下标
 func find_pattern_positions(pattern: Array[Symbol]) -> Array[int]:
@@ -87,6 +100,8 @@ func consume(pattern: Array[Symbol], start: int = -1) -> bool:
 		return false
 	for offset in range(pattern.size()):
 		_symbols.remove_at(start)
+	if not pattern.is_empty():
+		changed.emit()
 	return true
 
 ###################采用了较为复杂的算法，如看不懂不要改 ######################

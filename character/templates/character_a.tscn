@@ -2,12 +2,32 @@
 
 [ext_resource type="Script" uid="uid://b73i3n7qwx06n" path="res://character/scripts/character_selectable.gd" id="1_r1ich"]
 [ext_resource type="Resource" uid="uid://d4bjheop27cpm" path="res://cards/templates/character_a/deck.tres" id="2_tepe0"]
+[ext_resource type="Texture2D" uid="uid://bp5riably1qnm" path="res://icon.svg" id="3_tepe0"]
 
-[node name="CharacterA" type="Node" unique_id=147786586]
+[sub_resource type="AtlasTexture" id="AtlasTexture_b7n5m"]
+atlas = ExtResource("3_tepe0")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_6vd2c"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b7n5m")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="CharacterA" type="Node" unique_id=147786586 node_paths=PackedStringArray("sprite")]
 script = ExtResource("1_r1ich")
 deck = ExtResource("2_tepe0")
 turn_draw_count = 8
 sequence_limit = 6
 character_id = "a_1_t"
 character_name = "A"
+sprite = NodePath("AnimatedSprite2D")
 metadata/_custom_type_script = "uid://b73i3n7qwx06n"
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2012762570]
+sprite_frames = SubResource("SpriteFrames_6vd2c")

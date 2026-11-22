@@ -2,7 +2,21 @@
 
 [ext_resource type="Script" uid="uid://ukx8jb2jklvw" path="res://cards/scripts/card_instance.gd" id="1_xd6au"]
 [ext_resource type="Resource" uid="uid://cu03wbm5gwtrq" path="res://cards/templates/character_a/card_tres/A1.tres" id="2_2orkw"]
+[ext_resource type="PackedScene" uid="uid://vr3wbp1durv7" path="res://cards/templates/sprite_tscn/default_card_sprite.tscn" id="3_sprite"]
 
-[node name="A1" type="Node" unique_id=760262253]
+[node name="A1" type="Control" unique_id=760262253 node_paths=PackedStringArray("sprite")]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 128.0
+offset_bottom = 128.0
+mouse_filter = 2
 script = ExtResource("1_xd6au")
 card = ExtResource("2_2orkw")
+sprite = NodePath("DefaultCardSprite")
+
+[node name="DefaultCardSprite" parent="." unique_id=326196695 instance=ExtResource("3_sprite")]
+anchors_preset = 0
+tooltip_text = "破阵
+消耗任意位置的攻守，造成3点伤害。"
+mouse_filter = 1

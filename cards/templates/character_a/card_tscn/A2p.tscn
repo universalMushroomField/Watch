@@ -3,6 +3,15 @@
 [ext_resource type="Script" uid="uid://ukx8jb2jklvw" path="res://cards/scripts/card_instance.gd" id="1_v2xku"]
 [ext_resource type="Resource" uid="uid://ugss6os7q7d8" path="res://cards/templates/character_a/card_tres/A2p.tres" id="2_xdspu"]
 
-[node name="A2p" type="Node" unique_id=199408954]
+[ext_resource type="PackedScene" path="res://cards/templates/sprite_tscn/default_card_sprite.tscn" id="3_sprite"]
+
+[node name="A2p" type="Control" unique_id=199408954 node_paths=PackedStringArray("sprite")]
+custom_minimum_size = Vector2(128, 128)
+offset_right = 128.0
+offset_bottom = 128.0
+mouse_filter = 2
 script = ExtResource("1_v2xku")
 card = ExtResource("2_xdspu")
+sprite = NodePath("DefaultCardSprite")
+
+[node name="DefaultCardSprite" parent="." instance=ExtResource("3_sprite")]

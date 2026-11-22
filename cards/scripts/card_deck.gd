@@ -6,6 +6,8 @@ extends Resource
 @export var turn_draw_count: int = 0
 ## 战斗的序列长度上限，-1 表示不限。
 @export var sequence_limit: int = -1
+## 回合结束时保留的序列尾部符号数量。
+@export_range(0, 32, 1, "or_greater") var sequence_carryover: int = 0
 
 ## 进入战斗时使用的卡牌列表，允许同一张牌出现多次。
 @export var cards: Array[CardData] = []

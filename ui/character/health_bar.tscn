@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[sub_resource type="StyleBoxFlat" id="Background"]
+bg_color = Color(0.12, 0.14, 0.18, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="Fill"]
+bg_color = Color(0.26, 0.72, 0.41, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[node name="HealthBar" type="ProgressBar"]
+offset_right = 88.0
+offset_bottom = 20.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("Background")
+theme_override_styles/fill = SubResource("Fill")
+show_percentage = false
+
+[node name="HealthText" type="Label" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ArmorText" type="Label" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_right = 48.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.65, 0.84, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "甲 0"
+vertical_alignment = 1

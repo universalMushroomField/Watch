@@ -1,5 +1,8 @@
 [gd_scene format=3 uid="uid://dsaumr1e41l4p"]
 
+[ext_resource type="Script" uid="uid://b6wsnffuu8uia" path="res://ui/GUI/fighting_gui.gd" id="1_gui"]
+[ext_resource type="Script" uid="uid://rqls3gamiye0" path="res://ui/GUI/sequence_selector.gd" id="2_sequence"]
+
 [node name="Gui" type="Control" unique_id=202914131]
 layout_mode = 3
 anchors_preset = 15
@@ -7,13 +10,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_gui")
 
 [node name="OverRoundButton" type="Button" parent="." unique_id=1140631776]
 layout_mode = 0
-offset_left = 804.0
-offset_top = 447.0
-offset_right = 1034.0
-offset_bottom = 519.0
+offset_left = 976.0
+offset_top = 373.0
+offset_right = 1089.0
+offset_bottom = 460.0
 text = "结束回合"
 
 [node name="RoundCount" type="Label" parent="." unique_id=2102971871]
@@ -23,3 +27,158 @@ offset_top = 94.0
 offset_right = 193.0
 offset_bottom = 188.0
 text = "回合数"
+
+[node name="DrawButton" type="Button" parent="." unique_id=575375533]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 386.0
+offset_right = 120.0
+offset_bottom = 417.0
+text = "抽卡堆"
+
+[node name="DiscardButton" type="Button" parent="." unique_id=410714284]
+layout_mode = 0
+offset_left = 65.0
+offset_top = 461.0
+offset_right = 121.0
+offset_bottom = 492.0
+text = "弃牌区"
+
+[node name="ExhaustButton" type="Button" parent="." unique_id=2064995589]
+layout_mode = 0
+offset_left = 66.0
+offset_top = 538.0
+offset_right = 122.0
+offset_bottom = 569.0
+text = "除外区"
+
+[node name="HandScroll" type="ScrollContainer" parent="." unique_id=1979710367]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 136.0
+offset_top = -202.0
+offset_right = -191.0
+grow_horizontal = 2
+grow_vertical = 0
+vertical_scroll_mode = 0
+
+[node name="HandPadding" type="MarginContainer" parent="HandScroll" unique_id=752225479]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/margin_top = 60
+
+[node name="HandContainer" type="HBoxContainer" parent="HandScroll/HandPadding" unique_id=940406224]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="PlayArea" type="VBoxContainer" parent="." unique_id=1907318285]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -42.0
+offset_right = 180.0
+offset_bottom = 85.0
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="PlayZone" type="PanelContainer" parent="PlayArea" unique_id=1893038253]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 65)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+
+[node name="PlayHint" type="Label" parent="PlayArea/PlayZone" unique_id=2046821503]
+unique_name_in_owner = true
+layout_mode = 2
+text = "将卡牌拖到这里"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SequenceRow" type="HBoxContainer" parent="PlayArea" unique_id=1815564817]
+layout_mode = 2
+mouse_filter = 2
+alignment = 1
+
+[node name="SequenceTitle" type="Label" parent="PlayArea/SequenceRow" unique_id=714365485]
+layout_mode = 2
+text = "序列"
+
+[node name="SequenceSelector" type="HBoxContainer" parent="PlayArea/SequenceRow" unique_id=500943840]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("2_sequence")
+
+[node name="CancelPlay" type="Button" parent="PlayArea/SequenceRow" unique_id=1260258682]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "取消"
+
+[node name="PileView" type="ColorRect" parent="." unique_id=1946164332]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.07
+anchor_top = 0.12
+anchor_right = 0.93
+anchor_bottom = 0.88
+color = Color(0.025, 0.05, 0.075, 0.97)
+
+[node name="Content" type="VBoxContainer" parent="PileView" unique_id=1674753385]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 20.0
+offset_right = -24.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="PileView/Content" unique_id=1932137790]
+layout_mode = 2
+
+[node name="PileTitle" type="Label" parent="PileView/Content/Header" unique_id=11400969]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+
+[node name="ClosePile" type="Button" parent="PileView/Content/Header" unique_id=12666356]
+unique_name_in_owner = true
+layout_mode = 2
+text = "关闭"
+
+[node name="EmptyMessage" type="Label" parent="PileView/Content" unique_id=820687264]
+unique_name_in_owner = true
+layout_mode = 2
+text = "此牌堆为空"
+horizontal_alignment = 1
+
+[node name="PileScroll" type="ScrollContainer" parent="PileView/Content" unique_id=517435765]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+vertical_scroll_mode = 2
+
+[node name="PileGrid" type="GridContainer" parent="PileView/Content/PileScroll" unique_id=942751872]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 6

@@ -1,0 +1,14 @@
+[gd_resource type="Animation" format=3 uid="uid://btx3djsjrwq65"]
+
+[resource]
+tracks/0/type = "bezier"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Artwork:position:y")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"handle_modes": PackedInt32Array(2, 2),
+"points": PackedFloat32Array(-60, 0, 0, 0.033333335, 1.4630699, 0, -0.33333334, -1.4064372, 0, 0),
+"times": PackedFloat32Array(0, 0.4)
+}
