@@ -11,6 +11,7 @@ class_name MapHexLayer
 extends Node3D
 
 const TUBE_SHADER: Shader = preload("res://map/shaders/hex_tube.gdshader")
+const ROUTE_BLUR_SHADER: Shader = preload("res://map/shaders/terrain_route_blur.gdshader")
 const SQRT3 := 1.7320508075688772
 ## 高度场的采样间距（世界单位）。
 const FIELD_CELL := 0.5
@@ -34,6 +35,10 @@ const POST_RADIUS := 0.24
 const POST_HEIGHT := 0.60
 ## 短圆柱的侧面数。
 const POST_SIDES := 10
+## 路线模糊遮罩的分辨率。
+const MASK_SIZE := 512
+## 遮罩线条在世界空间中的半径（米）。
+const MASK_RADIUS := 0.55
 
 const TYPE_COLORS := {
 	MapNode.Type.START: Color(0.30, 0.72, 0.42),
@@ -72,6 +77,8 @@ var _base_heights := {}
 var _label_font: SystemFont
 var _grid_root: Node3D
 var _tube_mat: ShaderMaterial
+var _terrain_blur: MeshInstance3D
+var _terrain_blur_mat: ShaderMaterial
 
 var _field := PackedFloat32Array()
 var _raw_field := PackedFloat32Array()
@@ -93,6 +100,7 @@ func _ready() -> void:
 		tiles_root.name = "Tiles"
 		add_child(tiles_root)
 	_ensure_grid_root()
+	_ensure_terrain_blur()
 	_label_font = SystemFont.new()
 	_label_font.font_names = PackedStringArray([
 		"Microsoft YaHei UI",
@@ -134,6 +142,7 @@ func show_run(map_run: MapRun) -> void:
 		return
 	_board_angle = _camera_board_angle()
 	_compute_board_offset(_available_rect(run.config))
+	_update_terrain_blur()
 	_compute_base_heights()
 	_create_tiles()
 	_create_grid()
@@ -458,6 +467,86 @@ func _edge_key(a: Vector2, b: Vector2) -> Vector2i:
 
 func _point_key(point: Vector2) -> Vector2i:
 	return Vector2i(roundi(point.x * 100.0), roundi(point.y * 100.0))
+
+
+## 生成和地形共用 mesh 的轻微模糊层；只在地图路线附近显示。
+func _ensure_terrain_blur() -> void:
+	if terrain == null or terrain.mesh == null:
+		return
+	if _terrain_blur != null and is_instance_valid(_terrain_blur):
+		return
+	var parent := terrain.get_parent()
+	if parent == null:
+		parent = self
+	_terrain_blur = MeshInstance3D.new()
+	_terrain_blur.name = "TerrainRouteBlur"
+	_terrain_blur.mesh = terrain.mesh
+	_terrain_blur.transform = terrain.transform
+	_terrain_blur.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_terrain_blur_mat = ShaderMaterial.new()
+	_terrain_blur_mat.shader = ROUTE_BLUR_SHADER
+	_terrain_blur_mat.render_priority = -100
+	_terrain_blur.material_override = _terrain_blur_mat
+	parent.add_child(_terrain_blur)
+
+
+func _update_terrain_blur() -> void:
+	if _terrain_blur_mat == null or run == null or run.graph == null or terrain == null or terrain.mesh == null:
+		return
+	var box: AABB = terrain.global_transform * terrain.mesh.get_aabb()
+	if box.size.x <= 0.0 or box.size.z <= 0.0:
+		return
+	var mask_min := Vector2(box.position.x, box.position.z)
+	var mask_size := Vector2(box.size.x, box.size.z)
+	var image := Image.create(MASK_SIZE, MASK_SIZE, false, Image.FORMAT_R8)
+	image.fill(Color(0.0, 0.0, 0.0))
+	var radius_px := clampf(MASK_RADIUS / minf(mask_size.x, mask_size.y) * float(MASK_SIZE), 4.0, 32.0)
+	var seen := {}
+	for node in run.graph.nodes:
+		var center := _hex_center(node)
+		for index in range(6):
+			var a := _hex_corner(center, index)
+			var b := _hex_corner(center, (index + 1) % 6)
+			var key := _edge_key(a, b)
+			if seen.has(key):
+				continue
+			seen[key] = true
+			_stamp_mask_segment(image, a, b, mask_min, mask_size, radius_px)
+	_terrain_blur_mat.set_shader_parameter("route_mask", ImageTexture.create_from_image(image))
+	_terrain_blur_mat.set_shader_parameter("mask_min", mask_min)
+	_terrain_blur_mat.set_shader_parameter("mask_size", mask_size)
+
+
+func _mask_pixel(point: Vector2, mask_min: Vector2, mask_size: Vector2) -> Vector2:
+	return Vector2(
+		(point.x - mask_min.x) / mask_size.x * float(MASK_SIZE),
+		(point.y - mask_min.y) / mask_size.y * float(MASK_SIZE),
+	)
+
+
+func _stamp_mask_segment(image: Image, a: Vector2, b: Vector2, mask_min: Vector2, mask_size: Vector2, radius: float) -> void:
+	var start := _mask_pixel(a, mask_min, mask_size)
+	var end := _mask_pixel(b, mask_min, mask_size)
+	var length := start.distance_to(end)
+	var steps := maxi(1, int(ceil(length / maxf(1.0, radius * 0.35))))
+	for step in range(steps + 1):
+		_stamp_mask_point(image, a.lerp(b, float(step) / float(steps)), radius, mask_min, mask_size)
+
+
+func _stamp_mask_point(image: Image, point: Vector2, radius: float, mask_min: Vector2, mask_size: Vector2) -> void:
+	var pixel := _mask_pixel(point, mask_min, mask_size)
+	var x0 := maxi(0, int(floor(pixel.x - radius)))
+	var x1 := mini(MASK_SIZE - 1, int(ceil(pixel.x + radius)))
+	var y0 := maxi(0, int(floor(pixel.y - radius)))
+	var y1 := mini(MASK_SIZE - 1, int(ceil(pixel.y + radius)))
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			var distance := Vector2(float(x) + 0.5, float(y) + 0.5).distance_to(pixel)
+			var value := 1.0 - smoothstep(radius * 0.2, radius, distance)
+			if value <= 0.0:
+				continue
+			if value > image.get_pixel(x, y).r:
+				image.set_pixel(x, y, Color(value, value, value))
 
 
 func _create_tiles() -> void:
