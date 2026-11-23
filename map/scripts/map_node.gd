@@ -1,4 +1,4 @@
-## 地图上的一个地点（六边形格）。
+## 地图蜂巢顶点上的一个地点。
 class_name MapNode
 extends RefCounted
 
@@ -40,10 +40,12 @@ const TYPE_SHORT_LABELS := {
 var id: int
 ## 地点类型。
 var type: Type
-## 六边形列号，0 是最左的起点列。
+## 蜂巢顶点的横向整数坐标。
 var column: int
-## 六边形行号，0 是最上面一行。
+## 蜂巢顶点的纵向整数坐标。
 var row: int
+## 蜂巢顶点的整数坐标。
+var vertex: Vector2i
 ## 相邻地点的编号。
 var neighbor_ids: Array[int] = []
 ## 是否已经被玩家访问过。

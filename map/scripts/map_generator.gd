@@ -1,31 +1,11 @@
-## 六边形蜂巢地图生成器。
-##
-## 结构：最左一列只有一个起点，最右一列只有一个 Boss，中间是完整的
-## [member HexLayout.columns] × [member HexLayout.rows] 矩形蜂巢。所有物理
-## 相邻的六边形直接连边，因此保留“已探索节点的未探索邻居都可走”的规则。
 class_name MapGenerator
 extends RefCounted
 
-## 偶数列（column 为偶数）的六个邻居偏移。
-const EVEN_NEIGHBORS: Array[Vector2i] = [
-	Vector2i(1, 0),
-	Vector2i(0, -1),
-	Vector2i(-1, -1),
-	Vector2i(-1, 0),
-	Vector2i(-1, 1),
-	Vector2i(0, 1),
+## 尖顶格角点。X、Z 单位分别是 sqrt(3) * 半径 / 2 和半径 / 2。
+const CORNERS: Array[Vector2i] = [
+	Vector2i(1, 1), Vector2i(0, 2), Vector2i(-1, 1),
+	Vector2i(-1, -1), Vector2i(0, -2), Vector2i(1, -1),
 ]
-
-## 奇数列（column 为奇数）的六个邻居偏移。
-const ODD_NEIGHBORS: Array[Vector2i] = [
-	Vector2i(1, 0),
-	Vector2i(1, -1),
-	Vector2i(0, -1),
-	Vector2i(-1, 0),
-	Vector2i(0, 1),
-	Vector2i(1, 1),
-]
-
 var config: MapConfig
 var layout: HexLayout
 var _rng := RandomNumberGenerator.new()
@@ -46,34 +26,73 @@ func generate(seed_value: int = -1) -> MapGraph:
 	var graph := MapGraph.new()
 	graph.layout = layout
 
-	var middle_row := layout.get_middle_row()
-	var start := graph.add_node(MapNode.Type.START, 0, middle_row)
-	var cells := {Vector2i(0, middle_row): start}
-
-	for column in range(1, layout.columns + 1):
+	var vertices := {}
+	var edges: Array[Vector2i] = []
+	var seen_edges := {}
+	for column in range(layout.get_total_columns()):
 		for row in range(layout.rows):
-			cells[Vector2i(column, row)] = graph.add_node(MapNode.Type.BATTLE, column, row)
+			if (column == 0 or column == layout.get_total_columns() - 1) and row != layout.get_middle_row():
+				continue
+			var center := Vector2i(2 * column + (row & 1), 3 * row)
+			var ids: Array[int] = []
+			for corner in CORNERS:
+				var key := center + corner
+				if not vertices.has(key):
+					var node := graph.add_node(MapNode.Type.BATTLE, key.x, key.y)
+					node.vertex = key
+					vertices[key] = node.id
+				ids.append(vertices[key])
+			for i in range(6):
+				var a := ids[i]
+				var b := ids[(i + 1) % 6]
+				var edge := Vector2i(mini(a, b), maxi(a, b))
+				if not seen_edges.has(edge):
+					seen_edges[edge] = true
+					edges.append(edge)
 
-	var boss_column := layout.get_total_columns() - 1
-	var boss := graph.add_node(MapNode.Type.BOSS, boss_column, middle_row)
-	cells[Vector2i(boss_column, middle_row)] = boss
-
-	_connect_hex_neighbors(graph, cells)
+	var left: Array[MapNode] = []
+	var right: Array[MapNode] = []
+	var min_x := graph.nodes[0].vertex.x
+	var max_x := min_x
+	for node in graph.nodes:
+		min_x = mini(min_x, node.vertex.x)
+		max_x = maxi(max_x, node.vertex.x)
+	for node in graph.nodes:
+		if node.vertex.x == min_x:
+			left.append(node)
+		if node.vertex.x == max_x:
+			right.append(node)
+	var start := left[_rng.randi_range(0, left.size() - 1)]
+	var boss := right[_rng.randi_range(0, right.size() - 1)]
+	start.type = MapNode.Type.START
+	boss.type = MapNode.Type.BOSS
+	graph.start_id = start.id
+	graph.boss_id = boss.id
+	_connect_network(graph, edges)
 	_assign_types(graph)
 	return graph
 
 
-## 把所有相邻的六边形连起来。
-func _connect_hex_neighbors(graph: MapGraph, cells: Dictionary) -> void:
-	for cell_key in cells.keys():
-		var cell: Vector2i = cell_key
-		var node: MapNode = cells[cell]
-		var offsets := ODD_NEIGHBORS if (cell.y & 1) == 1 else EVEN_NEIGHBORS
-		for offset in offsets:
-			var neighbor_key := cell + offset
-			if cells.has(neighbor_key):
-				graph.link(node.id, cells[neighbor_key].id)
+## 随机生成树保证全图连通，再补回部分边形成可选路线。
+func _connect_network(graph: MapGraph, edges: Array[Vector2i]) -> void:
+	_shuffle(edges)
+	var parents: Array[int] = []
+	for node in graph.nodes:
+		parents.append(node.id)
+	for edge in edges:
+		var a := _root(parents, edge.x)
+		var b := _root(parents, edge.y)
+		if a != b:
+			parents[b] = a
+			graph.link(edge.x, edge.y)
+		elif _rng.randf() < 0.28:
+			graph.link(edge.x, edge.y)
 
+
+func _root(parents: Array[int], index: int) -> int:
+	while parents[index] != index:
+		index = parents[index]
+	return index
 
 ## 随机分配精英、商店、休息、宝箱、事件和普通战斗。
 func _assign_types(graph: MapGraph) -> void:

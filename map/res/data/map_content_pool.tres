@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MapContentPool" format=3]
+[gd_resource type="Resource" script_class="MapContentPool" format=3 uid="uid://dh6b88fdu2ucb"]
 
 [ext_resource type="Script" uid="uid://bc2aghvcy4adg" path="res://map/content/map_content_pool.gd" id="1_pool"]
 [ext_resource type="Resource" uid="uid://lsq7s8dclnmv" path="res://map/res/data/shop_stock.tres" id="2_stock"]
@@ -11,10 +11,3 @@
 script = ExtResource("1_pool")
 events = Array[ExtResource("6_event")]([ExtResource("3_event_a"), ExtResource("4_event_b"), ExtResource("5_event_c")])
 shop_stock = ExtResource("2_stock")
-treasure_gold_min = 20
-treasure_gold_max = 40
-battle_gold_min = 10
-battle_gold_max = 20
-elite_gold_min = 25
-elite_gold_max = 40
-rest_heal_ratio = 0.3
