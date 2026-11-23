@@ -66,6 +66,11 @@ func _sprite_bounds() -> Rect2:
 
 ## 承受来自指定单位的伤害，返回实际损失的生命值。
 func take_damage(amount: int, source: Character = null) -> int:
+	return apply_resolved_damage(prepare_damage(amount, source))
+
+
+## 提交伤害时消耗护甲或一次抵消，锁定待结算的伤害。
+func prepare_damage(amount: int, source: Character = null) -> int:
 	if amount <= 0 or life_count <= 0:
 		return 0
 	var blocked := _blocked_sources.find(source)
@@ -74,7 +79,13 @@ func take_damage(amount: int, source: Character = null) -> int:
 		return 0
 	var absorbed := mini(armor, amount)
 	armor -= absorbed
-	var lost := mini(life_count, amount - absorbed)
+	return amount - absorbed
+
+
+func apply_resolved_damage(amount: int) -> int:
+	if amount <= 0 or life_count <= 0:
+		return 0
+	var lost := mini(life_count, amount)
 	life_count -= lost
 	if life_count == 0:
 		_on_death()

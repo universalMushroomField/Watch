@@ -50,7 +50,7 @@ func _hide_intent(_character: Character) -> void:
 
 
 ## 每个敌方回合只结算一次行动，成功后切换到后继状态。
-func take_turn(target: Character, sequence: CardSequence) -> bool:
+func take_turn(target: Character, sequence: CardSequence, processor: EffectProcessor = null) -> bool:
 	if life_count <= 0 or not is_instance_valid(target) or target.life_count <= 0:
 		return false
 	if current_state < 0 or current_state >= action_states.size():
@@ -59,7 +59,9 @@ func take_turn(target: Character, sequence: CardSequence) -> bool:
 	if action == null or action.next_state < 0 or action.next_state >= action_states.size():
 		return false
 	var context := {&"player": self, &"target": target, &"enemies": [target]}
-	if not EffectProcessor.process_effects(action.effects, sequence, context):
+	if processor == null:
+		processor = EffectProcessor.new()
+	if not processor.process_effects(action.effects, sequence, context):
 		return false
 	current_state = action.next_state
 	return true

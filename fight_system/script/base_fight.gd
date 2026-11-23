@@ -2,14 +2,13 @@
 class_name BaseFightScene
 extends Node2D
 
-enum stage { START, DRAW, PLAYER, END, ENEMYTURN, FINISHED }
-
 const CARD_VIEW := preload("res://cards/templates/sprite_tscn/default_card_sprite.tscn")
 
 @export var card_manager: CardManager
 @export var player_character: CharacterSelectable
 ## 敌人按数组顺序行动。
 @export var enemies: Array[Enemy] = []
+
 @export var fight_ui: Control
 
 ## 敌人的定位位置
@@ -20,7 +19,7 @@ const CARD_VIEW := preload("res://cards/templates/sprite_tscn/default_card_sprit
 @export_range(0.0, 1024.0, 1.0, "or_greater") var enemy_spacing: float = 140.0
 
 var round_count: int = 0
-var cur_stage: stage = stage.START
+var cur_stage: BattlePhase.Stage = BattlePhase.Stage.START
 
 
 func _ready() -> void:
@@ -33,7 +32,7 @@ func _ready() -> void:
 
 
 func start_fight(player: CharacterSelectable) -> bool:
-	if cur_stage != stage.START or player == null or player.deck == null or card_manager == null:
+	if cur_stage != BattlePhase.Stage.START or player == null or player.deck == null or card_manager == null:
 		return false
 	player_character = player
 	prepare()
@@ -46,6 +45,7 @@ func start_fight(player: CharacterSelectable) -> bool:
 		fight_ui.bind_fight(self)
 	if fight_ui != null:
 		fight_ui.show()
+	_enter_stage(BattlePhase.Stage.START)
 	_begin_player_turn()
 	return true
 
@@ -82,23 +82,27 @@ func _refresh_hand() -> void:
 
 
 func end_player_turn() -> void:
-	if cur_stage != stage.PLAYER:
+	if cur_stage != BattlePhase.Stage.PLAYER:
 		return
 	if fight_ui is FightingGUI:
 		fight_ui.cancel_play()
-	cur_stage = stage.END
+	_enter_stage(BattlePhase.Stage.END)
+	if _finish_if_decided():
+		return
 	card_manager.end_turn()
-	cur_stage = stage.ENEMYTURN
+	_enter_stage(BattlePhase.Stage.ENEMYTURN)
+	if _finish_if_decided():
+		return
 	for enemy in enemies.duplicate():
 		if not is_instance_valid(player_character) or player_character.life_count <= 0:
 			break
 		if is_instance_valid(enemy):
-			enemy.take_turn(player_character, card_manager.sequence)
+			enemy.take_turn(player_character, card_manager.sequence, card_manager.effect_processor)
 	_begin_player_turn()
 
 
 func play_card(instance: CardInstance, target: Enemy, sequence_start: int) -> bool:
-	if cur_stage != stage.PLAYER or not is_instance_valid(instance):
+	if cur_stage != BattlePhase.Stage.PLAYER or not is_instance_valid(instance):
 		return false
 	if instance.card.requires_target():
 		if not is_instance_valid(target) or target.life_count <= 0 or not enemies.has(target):
@@ -110,23 +114,36 @@ func play_card(instance: CardInstance, target: Enemy, sequence_start: int) -> bo
 	var context := {&"target": target, &"enemies": living_enemies}
 	if not card_manager.play(card_manager.hand.find(instance), context, sequence_start):
 		return false
-	if not _has_living_enemy():
-		cur_stage = stage.FINISHED
+	_finish_if_decided()
 	return true
 
 
 func _begin_player_turn() -> void:
-	if not is_instance_valid(player_character) or player_character.life_count <= 0 or not _has_living_enemy():
-		cur_stage = stage.FINISHED
+	if _finish_if_decided():
 		return
-	cur_stage = stage.DRAW
+	_enter_stage(BattlePhase.Stage.DRAW)
+	if _finish_if_decided():
+		return
 	round_count += 1
 	card_manager.start_turn()
 	if fight_ui != null:
 		var round_label := fight_ui.get_node_or_null("RoundCount") as Label
 		if round_label != null:
 			round_label.text = "回合数 %d" % round_count
-	cur_stage = stage.PLAYER
+	_enter_stage(BattlePhase.Stage.PLAYER)
+	_finish_if_decided()
+
+
+func _finish_if_decided() -> bool:
+	if is_instance_valid(player_character) and player_character.life_count > 0 and _has_living_enemy():
+		return false
+	_enter_stage(BattlePhase.Stage.FINISHED)
+	return true
+
+
+func _enter_stage(next_stage: BattlePhase.Stage) -> void:
+	cur_stage = next_stage
+	card_manager.effect_processor.enter_stage(next_stage)
 
 
 func _has_living_enemy() -> bool:

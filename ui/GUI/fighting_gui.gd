@@ -79,7 +79,7 @@ func bind_fight(fight: BaseFightScene) -> void:
 func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 	if not data is CardInstance or not is_instance_valid(_fight) or pile_view.visible:
 		return false
-	if _fight.cur_stage != BaseFightScene.stage.PLAYER or is_instance_valid(_pending_card):
+	if _fight.cur_stage != BattlePhase.Stage.PLAYER or is_instance_valid(_pending_card):
 		return false
 	if not card_manager.hand.has(data):
 		return false

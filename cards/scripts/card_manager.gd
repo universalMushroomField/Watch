@@ -6,6 +6,7 @@ signal hand_changed
 
 ## 当前回合的攻防序列。
 var sequence := CardSequence.new()
+var effect_processor := EffectProcessor.new()
 ## 玩家战斗状态，敌人行动时也通过此对象结算伤害。
 var player: Character
 var _default_player: Character
@@ -28,6 +29,7 @@ func get_deck(deck: CardDeck, player_unit: Character = null) -> void:
 		for instance in pile:
 			instance.queue_free()
 		pile.clear()
+	effect_processor.reset()
 	sequence.clear()
 	if player_unit == null:
 		if _default_player == null:
@@ -153,7 +155,7 @@ func play(hand_index: int, context: Dictionary = {}, sequence_start: int = -1) -
 		CardData.Kind.DEFENSE:
 			sequence.push(CardSequence.Symbol.DEFENSE)
 
-	EffectProcessor.apply(card.effects, sequence, effect_context)
+	effect_processor.submit(card.effects, sequence, effect_context)
 
 	# 先结算抽牌，避免本次打出的牌立即被弃牌堆洗回。
 	if card.extra_draw > 0:

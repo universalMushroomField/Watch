@@ -1,6 +1,9 @@
-## 按配置顺序结算效果，目标校验在任何效果执行之前完成。
 class_name EffectProcessor
-extends Node
+extends RefCounted
+
+var _pending: Array[EffectInstance] = []
+var _stage: BattlePhase.Stage = BattlePhase.Stage.START
+var _draining := false
 
 
 static func can_apply(effects: Array[Effect], context: Dictionary) -> bool:
@@ -10,16 +13,45 @@ static func can_apply(effects: Array[Effect], context: Dictionary) -> bool:
 	return true
 
 
-## 执行已通过校验的效果。出牌流程可在校验和结算之间支付费用。
-static func apply(effects: Array[Effect], sequence: CardSequence, context: Dictionary) -> void:
+func reset() -> void:
+	_pending.clear()
+	_stage = BattlePhase.Stage.START
+
+
+func enter_stage(stage: BattlePhase.Stage) -> void:
+	_stage = stage
+	_drain()
+
+
+## 按配置顺序计算效果。立即效果当场执行，阶段效果按提交顺序排队。
+func submit(effects: Array[Effect], sequence: CardSequence, context: Dictionary) -> void:
 	for effect in effects:
-		if effect != null:
-			effect.apply(sequence, context)
+		if effect == null:
+			continue
+		var prepared_effect := effect.duplicate() as Effect
+		var operation := prepared_effect.prepare(sequence, context.duplicate())
+		if effect.immediate:
+			operation.call()
+		else:
+			_pending.append(EffectInstance.new(effect.effective_stage, operation, prepared_effect))
+	_drain()
 
 
-## 直接结算不涉及出牌费用的效果。
-static func process_effects(effects: Array[Effect], sequence: CardSequence, context: Dictionary) -> bool:
+func process_effects(effects: Array[Effect], sequence: CardSequence, context: Dictionary) -> bool:
 	if not can_apply(effects, context):
 		return false
-	apply(effects, sequence, context)
+	submit(effects, sequence, context)
 	return true
+
+
+func _drain() -> void:
+	if _draining:
+		return
+	_draining = true
+	while true:
+		var index := _pending.find_custom(func(instance: EffectInstance) -> bool: return instance.stage == _stage)
+		if index < 0:
+			break
+		var instance: EffectInstance = _pending.pop_at(index)
+		instance.execute.call()
+	_draining = false

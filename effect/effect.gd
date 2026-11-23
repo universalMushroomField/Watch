@@ -2,6 +2,14 @@
 class_name Effect
 extends Resource
 
+@export var immediate: bool = true
+@export var effective_stage: BattlePhase.Stage = BattlePhase.Stage.END
+
+
+## 提交时计算效果，并返回供指定阶段执行的操作。
+func prepare(sequence: CardSequence, context: Dictionary) -> Callable:
+	return apply.bind(sequence, context)
+
 
 ## 是否需要玩家指定单个目标。
 func requires_target() -> bool:

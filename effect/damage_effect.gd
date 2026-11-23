@@ -17,13 +17,16 @@ func can_apply(context: Dictionary) -> bool:
 	return target is Character and target.life_count > 0
 
 
-func apply(_sequence: CardSequence, context: Dictionary) -> void:
+func prepare(_sequence: CardSequence, context: Dictionary) -> Callable:
 	var source := context.get(&"player") as Character
-	if all_enemies:
-		for enemy in context[&"enemies"]:
-			if enemy is Character:
-				enemy.take_damage(amount, source)
-	else:
-		var target: Character = context[&"target"]
-		if is_instance_valid(target):
-			target.take_damage(amount, source)
+	var targets: Array = context[&"enemies"] if all_enemies else [context[&"target"]]
+	var hits: Array[Callable] = []
+	for target in targets:
+		if target is Character:
+			var damage: int = target.prepare_damage(amount, source)
+			if damage > 0:
+				hits.append(target.apply_resolved_damage.bind(damage))
+	return func() -> void:
+		for hit in hits:
+			if hit.is_valid():
+				hit.call()

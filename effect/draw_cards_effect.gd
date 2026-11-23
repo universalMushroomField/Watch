@@ -11,4 +11,5 @@ func can_apply(context: Dictionary) -> bool:
 
 func apply(_sequence: CardSequence, context: Dictionary) -> void:
 	var card_manager: CardManager = context[&"card_manager"]
-	card_manager.draw(count)
+	if is_instance_valid(card_manager):
+		card_manager.draw(count)
