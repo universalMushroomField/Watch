@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://bklhhsb5ke0q0"]
 
 [ext_resource type="Theme" uid="uid://dhh77svvkoqgy" path="res://ui/theme/main_theme.tres" id="1_tlr4o"]
-[ext_resource type="Script" uid="uid://f1hv8w8jc082" path="res://map/map_view.gd" id="2_ev6oa"]
+[ext_resource type="Script" uid="uid://f1hv8w8jc082" path="res://map/scripts/map_view.gd" id="2_ev6oa"]
 [ext_resource type="Resource" path="res://map/res/data/map_config.tres" id="3_ev6oa"]
 [ext_resource type="Resource" path="res://map/res/data/map_content_pool.tres" id="4_oxnmh"]
 [ext_resource type="Resource" uid="uid://d4bjheop27cpm" path="res://cards/templates/character_a/deck.tres" id="5_f7jus"]
 [ext_resource type="PackedScene" uid="uid://4bln64glqcwl" path="res://map/templates/map_layer_0.tscn" id="6_8nppi"]
-[ext_resource type="Script" path="res://map/map_board_input.gd" id="7_board"]
+[ext_resource type="Script" path="res://map/scripts/map_board_input.gd" id="7_board"]
 
 [node name="MapView" type="Control" unique_id=806389364]
 layout_mode = 3

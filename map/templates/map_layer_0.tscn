@@ -2,7 +2,7 @@
 
 [ext_resource type="ArrayMesh" uid="uid://c4juulw3su538" path="res://map/res/terrain_mesh.res" id="1_st031"]
 [ext_resource type="Shader" uid="uid://ccd3qyxoh8yrv" path="res://map/shaders/camera_edge_breakup.gdshader" id="2_edge"]
-[ext_resource type="Script" path="res://map/map_hex_layer.gd" id="3_hex"]
+[ext_resource type="Script" path="res://map/scripts/map_hex_layer.gd" id="3_hex"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_edge"]
 render_priority = 0
