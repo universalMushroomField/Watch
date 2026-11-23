@@ -28,6 +28,36 @@ func _run() -> void:
 	_check(is_zero_approx(view.run.get_decay_ratio()), "开局崩解度为 0")
 	_check(view.content_pool.events.size() > 0, "内容池包含事件")
 	_check(view.content_pool.shop_stock != null, "内容池包含商店库存")
+	_check(view.run_state != null, "单局状态已接入")
+	_check(view.run.layout != null, "地图使用六边形布局")
+	_check(view._hex_layer != null, "六边形层已创建")
+	_check(view._hex_layer._tiles.size() == view.run.graph.get_node_count(), "每个节点都生成了六边形")
+	_check(view._hex_layer.get_edge_count() > 0, "六边形边界生成了圆管")
+	_check(view._hex_layer.get_post_count() > 0, "六边形顶点生成了圆柱")
+	var above_surface := true
+	for node in view.run.graph.nodes:
+		var center: Vector2 = view._hex_layer._hex_center(node)
+		var raw: float = view._hex_layer._footprint_max(center.x, center.y)
+		var base_y: float = float(view._hex_layer._base_heights.get(node.id, -100000.0))
+		if base_y < raw + view.run.config.hex_lift - 0.001:
+			above_surface = false
+	_check(above_surface, "所有六边形都高于地表并整体抬升")
+
+	var start_node: MapNode = view.run.graph.get_node_by_id(view.run.graph.start_id)
+	var boss_node: MapNode = view.run.graph.get_node_by_id(view.run.graph.boss_id)
+	var start_screen: Vector2 = view._hex_layer.camera.unproject_position(
+		Vector3(view._hex_layer._hex_center(start_node).x, float(view._hex_layer._base_heights[start_node.id]), view._hex_layer._hex_center(start_node).y)
+	)
+	var boss_screen: Vector2 = view._hex_layer.camera.unproject_position(
+		Vector3(view._hex_layer._hex_center(boss_node).x, float(view._hex_layer._base_heights[boss_node.id]), view._hex_layer._hex_center(boss_node).y)
+	)
+	_check(start_screen.x < boss_screen.x, "起点在屏幕左侧、Boss 在右侧")
+	var pick_target: MapNode = view.run.graph.get_node_by_id(start_node.neighbor_ids[0])
+	var pick_center: Vector2 = view._hex_layer._hex_center(pick_target)
+	var pick_top := Vector3(pick_center.x, float(view._hex_layer._base_heights[pick_target.id]), pick_center.y)
+	var pick_screen: Vector2 = view._hex_layer.camera.unproject_position(pick_top)
+	_check(view._hex_layer.node_at_screen(pick_screen) == pick_target, "射线拾取命中正确的六边形")
+	_check(view._board_input._node_at(pick_screen - view._board_input.get_global_rect().position) == pick_target, "覆盖层坐标换算正确")
 
 	var path := _find_path(view.run, view.run.current_id, view.run.graph.boss_id)
 	_check(path.size() > 1, "起点到 Boss 存在路径")
