@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("1_config")
-max_columns = 7
-max_rows = 5
-hex_radius = 3.2
+max_columns = 4
+max_rows = 4
+hex_radius = 3.6
 hex_lift = 0.25
 board_margin = 2.0
 elite_count = 2

@@ -31,21 +31,21 @@ func get_middle_row() -> int:
 	return rows >> 1
 
 
-## 六边形水平方向相邻列的中心距。
+## 尖顶六边形水平方向相邻列的中心距。
 func get_column_step() -> float:
-	return 1.5 * hex_radius
-
-
-## 六边形同列相邻行的中心距。
-func get_row_step() -> float:
 	return SQRT3 * hex_radius
 
 
-## 棋盘（含六边形自身宽度）在 X 方向的总跨度。
+## 尖顶六边形相邻行的中心距。
+func get_row_step() -> float:
+	return 1.5 * hex_radius
+
+
+## 棋盘（含六边形自身宽度）在 X 方向的总跨度；奇数行会再错开半列。
 func get_world_width() -> float:
-	return get_column_step() * float(get_total_columns() - 1) + hex_radius * 2.0
+	return get_column_step() * (float(get_total_columns()) + 0.5)
 
 
 ## 棋盘（含六边形自身高度）在 Z 方向的总跨度。
 func get_world_depth() -> float:
-	return get_row_step() * (float(rows) + 0.5)
+	return get_row_step() * float(maxi(rows - 1, 0)) + hex_radius * 2.0

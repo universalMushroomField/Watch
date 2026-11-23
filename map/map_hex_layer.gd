@@ -26,6 +26,8 @@ const WALL_SEGMENTS := 4
 const WALL_SINK := 0.5
 ## 墙至少保留的高度，避免贴地时完全看不见。
 const WALL_MIN_HEIGHT := 0.35
+## 墙在法线方向的最小厚度：完全零厚度的竖直面在正对视线时会消失。
+const WALL_THICKNESS := 0.12
 
 const TYPE_COLORS := {
 	MapNode.Type.START: Color(0.30, 0.72, 0.42),
@@ -103,14 +105,14 @@ func make_layout(config: MapConfig) -> HexLayout:
 	_build_height_field()
 	var rect := _available_rect(config)
 	var target_radius := maxf(config.hex_radius, 0.5)
-	var interior_columns := int(floor(rect.size.x / (1.5 * target_radius) - 3.5 / 1.5))
-	var interior_rows := int(floor(rect.size.y / (SQRT3 * target_radius) - 0.5))
+	var interior_columns := int(floor(rect.size.x / (SQRT3 * target_radius) - 2.5))
+	var interior_rows := int(floor((rect.size.y / target_radius - 0.5) / 1.5))
 	interior_columns = clampi(interior_columns, 2, maxi(config.max_columns, 2))
 	interior_rows = clampi(interior_rows, 2, maxi(config.max_rows, 2))
 
 	# 用实际列数重新拟合半径，保证棋盘完整落在可用矩形内。
-	var span_columns := 1.5 * float(interior_columns) + 3.5
-	var span_rows := SQRT3 * (float(interior_rows) + 0.5)
+	var span_columns := SQRT3 * (float(interior_columns) + 2.5)
+	var span_rows := 1.5 * float(interior_rows) + 0.5
 	var radius := minf(rect.size.x / span_columns, rect.size.y / span_rows)
 	radius = minf(radius, target_radius)
 	return HexLayout.new(interior_columns, interior_rows, radius)
@@ -351,13 +353,14 @@ func _compute_board_offset(rect: Rect2) -> void:
 	var max_x := -INF
 	var min_z := INF
 	var max_z := -INF
-	var half_depth := layout.get_row_step() * 0.5
 	for node in run.graph.nodes:
 		var center := _raw_hex_center(node)
-		min_x = minf(min_x, center.x - layout.hex_radius)
-		max_x = maxf(max_x, center.x + layout.hex_radius)
-		min_z = minf(min_z, center.y - half_depth)
-		max_z = maxf(max_z, center.y + half_depth)
+		for index in range(6):
+			var corner := _hex_corner(center, index)
+			min_x = minf(min_x, corner.x)
+			max_x = maxf(max_x, corner.x)
+			min_z = minf(min_z, corner.y)
+			max_z = maxf(max_z, corner.y)
 	if min_x > max_x or min_z > max_z:
 		return
 	var board_center := Vector2((min_x + max_x) * 0.5, (min_z + max_z) * 0.5)
@@ -436,8 +439,8 @@ func _sample_field(values: PackedFloat32Array, x: float, z: float) -> float:
 ## 未加棋盘偏移的六边形中心，列方向对齐相机屏幕的左右方向。
 func _raw_hex_center(node: MapNode) -> Vector2:
 	var local := Vector2(
-		float(node.column) * layout.get_column_step(),
-		(float(node.row) + 0.5 * float(node.column & 1)) * layout.get_row_step(),
+		(float(node.column) + 0.5 * float(node.row & 1)) * layout.get_column_step(),
+		float(node.row) * layout.get_row_step(),
 	)
 	return _rotate(local, _board_angle)
 
@@ -447,9 +450,9 @@ func _hex_center(node: MapNode) -> Vector2:
 	return _raw_hex_center(node) + _board_offset
 
 
-## flat-top 六边形的第 [param index] 个角。
+## 尖顶六边形的第 [param index] 个角。
 func _hex_corner(center: Vector2, index: int) -> Vector2:
-	var angle := _board_angle + TAU * float(index % 6) / 6.0
+	var angle := _board_angle + PI / 6.0 + TAU * float(index % 6) / 6.0
 	return center + Vector2(cos(angle), sin(angle)) * layout.hex_radius
 
 
@@ -468,12 +471,12 @@ func _camera_board_angle() -> float:
 	return atan2(right.z, right.x)
 
 
-## flat-top 六边形的点内测试。
+## 尖顶六边形的点内测试。
 func _in_hex(dx: float, dz: float, radius: float) -> bool:
 	var half := SQRT3 * 0.5 * radius
 	var ax := absf(dx)
 	var az := absf(dz)
-	return az <= half + 0.0001 and SQRT3 * 0.5 * ax + 0.5 * az <= half + 0.0001
+	return ax <= half + 0.0001 and 0.5 * ax + SQRT3 * 0.5 * az <= half + 0.0001
 
 
 ## 用六边形边的中点作为唯一键，相邻两格共享同一条边。
@@ -549,7 +552,7 @@ func _create_wall(a: Vector2, b: Vector2, ids: Array) -> void:
 	for segment in range(WALL_SEGMENTS + 1):
 		var t := float(segment) / float(WALL_SEGMENTS)
 		var point := a.lerp(b, t)
-		var top := maxf(_sample_height(point.x, point.y) + lift, _sample_raw(point.x, point.y) + 0.08)
+		var top := maxf(_sample_height(point.x, point.y), _sample_raw(point.x, point.y)) + lift
 		var bottom := minf(_sample_raw(point.x, point.y) - WALL_SINK, top - WALL_MIN_HEIGHT)
 		top_points.append(Vector3(point.x, top, point.y))
 		bottom_points.append(Vector3(point.x, bottom, point.y))
@@ -557,17 +560,51 @@ func _create_wall(a: Vector2, b: Vector2, ids: Array) -> void:
 	var normal := Vector3(b.y - a.y, 0.0, a.x - b.x).normalized()
 	if normal.length_squared() < 0.0001:
 		normal = Vector3.RIGHT
+	var half := WALL_THICKNESS * 0.5
+	var front_offset := normal * half
+	var back_offset := -front_offset
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for segment in range(WALL_SEGMENTS):
 		var t0 := float(segment) / float(WALL_SEGMENTS)
 		var t1 := float(segment + 1) / float(WALL_SEGMENTS)
-		_add_vertex(surface, top_points[segment], normal, Vector2(t0, 1.0))
-		_add_vertex(surface, bottom_points[segment], normal, Vector2(t0, 0.0))
-		_add_vertex(surface, bottom_points[segment + 1], normal, Vector2(t1, 0.0))
-		_add_vertex(surface, top_points[segment], normal, Vector2(t0, 1.0))
-		_add_vertex(surface, bottom_points[segment + 1], normal, Vector2(t1, 0.0))
-		_add_vertex(surface, top_points[segment + 1], normal, Vector2(t1, 1.0))
+		var top_a := top_points[segment]
+		var top_b := top_points[segment + 1]
+		var bottom_a := bottom_points[segment]
+		var bottom_b := bottom_points[segment + 1]
+
+		var front_top_a := top_a + front_offset
+		var front_top_b := top_b + front_offset
+		var front_bottom_a := bottom_a + front_offset
+		var front_bottom_b := bottom_b + front_offset
+		var back_top_a := top_a + back_offset
+		var back_top_b := top_b + back_offset
+		var back_bottom_a := bottom_a + back_offset
+		var back_bottom_b := bottom_b + back_offset
+
+		# 朝向相机的一面
+		_add_vertex(surface, front_top_a, normal, Vector2(t0, 1.0))
+		_add_vertex(surface, front_bottom_a, normal, Vector2(t0, 0.0))
+		_add_vertex(surface, front_bottom_b, normal, Vector2(t1, 0.0))
+		_add_vertex(surface, front_top_a, normal, Vector2(t0, 1.0))
+		_add_vertex(surface, front_bottom_b, normal, Vector2(t1, 0.0))
+		_add_vertex(surface, front_top_b, normal, Vector2(t1, 1.0))
+
+		# 背面，保证从任何方向看都有可见面
+		_add_vertex(surface, back_top_b, -normal, Vector2(t1, 1.0))
+		_add_vertex(surface, back_bottom_b, -normal, Vector2(t1, 0.0))
+		_add_vertex(surface, back_bottom_a, -normal, Vector2(t0, 0.0))
+		_add_vertex(surface, back_top_b, -normal, Vector2(t1, 1.0))
+		_add_vertex(surface, back_bottom_a, -normal, Vector2(t0, 0.0))
+		_add_vertex(surface, back_top_a, -normal, Vector2(t0, 1.0))
+
+		# 墙顶盖，让墙的正上方也有一条清晰的边
+		_add_vertex(surface, front_top_a, Vector3.UP, Vector2(0.0, 1.0))
+		_add_vertex(surface, front_top_b, Vector3.UP, Vector2(1.0, 1.0))
+		_add_vertex(surface, back_top_b, Vector3.UP, Vector2(1.0, 1.0))
+		_add_vertex(surface, front_top_a, Vector3.UP, Vector2(0.0, 1.0))
+		_add_vertex(surface, back_top_b, Vector3.UP, Vector2(1.0, 1.0))
+		_add_vertex(surface, back_top_a, Vector3.UP, Vector2(0.0, 1.0))
 
 	var mesh_instance := MeshInstance3D.new()
 	mesh_instance.name = "Wall"

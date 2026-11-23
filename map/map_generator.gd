@@ -9,21 +9,21 @@ extends RefCounted
 ## 偶数列（column 为偶数）的六个邻居偏移。
 const EVEN_NEIGHBORS: Array[Vector2i] = [
 	Vector2i(1, 0),
-	Vector2i(1, -1),
 	Vector2i(0, -1),
 	Vector2i(-1, -1),
 	Vector2i(-1, 0),
+	Vector2i(-1, 1),
 	Vector2i(0, 1),
 ]
 
 ## 奇数列（column 为奇数）的六个邻居偏移。
 const ODD_NEIGHBORS: Array[Vector2i] = [
-	Vector2i(1, 1),
 	Vector2i(1, 0),
+	Vector2i(1, -1),
 	Vector2i(0, -1),
 	Vector2i(-1, 0),
-	Vector2i(-1, 1),
 	Vector2i(0, 1),
+	Vector2i(1, 1),
 ]
 
 var config: MapConfig
@@ -68,7 +68,7 @@ func _connect_hex_neighbors(graph: MapGraph, cells: Dictionary) -> void:
 	for cell_key in cells.keys():
 		var cell: Vector2i = cell_key
 		var node: MapNode = cells[cell]
-		var offsets := ODD_NEIGHBORS if (cell.x & 1) == 1 else EVEN_NEIGHBORS
+		var offsets := ODD_NEIGHBORS if (cell.y & 1) == 1 else EVEN_NEIGHBORS
 		for offset in offsets:
 			var neighbor_key := cell + offset
 			if cells.has(neighbor_key):

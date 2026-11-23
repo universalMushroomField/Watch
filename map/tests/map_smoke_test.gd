@@ -202,7 +202,7 @@ func _check_layout(graph: MapGraph, label: String, failures: Array[String]) -> v
 
 
 func _expected_neighbors(graph: MapGraph, node: MapNode) -> Dictionary:
-	var offsets := MapGenerator.ODD_NEIGHBORS if (node.column & 1) == 1 else MapGenerator.EVEN_NEIGHBORS
+	var offsets := MapGenerator.ODD_NEIGHBORS if (node.row & 1) == 1 else MapGenerator.EVEN_NEIGHBORS
 	var expected := {}
 	for offset in offsets:
 		var neighbor := graph.find_node_at(node.column + offset.x, node.row + offset.y)
