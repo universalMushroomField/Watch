@@ -4,10 +4,12 @@
 
 [resource]
 script = ExtResource("1_config")
-band_count = 7
-min_nodes_per_band = 3
-max_nodes_per_band = 5
-ring_link_chance = 0.55
+max_columns = 7
+max_rows = 5
+hex_radius = 2.7
+hex_height = 1.0
+hex_lift = 0.45
+board_margin = 2.0
 elite_count = 2
 shop_count = 1
 rest_count = 1

@@ -1,20 +1,22 @@
-## 一张放射状地图：节点集合、无向连边、环向捷径和起终点。
+## 一张地图的图结构：六边形格子、节点之间的连通关系，以及起点和 Boss。
 class_name MapGraph
 extends RefCounted
 
-## 地图中的全部节点，下标与节点编号一致。
+const SQRT3 := 1.7320508075688772
+
+## 所有地点，按编号索引。
 var nodes: Array[MapNode] = []
-## 起点节点编号。
+## 起点编号。
 var start_id: int = -1
-## Boss 节点编号。
+## Boss 编号。
 var boss_id: int = -1
-## 同层弧线边的键集合，键为 "较小编号:较大编号"。
-var ring_links: Dictionary = {}
+## 这张图使用的六边形布局。
+var layout: HexLayout
 
 
-## 创建并加入一个新节点，返回该节点。
-func add_node(node_type: MapNode.Type, node_band: int, position: Vector2) -> MapNode:
-	var node := MapNode.new(nodes.size(), node_type, node_band, position)
+## 新建一个地点并返回它。
+func add_node(node_type: MapNode.Type, column: int, row: int) -> MapNode:
+	var node := MapNode.new(nodes.size(), node_type, column, row)
 	nodes.append(node)
 	if node_type == MapNode.Type.START:
 		start_id = node.id
@@ -23,100 +25,84 @@ func add_node(node_type: MapNode.Type, node_band: int, position: Vector2) -> Map
 	return node
 
 
-## 按编号取节点，编号无效时返回 null。
-func get_node_by_id(node_id: int) -> MapNode:
-	if node_id < 0 or node_id >= nodes.size():
-		return null
-	return nodes[node_id]
-
-
-## 连接两个节点。边无方向，重复连接会被忽略。
-func link(node_a: int, node_b: int) -> void:
-	if node_a == node_b:
+## 双向连接两个地点。
+func link(a_id: int, b_id: int) -> void:
+	if a_id == b_id:
 		return
-	var a := get_node_by_id(node_a)
-	var b := get_node_by_id(node_b)
+	var a := get_node_by_id(a_id)
+	var b := get_node_by_id(b_id)
 	if a == null or b == null:
 		return
-	if not a.neighbor_ids.has(node_b):
-		a.neighbor_ids.append(node_b)
-	if not b.neighbor_ids.has(node_a):
-		b.neighbor_ids.append(node_a)
+	if not a.neighbor_ids.has(b_id):
+		a.neighbor_ids.append(b_id)
+	if not b.neighbor_ids.has(a_id):
+		b.neighbor_ids.append(a_id)
 
 
-## 连接同层相邻节点，并标记为弧线边。
-func link_ring(node_a: int, node_b: int) -> void:
-	if node_a == node_b:
-		return
-	link(node_a, node_b)
-	ring_links[_edge_key(node_a, node_b)] = true
-
-
-## 判断一条边是否应画成同层弧线。
-func is_ring_link(node_a: int, node_b: int) -> bool:
-	return ring_links.has(_edge_key(node_a, node_b))
-
-
-## 地图的层数，含起点层和 Boss 层。
-func get_band_count() -> int:
-	var result := 0
+## 按编号取地点，不存在时返回 null。
+func get_node_by_id(node_id: int) -> MapNode:
 	for node in nodes:
-		result = maxi(result, node.band + 1)
-	return result
+		if node.id == node_id:
+			return node
+	return null
 
 
-## 边的无序键。
-func _edge_key(node_a: int, node_b: int) -> String:
-	return "%d:%d" % [mini(node_a, node_b), maxi(node_a, node_b)]
+## 按六边形坐标取地点，不存在时返回 null。
+func find_node_at(column: int, row: int) -> MapNode:
+	for node in nodes:
+		if node.column == column and node.row == row:
+			return node
+	return null
 
 
-## 返回指定节点的相邻节点。
-func get_neighbor_nodes(node_id: int) -> Array[MapNode]:
-	var result: Array[MapNode] = []
-	var node := get_node_by_id(node_id)
-	if node == null:
-		return result
-	for neighbor_id in node.neighbor_ids:
-		var neighbor := get_node_by_id(neighbor_id)
-		if neighbor != null:
-			result.append(neighbor)
-	return result
-
-
-## 地图中的节点总数。
+## 地图的节点总数。
 func get_node_count() -> int:
 	return nodes.size()
 
 
-## 从起点出发能到达的节点编号集合。
-func collect_reachable_ids() -> Dictionary:
-	var reachable := {}
-	if start_id < 0:
-		return reachable
-	var queue: Array[int] = [start_id]
-	reachable[start_id] = true
-	while not queue.is_empty():
-		var node_id: int = queue.pop_back()
-		var node := get_node_by_id(node_id)
-		if node == null:
-			continue
-		for neighbor_id in node.neighbor_ids:
-			if not reachable.has(neighbor_id):
-				reachable[neighbor_id] = true
-				queue.append(neighbor_id)
-	return reachable
-
-
-## 返回从起点无法到达的节点编号。
-func find_unreachable_ids() -> Array[int]:
-	var reachable := collect_reachable_ids()
-	var unreachable: Array[int] = []
+## 地图的列数（含起点列和 Boss 列）。
+func get_column_count() -> int:
+	if layout != null:
+		return layout.get_total_columns()
+	var count := 0
 	for node in nodes:
-		if not reachable.has(node.id):
-			unreachable.append(node.id)
-	return unreachable
+		count = maxi(count, node.column + 1)
+	return count
 
 
-## 是否所有节点都能从起点到达。
+## 地图的行数。
+func get_row_count() -> int:
+	if layout != null:
+		return layout.rows
+	var count := 0
+	for node in nodes:
+		count = maxi(count, node.row + 1)
+	return count
+
+
+## 从指定地点出发、只沿邻接边能到达的所有地点编号。
+func collect_reachable_ids(from_id: int) -> Array[int]:
+	var result: Array[int] = []
+	var start := get_node_by_id(from_id)
+	if start == null:
+		return result
+	var queue: Array[int] = [from_id]
+	var seen := {from_id: true}
+	while not queue.is_empty():
+		var current_id: int = queue.pop_front()
+		result.append(current_id)
+		var current := get_node_by_id(current_id)
+		if current == null:
+			continue
+		for neighbor_id in current.neighbor_ids:
+			if not seen.has(neighbor_id):
+				seen[neighbor_id] = true
+				queue.append(neighbor_id)
+	return result
+
+
+## 所有地点是否都从起点可达。
 func is_fully_connected() -> bool:
-	return start_id >= 0 and find_unreachable_ids().is_empty()
+	if start_id < 0:
+		return false
+	return collect_reachable_ids(start_id).size() == nodes.size()

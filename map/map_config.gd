@@ -1,22 +1,33 @@
-## 地图生成的可调参数，在检查器里为每局游戏指定一份配置。
+## 地图生成参数。
+##
+## 棋盘是六边形蜂巢：中间是 [member max_columns] × [member max_rows] 的完整
+## 矩形，起点和 Boss 各占最左/最右一列。实际列数和行数会按地形与相机可视
+## 范围缩小，见 [MapHexLayer.make_layout]。
 class_name MapConfig
 extends Resource
 
-## 地图包含的层数，含起点层和 Boss 层。层数越多，环与环之间越密。
-@export_range(3, 12) var band_count: int = 7
-## 中间层每层最少的节点数。
-@export_range(1, 6) var min_nodes_per_band: int = 3
-## 中间层每层最多的节点数。
-@export_range(1, 6) var max_nodes_per_band: int = 5
-## 同层至少 4 个节点时，相邻节点之间连成弧线的概率。
-@export_range(0.0, 1.0) var ring_link_chance: float = 0.55
-## 精英节点的数量。
-@export_range(0, 4) var elite_count: int = 2
-## 商店节点的数量。
-@export_range(0, 3) var shop_count: int = 1
-## 休息节点的数量。
-@export_range(0, 3) var rest_count: int = 1
-## 宝箱节点的数量。
-@export_range(0, 3) var treasure_count: int = 1
-## 剩余节点中成为未知事件的概率，其余为普通战斗。
+@export_group("Hex Board")
+## 中间区域的最大列数。
+@export_range(2, 24) var max_columns: int = 7
+## 中间区域的最大行数。
+@export_range(2, 12) var max_rows: int = 5
+## 六边形外接圆半径的目标值，单位与世界坐标一致。
+@export var hex_radius: float = 2.7
+## 六边形棱柱的最小厚度；棱柱会继续向下埋入地形，避免相邻高差露出缝隙。
+@export var hex_height: float = 1.0
+## 六边形在平滑地表高度之上额外抬升的距离。
+@export var hex_lift: float = 0.45
+## 棋盘与地形边缘保留的空白，单位与世界坐标一致。
+@export var board_margin: float = 2.0
+
+@export_group("Node Types")
+## 精英战数量。
+@export var elite_count: int = 2
+## 商店数量。
+@export var shop_count: int = 1
+## 休息点数量。
+@export var rest_count: int = 1
+## 宝箱数量。
+@export var treasure_count: int = 1
+## 普通战斗被替换成未知事件的概率。
 @export_range(0.0, 1.0) var event_ratio: float = 0.5

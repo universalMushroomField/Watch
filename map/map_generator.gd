@@ -1,140 +1,102 @@
-## 生成放射状地图：Boss 在中心，其余节点按层环绕，连线不会交叉。
+## 六边形蜂巢地图生成器。
+##
+## 结构：最左一列只有一个起点，最右一列只有一个 Boss，中间是完整的
+## [member HexLayout.columns] × [member HexLayout.rows] 矩形蜂巢。所有物理
+## 相邻的六边形直接连边，因此保留“已探索节点的未探索邻居都可走”的规则。
 class_name MapGenerator
 extends RefCounted
 
-## 生成参数。
+## 偶数列（column 为偶数）的六个邻居偏移。
+const EVEN_NEIGHBORS: Array[Vector2i] = [
+	Vector2i(1, 0),
+	Vector2i(1, -1),
+	Vector2i(0, -1),
+	Vector2i(-1, -1),
+	Vector2i(-1, 0),
+	Vector2i(0, 1),
+]
+
+## 奇数列（column 为奇数）的六个邻居偏移。
+const ODD_NEIGHBORS: Array[Vector2i] = [
+	Vector2i(1, 1),
+	Vector2i(1, 0),
+	Vector2i(0, -1),
+	Vector2i(-1, 0),
+	Vector2i(-1, 1),
+	Vector2i(0, 1),
+]
+
 var config: MapConfig
+var layout: HexLayout
 var _rng := RandomNumberGenerator.new()
 
 
-func _init(map_config: MapConfig = null) -> void:
+func _init(map_config: MapConfig = null, hex_layout: HexLayout = null) -> void:
 	config = map_config if map_config != null else MapConfig.new()
+	layout = hex_layout if hex_layout != null else HexLayout.new()
 
 
-## 生成一张完整地图。seed_value 为负数时使用随机种子。
+## 生成一张地图。[param seed_value] 小于 0 时随机取种子。
 func generate(seed_value: int = -1) -> MapGraph:
 	if seed_value >= 0:
 		_rng.seed = seed_value
 	else:
 		_rng.randomize()
 
-	var band_count := maxi(config.band_count, 3)
 	var graph := MapGraph.new()
-	var bands: Array[Array] = []
+	graph.layout = layout
 
-	# 先建节点，角度和位置稍后统一计算。
-	var start := graph.add_node(MapNode.Type.START, 0, Vector2.ZERO)
-	bands.append([start])
-	for band in range(1, band_count - 1):
-		bands.append(_create_band(graph, band))
-	var boss := graph.add_node(MapNode.Type.BOSS, band_count - 1, Vector2.ZERO)
-	bands.append([boss])
+	var middle_row := layout.get_middle_row()
+	var start := graph.add_node(MapNode.Type.START, 0, middle_row)
+	var cells := {Vector2i(0, middle_row): start}
 
-	var angles := _assign_angles(bands, band_count)
-	_assign_parents(graph, bands, angles)
-	_apply_positions(graph, angles, band_count)
+	for column in range(1, layout.columns + 1):
+		for row in range(layout.rows):
+			cells[Vector2i(column, row)] = graph.add_node(MapNode.Type.BATTLE, column, row)
 
-	# 同层相邻节点之间补弧线边，增加可绕行的路线。
-	for band in range(1, band_count - 1):
-		_add_ring_links(graph, bands[band], angles)
+	var boss_column := layout.get_total_columns() - 1
+	var boss := graph.add_node(MapNode.Type.BOSS, boss_column, middle_row)
+	cells[Vector2i(boss_column, middle_row)] = boss
 
+	_connect_hex_neighbors(graph, cells)
 	_assign_types(graph)
 	return graph
 
 
-## 在指定层随机摆放节点，位置稍后按角度计算。
-func _create_band(graph: MapGraph, band: int) -> Array:
-	var min_count := clampi(config.min_nodes_per_band, 1, 6)
-	var max_count := maxi(clampi(config.max_nodes_per_band, 1, 6), min_count)
-	var count := _rng.randi_range(min_count, max_count)
-	# 最外圈固定 4 个节点，保证起点四周有一圈完整的环，而不是一条孤立的长边。
-	if band == 1:
-		count = clampi(4, min_count, max_count)
-	var nodes: Array = []
-	for _index in range(count):
-		nodes.append(graph.add_node(MapNode.Type.BATTLE, band, Vector2.ZERO))
-	return nodes
+## 把所有相邻的六边形连起来。
+func _connect_hex_neighbors(graph: MapGraph, cells: Dictionary) -> void:
+	for cell_key in cells.keys():
+		var cell: Vector2i = cell_key
+		var node: MapNode = cells[cell]
+		var offsets := ODD_NEIGHBORS if (cell.x & 1) == 1 else EVEN_NEIGHBORS
+		for offset in offsets:
+			var neighbor_key := cell + offset
+			if cells.has(neighbor_key):
+				graph.link(node.id, cells[neighbor_key].id)
 
 
-## 每层节点沿圆周等距分布，起点固定在 0 度。
-func _assign_angles(bands: Array[Array], band_count: int) -> Dictionary:
-	var angles := {}
-	for band in range(bands.size()):
-		var nodes: Array = bands[band]
-		if band == band_count - 1:
-			angles[nodes[0].id] = 0.0
-			continue
-		var step := TAU / float(nodes.size())
-		# 最外两层保持 0 度对齐，让起点到门节点的连线最短；更内层错开半个间隔。
-		var offset := 0.0 if band <= 1 or band % 2 == 0 else step * 0.5
-		for index in range(nodes.size()):
-			angles[nodes[index].id] = offset + step * float(index)
-	return angles
-
-
-## 每个节点连向角度最近的内层节点，保证同一扇区内的连线不会交叉。
-func _assign_parents(graph: MapGraph, bands: Array[Array], angles: Dictionary) -> void:
-	for band in range(bands.size() - 1):
-		var candidates: Array = bands[band + 1]
-		for node: MapNode in bands[band]:
-			var parent: MapNode = candidates[0]
-			var best_distance := INF
-			for candidate: MapNode in candidates:
-				var distance := absf(wrapf(angles[candidate.id] - angles[node.id], -PI, PI))
-				if distance < best_distance:
-					best_distance = distance
-					parent = candidate
-			graph.link(node.id, parent.id)
-
-
-## 把角度和层数换算成归一化坐标，Boss 固定在正中心。
-func _apply_positions(graph: MapGraph, angles: Dictionary, band_count: int) -> void:
-	var outer := float(band_count - 1)
-	for node in graph.nodes:
-		if node.type == MapNode.Type.BOSS:
-			node.position = Vector2(0.5, 0.5)
-			continue
-		var radius := 0.5 * float(band_count - 1 - node.band) / outer
-		var angle: float = angles.get(node.id, 0.0)
-		node.position = Vector2(0.5 + cos(angle) * radius, 0.5 + sin(angle) * radius)
-
-
-## 同一层角度相邻的节点之间按概率补一条弧线边。
-func _add_ring_links(graph: MapGraph, nodes: Array, angles: Dictionary) -> void:
-	# 节点太少时环向弧线会横跨半张地图，只给至少 4 个节点的层加捷径。
-	if nodes.size() < 4:
-		return
-	var ring: Array = nodes.duplicate()
-	ring.sort_custom(func(a: MapNode, b: MapNode) -> bool:
-		return angles[a.id] < angles[b.id])
-	var max_gap := TAU / 4.0 + 0.001
-	for index in range(ring.size()):
-		var next_index := (index + 1) % ring.size()
-		var gap := absf(angles[ring[next_index].id] - angles[ring[index].id])
-		if gap > PI:
-			gap = TAU - gap
-		if gap > max_gap:
-			continue
-		if _rng.randf() < config.ring_link_chance:
-			graph.link_ring(ring[index].id, ring[next_index].id)
-
-
-## 随机分配节点类型，保证各类节点数量符合配置。
+## 随机分配精英、商店、休息、宝箱、事件和普通战斗。
 func _assign_types(graph: MapGraph) -> void:
 	var pool: Array[MapNode] = []
 	for node in graph.nodes:
-		if node.type != MapNode.Type.START and node.type != MapNode.Type.BOSS:
-			pool.append(node)
+		if node.type == MapNode.Type.START or node.type == MapNode.Type.BOSS:
+			continue
+		pool.append(node)
 	_shuffle(pool)
+
 	pool = _assign_type(pool, MapNode.Type.SHOP, config.shop_count)
 	pool = _assign_type(pool, MapNode.Type.REST, config.rest_count)
 	pool = _assign_type(pool, MapNode.Type.TREASURE, config.treasure_count)
 	pool = _assign_elites(pool, config.elite_count)
+
 	for node in pool:
-		node.type = MapNode.Type.EVENT if _rng.randf() < config.event_ratio else MapNode.Type.BATTLE
+		if _rng.randf() < config.event_ratio:
+			node.type = MapNode.Type.EVENT
+		else:
+			node.type = MapNode.Type.BATTLE
 
 
-## 把池中前 count 个节点设为指定类型，返回剩余的节点。
+## 从池中取出若干节点设为指定类型，返回剩下的节点。
 func _assign_type(pool: Array[MapNode], node_type: MapNode.Type, count: int) -> Array[MapNode]:
 	var remaining: Array[MapNode] = []
 	var assigned := 0
@@ -147,12 +109,12 @@ func _assign_type(pool: Array[MapNode], node_type: MapNode.Type, count: int) -> 
 	return remaining
 
 
-## 精英不放在紧邻起点的一层，避免开局无路可走。
+## 精英只放在离起点至少两列的位置，避免开局就撞上。
 func _assign_elites(pool: Array[MapNode], count: int) -> Array[MapNode]:
 	var remaining: Array[MapNode] = []
 	var assigned := 0
 	for node in pool:
-		if assigned < count and node.band >= 2:
+		if assigned < count and node.column >= 2:
 			node.type = MapNode.Type.ELITE
 			assigned += 1
 		else:
@@ -160,10 +122,9 @@ func _assign_elites(pool: Array[MapNode], count: int) -> Array[MapNode]:
 	return remaining
 
 
-## 用生成器自带的随机数洗牌。
 func _shuffle(items: Array) -> void:
 	for index in range(items.size() - 1, 0, -1):
 		var swap_index := _rng.randi_range(0, index)
-		var temp: Variant = items[index]
+		var temp = items[index]
 		items[index] = items[swap_index]
 		items[swap_index] = temp
