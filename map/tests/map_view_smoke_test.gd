@@ -9,7 +9,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var scene: PackedScene = load("res://map/map_view.tscn")
+	var scene: PackedScene = load("res://map/templates/map_view.tscn")
 	_check(scene != null, "地图场景可以加载")
 	if scene == null:
 		_finish()

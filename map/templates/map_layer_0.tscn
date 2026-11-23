@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://4bln64glqcwl"]
+
+[ext_resource type="ArrayMesh" uid="uid://c4juulw3su538" path="res://map/res/terrain_mesh.res" id="1_st031"]
+
+[node name="MapLayer0" type="Node3D" unique_id=2057812014]
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1091666386]
+transform = Transform3D(-0.73013633, -0.38847816, 0.56212604, 0, 0.82266176, 0.5685311, -0.6833015, 0.41510522, -0.60065526, 18.506104, 20.520508, -16.38501)
+projection = 1
+fov = 128.1
+size = 30.0
+near = 0.001
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=617485418]
+mesh = ExtResource("1_st031")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=210431350]
+transform = Transform3D(0.6156615, 0.59471923, 0.5169815, 0, -0.65605897, 0.7547096, 0.7880107, -0.46464565, -0.40391025, 0, 12.13, 33.631336)

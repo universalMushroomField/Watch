@@ -1,0 +1,183 @@
+[gd_scene format=3 uid="uid://bklhhsb5ke0q0"]
+
+[ext_resource type="Theme" uid="uid://dhh77svvkoqgy" path="res://ui/theme/main_theme.tres" id="1_tlr4o"]
+[ext_resource type="Script" uid="uid://f1hv8w8jc082" path="res://map/map_view.gd" id="2_ev6oa"]
+[ext_resource type="Resource" path="res://map/res/data/map_config.tres" id="3_ev6oa"]
+[ext_resource type="Resource" path="res://map/res/data/map_content_pool.tres" id="4_oxnmh"]
+[ext_resource type="Resource" uid="uid://d4bjheop27cpm" path="res://cards/templates/character_a/deck.tres" id="5_f7jus"]
+[ext_resource type="PackedScene" uid="uid://4bln64glqcwl" path="res://map/templates/map_layer_0.tscn" id="6_8nppi"]
+[ext_resource type="Script" uid="uid://b6y1xudlre3x5" path="res://map/map_canvas.gd" id="6_r5rqu"]
+
+[node name="MapView" type="Control" unique_id=806389364]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_tlr4o")
+script = ExtResource("2_ev6oa")
+map_config = ExtResource("3_ev6oa")
+content_pool = ExtResource("4_oxnmh")
+starting_deck = ExtResource("5_f7jus")
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=1748054498]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer" unique_id=1877666176]
+handle_input_locally = false
+size = Vector2i(1152, 648)
+render_target_update_mode = 4
+
+[node name="MapLayer0" parent="SubViewportContainer/SubViewport" unique_id=2057812014 instance=ExtResource("6_8nppi")]
+
+[node name="Background" type="ColorRect" parent="." unique_id=1833931219]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.05490196, 0.06666667, 0.08627451, 0.3137255)
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=2058827322]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="Margin" unique_id=485498350]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="Margin/VBox" unique_id=823862486]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="ActLabel" type="Label" parent="Margin/VBox/Header" unique_id=2116224809]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "第 1 幕"
+
+[node name="HealthLabel" type="Label" parent="Margin/VBox/Header" unique_id=606567986]
+unique_name_in_owner = true
+layout_mode = 2
+text = "生命 70/70"
+
+[node name="GoldLabel" type="Label" parent="Margin/VBox/Header" unique_id=1876610143]
+unique_name_in_owner = true
+layout_mode = 2
+text = "金币 50"
+
+[node name="DeckLabel" type="Label" parent="Margin/VBox/Header" unique_id=1256438593]
+unique_name_in_owner = true
+layout_mode = 2
+text = "卡组 16 张"
+
+[node name="Spacer" type="Control" parent="Margin/VBox/Header" unique_id=334398802]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DecayLabel" type="Label" parent="Margin/VBox/Header" unique_id=39256396]
+unique_name_in_owner = true
+layout_mode = 2
+text = "崩解度 0%（0/0）"
+
+[node name="DecayBar" type="ProgressBar" parent="Margin/VBox" unique_id=687105264]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+max_value = 1.0
+step = 0.001
+show_percentage = false
+
+[node name="MapCanvas" type="Control" parent="Margin/VBox" unique_id=1525601972]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("6_r5rqu")
+
+[node name="StatusLabel" type="Label" parent="Margin/VBox" unique_id=2142624686]
+unique_name_in_owner = true
+layout_mode = 2
+text = "点击任意已探索节点的未探索邻居前进。"
+horizontal_alignment = 1
+
+[node name="Overlay" type="Control" parent="." unique_id=980249747]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Overlay" unique_id=72076539]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.62)
+
+[node name="Panel" type="PanelContainer" parent="Overlay" unique_id=1806141376]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -220.0
+offset_right = 300.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelMargin" type="MarginContainer" parent="Overlay/Panel" unique_id=1545397134]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="PanelVBox" type="VBoxContainer" parent="Overlay/Panel/PanelMargin" unique_id=1037445066]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="PanelTitle" type="Label" parent="Overlay/Panel/PanelMargin/PanelVBox" unique_id=1904248434]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "节点"
+
+[node name="PanelBody" type="Label" parent="Overlay/Panel/PanelMargin/PanelVBox" unique_id=1281109687]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+size_flags_vertical = 3
+text = "内容"
+autowrap_mode = 2
+
+[node name="Choices" type="VBoxContainer" parent="Overlay/Panel/PanelMargin/PanelVBox" unique_id=637160462]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8

@@ -8,7 +8,7 @@ func _initialize() -> void:
 
 
 func _capture() -> void:
-	var scene: PackedScene = load("res://map/map_view.tscn")
+	var scene: PackedScene = load("res://map/templates/map_view.tscn")
 	var view := scene.instantiate()
 	root.add_child(view)
 	await process_frame
