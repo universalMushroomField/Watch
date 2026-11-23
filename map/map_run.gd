@@ -1,6 +1,6 @@
 ## 推进一幕地图：当前位置、已探索节点和崩解度。
 ##
-## 崩解度 = 已访问节点数 / 地图节点总数，每进入一个新节点上升，
+## 崩解度 = 已访问且非起点的节点数 / 非起点节点总数，每进入一个新节点上升，
 ## 进入下一幕时随新地图一起重置。具体减益效果暂未实现，先通过
 ## decay_changed 信号和 get_decay_ratio() 提供给后续系统使用。
 class_name MapRun
@@ -23,6 +23,8 @@ var config: MapConfig
 var player: MapPlayerState
 ## 当前幕的地图。
 var graph: MapGraph
+## 当前幕使用的六边形布局。
+var layout: HexLayout
 ## 当前幕的序号，从 0 开始。
 var act_index: int = 0
 ## 玩家当前所在节点编号。
@@ -33,8 +35,14 @@ var _rng := RandomNumberGenerator.new()
 var _run_seed: int = 0
 
 
-func _init(map_config: MapConfig = null, player_state: MapPlayerState = null, seed_value: int = -1) -> void:
+func _init(
+		map_config: MapConfig = null,
+		player_state: MapPlayerState = null,
+		seed_value: int = -1,
+		hex_layout: HexLayout = null,
+) -> void:
 	config = map_config if map_config != null else MapConfig.new()
+	layout = hex_layout if hex_layout != null else HexLayout.new()
 	player = player_state if player_state != null else MapPlayerState.new()
 	if seed_value >= 0:
 		_run_seed = seed_value
@@ -48,7 +56,7 @@ func _init(map_config: MapConfig = null, player_state: MapPlayerState = null, se
 ## 开始指定幕，生成新地图并重置崩解度。
 func start_act(index: int) -> void:
 	act_index = maxi(index, 0)
-	graph = MapGenerator.new(config).generate(_run_seed + act_index * 7919)
+	graph = MapGenerator.new(config, layout).generate(_run_seed + act_index * 7919)
 	_visited_ids.clear()
 	current_id = graph.start_id
 	_mark_visited(current_id)
