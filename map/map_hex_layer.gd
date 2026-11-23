@@ -40,8 +40,8 @@ const TYPE_COLORS := {
 	MapNode.Type.BOSS: Color(0.82, 0.22, 0.22),
 }
 
-const WALL_COLOR := Color(0.34, 0.40, 0.48)
-const WALL_TOP := Color(0.60, 0.68, 0.78)
+const WALL_COLOR := Color(0.24, 0.30, 0.40)
+const WALL_TOP := Color(0.55, 0.64, 0.76)
 const WALL_REACHABLE := Color(0.95, 0.72, 0.28)
 const WALL_CURRENT := Color(0.28, 0.86, 0.98)
 const WALL_VISITED := Color(0.22, 0.25, 0.30)

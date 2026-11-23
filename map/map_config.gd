@@ -12,11 +12,11 @@ extends Resource
 ## 中间区域的最大行数。
 @export_range(2, 12) var max_rows: int = 4
 ## 六边形外接圆半径的目标值，单位与世界坐标一致。
-@export var hex_radius: float = 3.6
+@export var hex_radius: float = 4.2
 ## 六边形在平滑地表高度之上额外抬升的距离。
 @export var hex_lift: float = 0.25
 ## 棋盘与地形边缘保留的空白，单位与世界坐标一致。
-@export var board_margin: float = 2.0
+@export var board_margin: float = 0.5
 
 @export_group("Node Types")
 ## 精英战数量。
