@@ -32,6 +32,24 @@ func set_run(map_run: MapRun) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if run == null:
 		return
+	var camera := hex_layer.camera as MapCamera if hex_layer != null else null
+	if event is InputEventMouseMotion and camera != null and event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
+		camera.orbit_drag(event.relative.x)
+		_update_hover(Vector2(-100000.0, -100000.0))
+		accept_event()
+		return
+	if event is InputEventMouseButton and camera != null and event.pressed:
+		match event.button_index:
+			MOUSE_BUTTON_WHEEL_UP:
+				camera.zoom_at(_viewport_position(event.position))
+				_update_hover(event.position)
+				accept_event()
+				return
+			MOUSE_BUTTON_WHEEL_DOWN:
+				camera.reset_zoom()
+				_update_hover(event.position)
+				accept_event()
+				return
 	if event is InputEventMouseMotion:
 		_update_hover(event.position)
 	elif event is InputEventMouseButton:
@@ -63,10 +81,16 @@ func _update_hover(local_position: Vector2) -> void:
 func _node_at(local_position: Vector2) -> MapNode:
 	if run == null or hex_layer == null or viewport_container == null or sub_viewport == null:
 		return null
+	return hex_layer.node_at_screen(_viewport_position(local_position))
+
+
+func _viewport_position(local_position: Vector2) -> Vector2:
+	if viewport_container == null or sub_viewport == null:
+		return local_position
 	var container_size := viewport_container.size
 	if container_size.x <= 0.0 or container_size.y <= 0.0:
-		return null
+		return local_position
 	var global_position := get_global_rect().position + local_position
 	var pixel := global_position - viewport_container.get_global_rect().position
 	var scale := Vector2(sub_viewport.size) / container_size
-	return hex_layer.node_at_screen(pixel * scale)
+	return pixel * scale

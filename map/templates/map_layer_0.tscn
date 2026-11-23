@@ -1,28 +1,35 @@
-[gd_scene load_steps=5 format=3 uid="uid://4bln64glqcwl"]
+[gd_scene format=3 uid="uid://4bln64glqcwl"]
 
 [ext_resource type="ArrayMesh" uid="uid://wuvgp0awyx3n" path="res://map/res/terrain_mesh.res" id="1_st031"]
 [ext_resource type="Shader" uid="uid://ccd3qyxoh8yrv" path="res://map/shaders/camera_edge_breakup.gdshader" id="2_edge"]
-[ext_resource type="Script" path="res://map/scripts/map_hex_layer.gd" id="3_hex"]
+[ext_resource type="Script" uid="uid://bvgv55kuxw82a" path="res://map/scripts/map_hex_layer.gd" id="3_hex"]
+[ext_resource type="Script" uid="uid://dnbvsrsj08okk" path="res://map/scripts/map_camera.gd" id="4_camera"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_edge"]
+resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("2_edge")
 shader_parameter/terrain_color = Color(1, 1, 1, 1)
 shader_parameter/edge_width = 0.17999999597665
 shader_parameter/block_size = 2.0
 shader_parameter/breakup = 0.6999999843536
+shader_parameter/random_speed = 60.0
+shader_parameter/refresh_probability = 0.1
 
-[node name="MapLayer0" type="Node3D" unique_id=2057812014]
+[sub_resource type="Environment" id="Environment_3g44r"]
+
+[node name="MapLayer0" type="Node3D" unique_id=2057812014 node_paths=PackedStringArray("terrain", "camera")]
 script = ExtResource("3_hex")
 terrain = NodePath("MeshInstance3D")
 camera = NodePath("Camera3D")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1091666386]
-transform = Transform3D(-0.73013633, -0.38847816, 0.56212604, 0, 0.82266176, 0.5685311, -0.6833015, 0.41510522, -0.60065526, 18.506104, 20.520508, -16.38501)
+transform = Transform3D(-0.6380711, -0.6668213, 0.38498658, 0, 0.4999972, 0.86602706, -0.76997745, 0.55258685, -0.31903377, 43.31875, 103.85698, -34.6206)
 projection = 1
 fov = 128.1
-size = 30.0
+size = 64.161
 near = 0.001
+script = ExtResource("4_camera")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=617485418]
 material_override = SubResource("ShaderMaterial_edge")
@@ -30,3 +37,6 @@ mesh = ExtResource("1_st031")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=210431350]
 transform = Transform3D(0.6156615, 0.59471923, 0.5169815, 0, -0.65605897, 0.7547096, 0.7880107, -0.46464565, -0.40391025, 0, 12.13, 33.631336)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1687985104]
+environment = SubResource("Environment_3g44r")
