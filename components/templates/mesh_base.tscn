@@ -1,0 +1,10 @@
+[gd_scene format=4 uid="uid://cuxeql1tje2o8"]
+
+[ext_resource type="Script" uid="uid://drmbks7uujx1v" path="res://components/mesh_generator.gd" id="1_bc207"]
+
+[node name="MeshBase" type="MeshInstance3D" unique_id=1297520322]
+script = ExtResource("1_bc207")
+columns = 128
+rows = 128
+max_high = 30.0
+metadata/_custom_type_script = "uid://drmbks7uujx1v"
