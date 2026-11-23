@@ -32,33 +32,44 @@ func _run() -> void:
 	_check(view.run.layout != null, "地图使用六边形布局")
 	_check(view._hex_layer != null, "六边形层已创建")
 	_check(view._hex_layer._tiles.size() == view.run.graph.get_node_count(), "每个节点都生成了六边形")
-	_check(view._hex_layer.get_edge_count() > 0, "六边形边界生成了圆管")
-	_check(view._hex_layer.get_post_count() > 0, "六边形顶点生成了圆柱")
-	var above_surface := true
+	var layer: MapHexLayer = view._hex_layer
+	var attached := true
+	var planar := true
+	var edges := 0
 	for node in view.run.graph.nodes:
-		var center: Vector2 = view._hex_layer._hex_center(node)
-		var raw: float = view._hex_layer._footprint_max(center.x, center.y)
-		var base_y: float = float(view._hex_layer._base_heights.get(node.id, -100000.0))
-		if base_y < raw + view.run.config.hex_lift - 0.001:
-			above_surface = false
-	_check(above_surface, "所有六边形都高于地表并整体抬升")
-
+		var attachment: Node3D = layer._tiles[node.id]["attachment"]
+		var holder: Node3D = layer._tiles[node.id]["holder"]
+		var point := attachment.global_position
+		var xz := Vector2(point.x, point.z)
+		attached = attached and is_equal_approx(point.y, layer._surface.height_at(xz))
+		planar = planar and is_equal_approx(holder.global_position.y, layer._interaction_plane)
+		edges += node.neighbor_ids.size()
+	_check(attached, "附着点位于真实地表")
+	_check(planar, "交互点初始共面")
+	_check(layer._paths.size() * 2 == edges and layer._attachment_paths.mesh != null and layer._interaction_paths.mesh != null, "两组路径覆盖图的每条边")
 	var start_node: MapNode = view.run.graph.get_node_by_id(view.run.graph.start_id)
-	var boss_node: MapNode = view.run.graph.get_node_by_id(view.run.graph.boss_id)
-	var start_screen: Vector2 = view._hex_layer.camera.unproject_position(
-		Vector3(view._hex_layer._hex_center(start_node).x, float(view._hex_layer._base_heights[start_node.id]), view._hex_layer._hex_center(start_node).y)
-	)
-	var boss_screen: Vector2 = view._hex_layer.camera.unproject_position(
-		Vector3(view._hex_layer._hex_center(boss_node).x, float(view._hex_layer._base_heights[boss_node.id]), view._hex_layer._hex_center(boss_node).y)
-	)
-	_check(start_screen.x < boss_screen.x, "起点在屏幕左侧、Boss 在右侧")
 	var pick_target: MapNode = view.run.graph.get_node_by_id(start_node.neighbor_ids[0])
-	var pick_center: Vector2 = view._hex_layer._hex_center(pick_target)
-	var pick_top := Vector3(pick_center.x, float(view._hex_layer._base_heights[pick_target.id]), pick_center.y)
+	var pick_holder: Node3D = view._hex_layer._tiles[pick_target.id]["holder"]
+	var pick_top := pick_holder.global_position
 	var pick_screen: Vector2 = view._hex_layer.camera.unproject_position(pick_top)
-	_check(view._hex_layer.node_at_screen(pick_screen) == pick_target, "射线拾取命中正确的六边形")
+	_check(view._hex_layer.node_at_screen(pick_screen) == pick_target, "屏幕拾取命中正确的顶点")
 	_check(view._board_input._node_at(pick_screen - view._board_input.get_global_rect().position) == pick_target, "覆盖层坐标换算正确")
 
+	var camera := view._hex_layer.camera as MapCamera
+	var original_position := pick_holder.global_position
+	camera.orbit_drag(-20.0)
+	var zoom_point := camera.unproject_position(original_position)
+	camera.zoom_at(zoom_point)
+	view._hex_layer._process(1.0)
+	var zoomed := pick_holder.global_position
+	_check(Vector2(zoomed.x, zoomed.z).is_equal_approx(Vector2(original_position.x, original_position.z)), "旋转和缩放后节点的世界 XZ 不变")
+	var attachment: Node3D = layer._tiles[pick_target.id]["attachment"]
+	var ground := attachment.global_position.y
+	_check(absf(zoomed.y - ground) < absf(original_position.y - ground), "放大时节点高度向地表过渡")
+	_check(view._hex_layer.node_at_screen(camera.unproject_position(zoomed)) == pick_target, "高度变化后拾取仍对齐节点")
+	camera.reset_zoom()
+	view._hex_layer._process(1.0)
+	_check(pick_holder.global_position.is_equal_approx(original_position), "缩放复位后恢复节点高度")
 	var path := _find_path(view.run, view.run.current_id, view.run.graph.boss_id)
 	_check(path.size() > 1, "起点到 Boss 存在路径")
 	for node_id in path:

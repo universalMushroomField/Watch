@@ -1,16 +1,6 @@
-[gd_resource type="Resource" script_class="MapConfig" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MapConfig" format=3 uid="uid://c1mrlxnd8gwjl"]
 
-[ext_resource type="Script" path="res://map/scripts/map_config.gd" id="1_config"]
+[ext_resource type="Script" uid="uid://cajmvvillaols" path="res://map/scripts/map_config.gd" id="1_config"]
 
 [resource]
 script = ExtResource("1_config")
-max_columns = 4
-max_rows = 4
-hex_radius = 4.2
-hex_lift = 0.25
-board_margin = 0.5
-elite_count = 2
-shop_count = 1
-rest_count = 1
-treasure_count = 1
-event_ratio = 0.5

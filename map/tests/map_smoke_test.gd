@@ -157,55 +157,24 @@ func _signature(graph: MapGraph) -> String:
 	return "|".join(parts)
 
 
-## 检查蜂巢结构：完整矩形、起点/Boss 各占一列、所有物理相邻格都连边。
+## 检查唯一蜂巢顶点、合法边和全图连通。
 func _check_layout(graph: MapGraph, label: String, failures: Array[String]) -> void:
-	var layout := graph.layout
-	var expected_columns := layout.get_total_columns()
-	var middle_row := layout.get_middle_row()
-
 	var start := graph.get_node_by_id(graph.start_id)
 	var boss := graph.get_node_by_id(graph.boss_id)
-	if start == null or start.column != 0 or start.row != middle_row:
-		failures.append(label + "起点不在最左列中间行")
-	if boss == null or boss.column != expected_columns - 1 or boss.row != middle_row:
-		failures.append(label + "Boss 不在最右列中间行")
-
-	if graph.get_node_count() != layout.columns * layout.rows + 2:
-		failures.append(label + "节点总数与蜂巢尺寸不符")
-
-	var left_column_count := 0
-	var right_column_count := 0
+	if start == null or start.type != MapNode.Type.START or boss == null or boss.type != MapNode.Type.BOSS:
+		failures.append(label + "缺少起点或 Boss")
+		return
+	var vertices := {}
 	for node in graph.nodes:
-		if node.column == 0:
-			left_column_count += 1
-		if node.column == expected_columns - 1:
-			right_column_count += 1
-	if left_column_count != 1 or right_column_count != 1:
-		failures.append(label + "起点列或 Boss 列有多余节点")
-
-	for column in range(1, layout.columns + 1):
-		for row in range(layout.rows):
-			if graph.find_node_at(column, row) == null:
-				failures.append(label + "缺少蜂巢格 (%d,%d)" % [column, row])
-
-	for node in graph.nodes:
-		var expected := _expected_neighbors(graph, node)
-		var actual := {}
-		for neighbor_id in node.neighbor_ids:
-			actual[neighbor_id] = true
-		if expected.size() != actual.size():
-			failures.append(label + "节点 %d 的邻居数 %d，应为 %d" % [node.id, actual.size(), expected.size()])
-			continue
-		for neighbor_id in expected:
-			if not actual.has(neighbor_id):
-				failures.append(label + "节点 %d 缺少邻居 %d" % [node.id, neighbor_id])
-
-
-func _expected_neighbors(graph: MapGraph, node: MapNode) -> Dictionary:
-	var offsets := MapGenerator.ODD_NEIGHBORS if (node.row & 1) == 1 else MapGenerator.EVEN_NEIGHBORS
-	var expected := {}
-	for offset in offsets:
-		var neighbor := graph.find_node_at(node.column + offset.x, node.row + offset.y)
-		if neighbor != null:
-			expected[neighbor.id] = true
-	return expected
+		if vertices.has(node.vertex):
+			failures.append(label + "出现重复顶点")
+		vertices[node.vertex] = true
+		if node.neighbor_ids.size() > 3:
+			failures.append(label + "顶点超过三条蜂巢边")
+		for id in node.neighbor_ids:
+			var neighbor := graph.get_node_by_id(id)
+			var delta := neighbor.vertex - node.vertex
+			if 3 * delta.x * delta.x + delta.y * delta.y != 4 or not neighbor.neighbor_ids.has(node.id):
+				failures.append(label + "存在无效蜂巢边")
+	if graph.collect_reachable_ids(start.id).size() != graph.get_node_count():
+		failures.append(label + "网络未完全连通")
