@@ -12,11 +12,9 @@ extends Resource
 ## 中间区域的最大行数。
 @export_range(2, 12) var max_rows: int = 5
 ## 六边形外接圆半径的目标值，单位与世界坐标一致。
-@export var hex_radius: float = 2.7
-## 六边形棱柱的最小厚度；棱柱会继续向下埋入地形，避免相邻高差露出缝隙。
-@export var hex_height: float = 1.0
+@export var hex_radius: float = 3.2
 ## 六边形在平滑地表高度之上额外抬升的距离。
-@export var hex_lift: float = 0.45
+@export var hex_lift: float = 0.25
 ## 棋盘与地形边缘保留的空白，单位与世界坐标一致。
 @export var board_margin: float = 2.0
 

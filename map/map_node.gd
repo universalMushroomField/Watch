@@ -33,7 +33,7 @@ const TYPE_SHORT_LABELS := {
 	Type.TREASURE: "宝",
 	Type.SHOP: "商",
 	Type.REST: "息",
-	Type.BOSS: "Bo",
+	Type.BOSS: "Boss",
 }
 
 ## 节点编号，在一张图内唯一。

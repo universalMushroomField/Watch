@@ -1,22 +1,31 @@
 ## 在三维地形上绘制六边形蜂巢地图。
 ##
+## 六边形不生成实体格子，而是把蜂巢边界投影到地形上：每条边是一堵没有厚度
+## 的竖直墙，顶边沿着平滑后的地表高度，底边埋进地形。格子内部保留原始地形，
+## 地图仍然是一整片地面，只是被六边形墙分割成一个个地点。
+##
 ## 高度：先把地形 mesh 的顶点烘成 0.5m 的高度场，取邻域最大值保证不低于
-## 地表，再做两次盒式模糊；每个六边形按自身脚印采样后，再做一次邻接平滑，
-## 最后整体抬升 [member MapConfig.hex_lift]。这样棋盘既高于地表，又不会出现
-## 一格一格跳动的锯齿。
+## 地表，再做两次盒式模糊；墙顶取模糊后的高度再加上 [member MapConfig.hex_lift]，
+## 因此既高于地表，又不会沿地形台阶出现锯齿。
 class_name MapHexLayer
 extends Node3D
 
-const HEX_SHADER: Shader = preload("res://map/shaders/hex_tile.gdshader")
+const WALL_SHADER: Shader = preload("res://map/shaders/hex_wall.gdshader")
 const SQRT3 := 1.7320508075688772
 ## 高度场的采样间距（世界单位）。
 const FIELD_CELL := 0.5
 ## 邻域最大值滤波的半径（格）。
-const FIELD_RADIUS := 2
+const FIELD_RADIUS := 1
 ## 高度场模糊次数。
 const FIELD_BLUR_PASSES := 2
 ## 六边形脚印采样的半径比例。
 const FOOTPRINT_RATIO := 0.62
+## 每条六边形边沿分成几段，用来贴合地形起伏。
+const WALL_SEGMENTS := 4
+## 墙底埋进地形的深度。
+const WALL_SINK := 0.5
+## 墙至少保留的高度，避免贴地时完全看不见。
+const WALL_MIN_HEIGHT := 0.35
 
 const TYPE_COLORS := {
 	MapNode.Type.START: Color(0.30, 0.72, 0.42),
@@ -28,6 +37,12 @@ const TYPE_COLORS := {
 	MapNode.Type.REST: Color(0.80, 0.36, 0.44),
 	MapNode.Type.BOSS: Color(0.82, 0.22, 0.22),
 }
+
+const WALL_COLOR := Color(0.34, 0.40, 0.48)
+const WALL_TOP := Color(0.60, 0.68, 0.78)
+const WALL_REACHABLE := Color(0.95, 0.72, 0.28)
+const WALL_CURRENT := Color(0.28, 0.86, 0.98)
+const WALL_VISITED := Color(0.22, 0.25, 0.30)
 
 ## 地形网格，用来读取地表高度。
 @export var terrain: MeshInstance3D
@@ -46,18 +61,21 @@ var run: MapRun
 var layout: HexLayout
 
 var _tiles := {}
+var _walls: Array[Dictionary] = []
 var _hover_id := -1
 var _base_heights := {}
 
-var _unit_mesh: ArrayMesh
 var _label_font: SystemFont
+var _wall_root: Node3D
 
 var _field := PackedFloat32Array()
+var _raw_field := PackedFloat32Array()
 var _field_columns := 0
 var _field_rows := 0
 var _field_origin := Vector2.ZERO
 var _field_ready := false
 var _board_offset := Vector2.ZERO
+var _board_angle := 0.0
 
 
 func _ready() -> void:
@@ -69,6 +87,7 @@ func _ready() -> void:
 		tiles_root = Node3D.new()
 		tiles_root.name = "Tiles"
 		add_child(tiles_root)
+	_ensure_wall_root()
 	_label_font = SystemFont.new()
 	_label_font.font_names = PackedStringArray([
 		"Microsoft YaHei UI",
@@ -76,7 +95,6 @@ func _ready() -> void:
 		"Noto Sans CJK SC",
 		"sans-serif",
 	])
-	_unit_mesh = _build_unit_hex()
 	_build_height_field()
 
 
@@ -109,13 +127,15 @@ func show_run(map_run: MapRun) -> void:
 	_clear_tiles()
 	if run == null:
 		return
+	_board_angle = _camera_board_angle()
 	_compute_board_offset(_available_rect(run.config))
 	_compute_base_heights()
 	_create_tiles()
+	_create_walls()
 	refresh()
 
 
-## 按当前进度刷新颜色、标签和可达状态。
+## 按当前进度刷新墙的颜色、标签和可达状态。
 func refresh() -> void:
 	if run == null or run.graph == null:
 		return
@@ -127,42 +147,64 @@ func refresh() -> void:
 		var entry: Dictionary = _tiles.get(node.id, {})
 		if entry.is_empty():
 			continue
-		var color: Color = TYPE_COLORS.get(node.type, Color(0.5, 0.5, 0.5))
-		var border := color.lightened(0.45)
-		var label_color := Color(1.0, 1.0, 1.0)
-		var emissive := 0.0
-
+		var type_color: Color = TYPE_COLORS.get(node.type, Color(0.5, 0.5, 0.5))
+		var label_color := type_color.lightened(0.55)
 		if node.visited and node.id != run.current_id:
-			color = color.darkened(0.62)
-			border = border.darkened(0.45)
-			label_color = Color(0.72, 0.72, 0.72)
+			label_color = Color(0.62, 0.65, 0.70)
 		elif not reachable.has(node.id):
-			color = color.darkened(0.22)
+			label_color = type_color.lightened(0.05)
 
 		if node.id == run.current_id:
-			border = Color(1.0, 1.0, 1.0)
-			emissive = 0.55
 			label_color = Color(1.0, 1.0, 1.0)
-		elif reachable.has(node.id):
-			border = Color(1.0, 0.84, 0.36)
-			emissive = 0.40
-
-		if node.id == _hover_id:
-			color = color.lightened(0.18)
-			emissive = maxf(emissive, 0.55)
-
-		var material: ShaderMaterial = entry["material"]
-		material.set_shader_parameter("tile_color", color)
-		material.set_shader_parameter("border_color", border)
-		material.set_shader_parameter("emissive", emissive)
+		elif node.id == _hover_id:
+			label_color = Color(1.0, 0.95, 0.72)
 
 		var label: Label3D = entry["label"]
 		label.text = node.get_short_label()
 		label.modulate = label_color
+		label.scale = Vector3.ONE * (1.22 if node.id == run.current_id else 1.0)
 
 		var holder: Node3D = entry["holder"]
 		var lift := 0.22 if node.id == _hover_id else 0.0
 		holder.position.y = float(entry["base_y"]) + lift
+
+	for wall in _walls:
+		var material: ShaderMaterial = wall["material"]
+		var ids: Array = wall["ids"]
+		var is_current := false
+		var is_reachable := false
+		var all_visited := true
+		for id in ids:
+			var node := run.graph.get_node_by_id(int(id))
+			if node == null:
+				continue
+			if node.id == run.current_id:
+				is_current = true
+			if reachable.has(node.id):
+				is_reachable = true
+			if not node.visited:
+				all_visited = false
+		if bool(ids.has(_hover_id)):
+			is_current = true
+
+		var wall_color := WALL_COLOR
+		var top_color := WALL_TOP
+		var emissive := 0.0
+		if is_current:
+			wall_color = WALL_CURRENT
+			top_color = WALL_CURRENT.lightened(0.55)
+			emissive = 0.75
+		elif is_reachable:
+			wall_color = WALL_REACHABLE
+			top_color = WALL_REACHABLE.lightened(0.45)
+			emissive = 0.45
+		elif all_visited:
+			wall_color = WALL_VISITED
+			top_color = WALL_VISITED.lightened(0.18)
+
+		material.set_shader_parameter("wall_color", wall_color)
+		material.set_shader_parameter("top_color", top_color)
+		material.set_shader_parameter("emissive", emissive)
 
 
 ## 设置鼠标悬停的节点编号，-1 表示没有。
@@ -181,6 +223,11 @@ func get_hover_id() -> int:
 ## 已经生成的六边形数量。
 func get_tile_count() -> int:
 	return _tiles.size()
+
+
+## 已经生成的墙数量。
+func get_wall_count() -> int:
+	return _walls.size()
 
 
 ## 返回屏幕坐标（SubViewport 像素）下的地点，没有命中时返回 null。
@@ -206,7 +253,8 @@ func node_at_screen(screen_position: Vector2) -> MapNode:
 		var holder: Node3D = entry["holder"]
 		var dx := hit.x - holder.position.x
 		var dz := hit.z - holder.position.z
-		if not _in_hex(dx, dz, layout.hex_radius):
+		var local := _rotate(Vector2(dx, dz), -_board_angle)
+		if not _in_hex(local.x, local.y, layout.hex_radius):
 			continue
 		if distance < best_distance:
 			best_distance = distance
@@ -214,7 +262,7 @@ func node_at_screen(screen_position: Vector2) -> MapNode:
 	return best
 
 
-## 把地形顶点烘成高度场。
+## 把地形顶点烘成高度场，并保留一份未平滑的原始值用于墙底。
 func _build_height_field() -> void:
 	if terrain == null or terrain.mesh == null:
 		return
@@ -244,6 +292,8 @@ func _build_height_field() -> void:
 	for index in range(_field.size()):
 		if _field[index] <= -1e19:
 			_field[index] = fallback
+
+	_raw_field = _field.duplicate()
 	_field = _box_max(_field, _field_columns, _field_rows, sample_radius_cells)
 	_field = _box_blur(_field, _field_columns, _field_rows, sample_radius_cells, height_smoothing_passes)
 	_field_ready = true
@@ -352,20 +402,18 @@ func _footprint_max(center_x: float, center_z: float) -> float:
 	return height
 
 
-## 六边形脚印内的地表最低点，用来决定棱柱向下延伸多深。
-func _footprint_low(center_x: float, center_z: float) -> float:
-	var height := _sample_height(center_x, center_z)
-	var radius := layout.hex_radius * FOOTPRINT_RATIO
-	for index in range(6):
-		var angle := TAU * float(index) / 6.0
-		var sample_x := center_x + cos(angle) * radius
-		var sample_z := center_z + sin(angle) * radius
-		height = minf(height, _sample_height(sample_x, sample_z))
-	return height
+## 采样平滑后的高度（墙顶使用）。
+func _sample_height(x: float, z: float) -> float:
+	return _sample_field(_field, x, z)
+
+
+## 采样未平滑的地表高度（墙底使用）。
+func _sample_raw(x: float, z: float) -> float:
+	return _sample_field(_raw_field, x, z)
 
 
 ## 双线性采样高度场。
-func _sample_height(x: float, z: float) -> float:
+func _sample_field(values: PackedFloat32Array, x: float, z: float) -> float:
 	if not _field_ready or _field_columns <= 0 or _field_rows <= 0:
 		return 0.0
 	var fx := clampf((x - _field_origin.x) / FIELD_CELL, 0.0, float(_field_columns - 1))
@@ -376,25 +424,48 @@ func _sample_height(x: float, z: float) -> float:
 	var z1 := mini(z0 + 1, _field_rows - 1)
 	var tx := fx - float(x0)
 	var tz := fz - float(z0)
-	var v00 := _field[z0 * _field_columns + x0]
-	var v10 := _field[z0 * _field_columns + x1]
-	var v01 := _field[z1 * _field_columns + x0]
-	var v11 := _field[z1 * _field_columns + x1]
+	var v00 := values[z0 * _field_columns + x0]
+	var v10 := values[z0 * _field_columns + x1]
+	var v01 := values[z1 * _field_columns + x0]
+	var v11 := values[z1 * _field_columns + x1]
 	var top := lerpf(v00, v10, tx)
 	var bottom := lerpf(v01, v11, tx)
 	return lerpf(top, bottom, tz)
 
 
-## 未加棋盘偏移的六边形中心。
+## 未加棋盘偏移的六边形中心，列方向对齐相机屏幕的左右方向。
 func _raw_hex_center(node: MapNode) -> Vector2:
-	var x := float(node.column) * layout.get_column_step()
-	var z := (float(node.row) + 0.5 * float(node.column & 1)) * layout.get_row_step()
-	return Vector2(x, z)
+	var local := Vector2(
+		float(node.column) * layout.get_column_step(),
+		(float(node.row) + 0.5 * float(node.column & 1)) * layout.get_row_step(),
+	)
+	return _rotate(local, _board_angle)
 
 
 ## 加上棋盘偏移后的六边形中心。
 func _hex_center(node: MapNode) -> Vector2:
 	return _raw_hex_center(node) + _board_offset
+
+
+## flat-top 六边形的第 [param index] 个角。
+func _hex_corner(center: Vector2, index: int) -> Vector2:
+	var angle := _board_angle + TAU * float(index % 6) / 6.0
+	return center + Vector2(cos(angle), sin(angle)) * layout.hex_radius
+
+
+## 绕原点旋转 XZ 平面上的点。
+func _rotate(value: Vector2, angle: float) -> Vector2:
+	var cosine := cos(angle)
+	var sine := sin(angle)
+	return Vector2(value.x * cosine - value.y * sine, value.x * sine + value.y * cosine)
+
+
+## 让棋盘列方向与相机屏幕的左右方向一致，起点在左、Boss 在右。
+func _camera_board_angle() -> float:
+	if camera == null:
+		return 0.0
+	var right := camera.global_basis.x
+	return atan2(right.z, right.x)
 
 
 ## flat-top 六边形的点内测试。
@@ -403,6 +474,12 @@ func _in_hex(dx: float, dz: float, radius: float) -> bool:
 	var ax := absf(dx)
 	var az := absf(dz)
 	return az <= half + 0.0001 and SQRT3 * 0.5 * ax + 0.5 * az <= half + 0.0001
+
+
+## 用六边形边的中点作为唯一键，相邻两格共享同一条边。
+func _edge_key(a: Vector2, b: Vector2) -> Vector2i:
+	var mid := (a + b) * 0.5
+	return Vector2i(roundi(mid.x * 100.0), roundi(mid.y * 100.0))
 
 
 func _create_tiles() -> void:
@@ -419,40 +496,94 @@ func _create_tiles() -> void:
 		holder.position = Vector3(center.x, base_y, center.y)
 		tiles_root.add_child(holder)
 
-		var mesh_instance := MeshInstance3D.new()
-		mesh_instance.name = "Mesh"
-		mesh_instance.mesh = _unit_mesh
-		var low := _footprint_low(center.x, center.y)
-		var depth := maxf(base_y - low + 0.8, run.config.hex_height)
-		mesh_instance.scale = Vector3(layout.hex_radius, depth, layout.hex_radius)
-		var material := ShaderMaterial.new()
-		material.shader = HEX_SHADER
-		material.set_shader_parameter("border_width", 0.085)
-		mesh_instance.material_override = material
-		holder.add_child(mesh_instance)
-
 		var label := Label3D.new()
 		label.name = "Label"
 		label.font = _label_font
-		label.font_size = 64
-		label.pixel_size = 0.012
-		label.outline_size = 12
-		label.outline_modulate = Color(0.0, 0.0, 0.0, 0.85)
+		label.font_size = 56
+		label.pixel_size = 0.02
+		label.outline_size = 14
+		label.outline_modulate = Color(0.0, 0.0, 0.0, 0.9)
 		label.modulate = Color.WHITE
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		label.no_depth_test = false
+		label.no_depth_test = true
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.position = Vector3(0.0, 0.6, 0.0)
+		label.position = Vector3(0.0, 0.62, 0.0)
 		label.text = node.get_short_label()
 		holder.add_child(label)
 
 		entry["holder"] = holder
-		entry["mesh"] = mesh_instance
-		entry["material"] = material
 		entry["label"] = label
 		entry["base_y"] = base_y
 		_tiles[node.id] = entry
+
+
+## 沿蜂巢边界生成没有厚度的墙。
+func _create_walls() -> void:
+	_walls.clear()
+	if run == null or run.graph == null or _wall_root == null:
+		return
+
+	var edges := {}
+	for node in run.graph.nodes:
+		var center := _hex_center(node)
+		for index in range(6):
+			var a := _hex_corner(center, index)
+			var b := _hex_corner(center, index + 1)
+			var key := _edge_key(a, b)
+			if not edges.has(key):
+				edges[key] = {"a": a, "b": b, "ids": [] as Array[int]}
+			var ids: Array = edges[key]["ids"]
+			if not ids.has(node.id):
+				ids.append(node.id)
+
+	for key in edges:
+		var edge: Dictionary = edges[key]
+		_create_wall(edge["a"], edge["b"], edge["ids"])
+
+
+func _create_wall(a: Vector2, b: Vector2, ids: Array) -> void:
+	var top_points: Array[Vector3] = []
+	var bottom_points: Array[Vector3] = []
+	var lift := run.config.hex_lift
+	for segment in range(WALL_SEGMENTS + 1):
+		var t := float(segment) / float(WALL_SEGMENTS)
+		var point := a.lerp(b, t)
+		var top := maxf(_sample_height(point.x, point.y) + lift, _sample_raw(point.x, point.y) + 0.08)
+		var bottom := minf(_sample_raw(point.x, point.y) - WALL_SINK, top - WALL_MIN_HEIGHT)
+		top_points.append(Vector3(point.x, top, point.y))
+		bottom_points.append(Vector3(point.x, bottom, point.y))
+
+	var normal := Vector3(b.y - a.y, 0.0, a.x - b.x).normalized()
+	if normal.length_squared() < 0.0001:
+		normal = Vector3.RIGHT
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for segment in range(WALL_SEGMENTS):
+		var t0 := float(segment) / float(WALL_SEGMENTS)
+		var t1 := float(segment + 1) / float(WALL_SEGMENTS)
+		_add_vertex(surface, top_points[segment], normal, Vector2(t0, 1.0))
+		_add_vertex(surface, bottom_points[segment], normal, Vector2(t0, 0.0))
+		_add_vertex(surface, bottom_points[segment + 1], normal, Vector2(t1, 0.0))
+		_add_vertex(surface, top_points[segment], normal, Vector2(t0, 1.0))
+		_add_vertex(surface, bottom_points[segment + 1], normal, Vector2(t1, 0.0))
+		_add_vertex(surface, top_points[segment + 1], normal, Vector2(t1, 1.0))
+
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.name = "Wall"
+	mesh_instance.mesh = surface.commit()
+	var material := ShaderMaterial.new()
+	material.shader = WALL_SHADER
+	material.set_shader_parameter("wall_color", WALL_COLOR)
+	material.set_shader_parameter("top_color", WALL_TOP)
+	material.set_shader_parameter("emissive", 0.0)
+	mesh_instance.material_override = material
+	_wall_root.add_child(mesh_instance)
+	_walls.append({
+		"mesh": mesh_instance,
+		"material": material,
+		"ids": ids,
+	})
 
 
 func _clear_tiles() -> void:
@@ -462,59 +593,18 @@ func _clear_tiles() -> void:
 		if is_instance_valid(holder):
 			holder.free()
 	_tiles.clear()
+	if _wall_root != null:
+		for child in _wall_root.get_children():
+			child.free()
+	_walls.clear()
 
 
-## 单位六边形棱柱：顶面 y=0，底面 y=-1，外接圆半径 1。
-func _build_unit_hex() -> ArrayMesh:
-	var surface := SurfaceTool.new()
-	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var ring: Array[Vector3] = []
-	for index in range(6):
-		var angle := TAU * float(index) / 6.0
-		ring.append(Vector3(cos(angle), 0.0, sin(angle)))
-
-	# 顶面。
-	for index in range(6):
-		var a := ring[index]
-		var b := ring[(index + 1) % 6]
-		_add_vertex(surface, Vector3.ZERO, Vector3.UP, _top_uv(Vector3.ZERO))
-		_add_vertex(surface, a, Vector3.UP, _top_uv(a))
-		_add_vertex(surface, b, Vector3.UP, _top_uv(b))
-
-	# 侧面，从顶面一直向下延伸到地表以下。
-	for index in range(6):
-		var a := ring[index]
-		var b := ring[(index + 1) % 6]
-		var normal := Vector3(a.x + b.x, 0.0, a.z + b.z).normalized()
-		var a_bottom := a - Vector3.UP
-		var b_bottom := b - Vector3.UP
-		_add_vertex(surface, a, normal, Vector2(0.0, 0.0))
-		_add_vertex(surface, b, normal, Vector2(1.0, 0.0))
-		_add_vertex(surface, b_bottom, normal, Vector2(1.0, 1.0))
-		_add_vertex(surface, a, normal, Vector2(0.0, 0.0))
-		_add_vertex(surface, b_bottom, normal, Vector2(1.0, 1.0))
-		_add_vertex(surface, a_bottom, normal, Vector2(0.0, 1.0))
-
-	# 底面。
-	for index in range(6):
-		var a := ring[index]
-		var b := ring[(index + 1) % 6]
-		_add_vertex(surface, Vector3.DOWN, Vector3.DOWN, Vector2.ZERO)
-		_add_vertex(surface, b - Vector3.UP, Vector3.DOWN, Vector2.ZERO)
-		_add_vertex(surface, a - Vector3.UP, Vector3.DOWN, Vector2.ZERO)
-
-	return surface.commit()
-
-
-func _add_vertex(surface: SurfaceTool, vertex: Vector3, normal: Vector3, uv: Vector2) -> void:
-	surface.set_normal(normal)
-	surface.set_uv(uv)
-	surface.add_vertex(vertex)
-
-
-## 顶面 UV 使用单位六边形的局部 x/z，供六边形边框着色器使用。
-func _top_uv(vertex: Vector3) -> Vector2:
-	return Vector2(vertex.x, vertex.z)
+func _ensure_wall_root() -> void:
+	if _wall_root != null:
+		return
+	_wall_root = Node3D.new()
+	_wall_root.name = "Walls"
+	tiles_root.add_child(_wall_root)
 
 
 ## 每个格取邻域最大值。
@@ -533,7 +623,7 @@ func _box_max(values: PackedFloat32Array, columns: int, rows: int, radius: int) 
 	return result
 
 
-## 盒式模糊，输出仍然不低于原值是被禁止的，因此这里只做纯平均。
+## 盒式模糊，纯平均，不保留局部最大值。
 func _box_blur(
 		values: PackedFloat32Array,
 		columns: int,
@@ -558,3 +648,9 @@ func _box_blur(
 				next[row * columns + column] = sum / float(count)
 		current = next
 	return current
+
+
+func _add_vertex(surface: SurfaceTool, vertex: Vector3, normal: Vector3, uv: Vector2) -> void:
+	surface.set_normal(normal)
+	surface.set_uv(uv)
+	surface.add_vertex(vertex)

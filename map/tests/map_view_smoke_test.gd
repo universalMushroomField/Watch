@@ -32,6 +32,7 @@ func _run() -> void:
 	_check(view.run.layout != null, "地图使用六边形布局")
 	_check(view._hex_layer != null, "六边形层已创建")
 	_check(view._hex_layer._tiles.size() == view.run.graph.get_node_count(), "每个节点都生成了六边形")
+	_check(view._hex_layer.get_wall_count() > 0, "六边形边界生成了墙")
 	var above_surface := true
 	for node in view.run.graph.nodes:
 		var center: Vector2 = view._hex_layer._hex_center(node)
@@ -42,6 +43,14 @@ func _run() -> void:
 	_check(above_surface, "所有六边形都高于地表并整体抬升")
 
 	var start_node: MapNode = view.run.graph.get_node_by_id(view.run.graph.start_id)
+	var boss_node: MapNode = view.run.graph.get_node_by_id(view.run.graph.boss_id)
+	var start_screen: Vector2 = view._hex_layer.camera.unproject_position(
+		Vector3(view._hex_layer._hex_center(start_node).x, float(view._hex_layer._base_heights[start_node.id]), view._hex_layer._hex_center(start_node).y)
+	)
+	var boss_screen: Vector2 = view._hex_layer.camera.unproject_position(
+		Vector3(view._hex_layer._hex_center(boss_node).x, float(view._hex_layer._base_heights[boss_node.id]), view._hex_layer._hex_center(boss_node).y)
+	)
+	_check(start_screen.x < boss_screen.x, "起点在屏幕左侧、Boss 在右侧")
 	var pick_target: MapNode = view.run.graph.get_node_by_id(start_node.neighbor_ids[0])
 	var pick_center: Vector2 = view._hex_layer._hex_center(pick_target)
 	var pick_top := Vector3(pick_center.x, float(view._hex_layer._base_heights[pick_target.id]), pick_center.y)

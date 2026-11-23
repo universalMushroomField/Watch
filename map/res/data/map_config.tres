@@ -6,9 +6,8 @@
 script = ExtResource("1_config")
 max_columns = 7
 max_rows = 5
-hex_radius = 2.7
-hex_height = 1.0
-hex_lift = 0.45
+hex_radius = 3.2
+hex_lift = 0.25
 board_margin = 2.0
 elite_count = 2
 shop_count = 1
