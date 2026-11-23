@@ -49,7 +49,8 @@ func _run() -> void:
 		_check(view.get("run") == run_state.map, "地图视图使用单局的地图进度")
 		_check(hex_layer != null and hex_layer.get("run") == run_state.map, "六边形层使用同一局地图")
 		_check(hex_layer != null and hex_layer.get_tile_count() == run_state.map.graph.get_node_count(), "每个节点都有六边形")
-		_check(hex_layer != null and hex_layer.get_wall_count() > 0, "六边形边界生成了墙")
+		_check(hex_layer != null and hex_layer.get_edge_count() > 0, "六边形边界生成了圆管")
+		_check(hex_layer != null and hex_layer.get_post_count() > 0, "六边形顶点生成了圆柱")
 		_check(board_input != null and board_input.get("run") == run_state.map, "六边形输入已接入")
 
 		# 点击起点右侧的邻居，验证“已探索节点的未探索邻居”规则在 3D 输入层同样生效。

@@ -1,16 +1,16 @@
 ## 在三维地形上绘制六边形蜂巢地图。
 ##
-## 六边形不生成实体格子，而是把蜂巢边界投影到地形上：每条边是一堵没有厚度
-## 的竖直墙，顶边沿着平滑后的地表高度，底边埋进地形。格子内部保留原始地形，
-## 地图仍然是一整片地面，只是被六边形墙分割成一个个地点。
+## 六边形不生成实体格子，也不画贴地的面：蜂巢的每条边是一根贴地的白色圆管，
+## 每个顶点是一根白色短圆柱。格子内部保留原始地形，地图仍然是一整片地面，
+## 只是被白色线框分割成一个个地点。
 ##
 ## 高度：先把地形 mesh 的顶点烘成 0.5m 的高度场，取邻域最大值保证不低于
-## 地表，再做两次盒式模糊；墙顶取模糊后的高度再加上 [member MapConfig.hex_lift]，
-## 因此既高于地表，又不会沿地形台阶出现锯齿。
+## 地表，再做两次盒式模糊；圆管和圆柱直接采样原始地形高度，贴在 mesh 表面，
+## 被地形挡住的部分由 shader 做柔和淡出。
 class_name MapHexLayer
 extends Node3D
 
-const WALL_SHADER: Shader = preload("res://map/shaders/hex_wall.gdshader")
+const TUBE_SHADER: Shader = preload("res://map/shaders/hex_tube.gdshader")
 const SQRT3 := 1.7320508075688772
 ## 高度场的采样间距（世界单位）。
 const FIELD_CELL := 0.5
@@ -21,13 +21,19 @@ const FIELD_BLUR_PASSES := 2
 ## 六边形脚印采样的半径比例。
 const FOOTPRINT_RATIO := 0.62
 ## 每条六边形边沿分成几段，用来贴合地形起伏。
-const WALL_SEGMENTS := 4
-## 墙底埋进地形的深度。
-const WALL_SINK := 0.5
-## 墙至少保留的高度，避免贴地时完全看不见。
-const WALL_MIN_HEIGHT := 0.35
-## 墙在法线方向的最小厚度：完全零厚度的竖直面在正对视线时会消失。
-const WALL_THICKNESS := 0.12
+const TUBE_SEGMENTS := 6
+## 圆管半径。
+const TUBE_RADIUS := 0.15
+## 圆管的侧面数，保持低多边形白模质感。
+const TUBE_SIDES := 6
+## 圆管中心离原始地表的距离，避免和地形 z-fighting。
+const TUBE_CLEARANCE := 0.18
+## 六边形顶点短圆柱的半径。
+const POST_RADIUS := 0.24
+## 六边形顶点短圆柱的高度。
+const POST_HEIGHT := 0.60
+## 短圆柱的侧面数。
+const POST_SIDES := 10
 
 const TYPE_COLORS := {
 	MapNode.Type.START: Color(0.30, 0.72, 0.42),
@@ -40,11 +46,6 @@ const TYPE_COLORS := {
 	MapNode.Type.BOSS: Color(0.82, 0.22, 0.22),
 }
 
-const WALL_COLOR := Color(0.24, 0.30, 0.40)
-const WALL_TOP := Color(0.55, 0.64, 0.76)
-const WALL_REACHABLE := Color(0.95, 0.72, 0.28)
-const WALL_CURRENT := Color(0.28, 0.86, 0.98)
-const WALL_VISITED := Color(0.22, 0.25, 0.30)
 
 ## 地形网格，用来读取地表高度。
 @export var terrain: MeshInstance3D
@@ -63,12 +64,14 @@ var run: MapRun
 var layout: HexLayout
 
 var _tiles := {}
-var _walls: Array[Dictionary] = []
+var _edge_meshes: Array[Dictionary] = []
 var _hover_id := -1
+var _post_count := 0
 var _base_heights := {}
 
 var _label_font: SystemFont
-var _wall_root: Node3D
+var _grid_root: Node3D
+var _tube_mat: ShaderMaterial
 
 var _field := PackedFloat32Array()
 var _raw_field := PackedFloat32Array()
@@ -89,7 +92,7 @@ func _ready() -> void:
 		tiles_root = Node3D.new()
 		tiles_root.name = "Tiles"
 		add_child(tiles_root)
-	_ensure_wall_root()
+	_ensure_grid_root()
 	_label_font = SystemFont.new()
 	_label_font.font_names = PackedStringArray([
 		"Microsoft YaHei UI",
@@ -133,11 +136,11 @@ func show_run(map_run: MapRun) -> void:
 	_compute_board_offset(_available_rect(run.config))
 	_compute_base_heights()
 	_create_tiles()
-	_create_walls()
+	_create_grid()
 	refresh()
 
 
-## 按当前进度刷新墙的颜色、标签和可达状态。
+## 按当前进度刷新标签和可达状态。
 func refresh() -> void:
 	if run == null or run.graph == null:
 		return
@@ -170,43 +173,6 @@ func refresh() -> void:
 		var lift := 0.22 if node.id == _hover_id else 0.0
 		holder.position.y = float(entry["base_y"]) + lift
 
-	for wall in _walls:
-		var material: ShaderMaterial = wall["material"]
-		var ids: Array = wall["ids"]
-		var is_current := false
-		var is_reachable := false
-		var all_visited := true
-		for id in ids:
-			var node := run.graph.get_node_by_id(int(id))
-			if node == null:
-				continue
-			if node.id == run.current_id:
-				is_current = true
-			if reachable.has(node.id):
-				is_reachable = true
-			if not node.visited:
-				all_visited = false
-		if bool(ids.has(_hover_id)):
-			is_current = true
-
-		var wall_color := WALL_COLOR
-		var top_color := WALL_TOP
-		var emissive := 0.0
-		if is_current:
-			wall_color = WALL_CURRENT
-			top_color = WALL_CURRENT.lightened(0.55)
-			emissive = 0.75
-		elif is_reachable:
-			wall_color = WALL_REACHABLE
-			top_color = WALL_REACHABLE.lightened(0.45)
-			emissive = 0.45
-		elif all_visited:
-			wall_color = WALL_VISITED
-			top_color = WALL_VISITED.lightened(0.18)
-
-		material.set_shader_parameter("wall_color", wall_color)
-		material.set_shader_parameter("top_color", top_color)
-		material.set_shader_parameter("emissive", emissive)
 
 
 ## 设置鼠标悬停的节点编号，-1 表示没有。
@@ -227,9 +193,14 @@ func get_tile_count() -> int:
 	return _tiles.size()
 
 
-## 已经生成的墙数量。
-func get_wall_count() -> int:
-	return _walls.size()
+## 已经生成的网格边数量。
+func get_edge_count() -> int:
+	return _edge_meshes.size()
+
+
+## 已经生成的顶点圆柱数量。
+func get_post_count() -> int:
+	return _post_count
 
 
 ## 返回屏幕坐标（SubViewport 像素）下的地点，没有命中时返回 null。
@@ -264,7 +235,7 @@ func node_at_screen(screen_position: Vector2) -> MapNode:
 	return best
 
 
-## 把地形顶点烘成高度场，并保留一份未平滑的原始值用于墙底。
+## 把地形顶点烘成高度场，并保留一份未平滑的原始值用于贴地网格线。
 func _build_height_field() -> void:
 	if terrain == null or terrain.mesh == null:
 		return
@@ -405,12 +376,12 @@ func _footprint_max(center_x: float, center_z: float) -> float:
 	return height
 
 
-## 采样平滑后的高度（墙顶使用）。
+## 采样平滑后的高度（节点标记和拾取使用）。
 func _sample_height(x: float, z: float) -> float:
 	return _sample_field(_field, x, z)
 
 
-## 采样未平滑的地表高度（墙底使用）。
+## 采样未平滑的地表高度（网格线贴地使用）。
 func _sample_raw(x: float, z: float) -> float:
 	return _sample_field(_raw_field, x, z)
 
@@ -485,6 +456,10 @@ func _edge_key(a: Vector2, b: Vector2) -> Vector2i:
 	return Vector2i(roundi(mid.x * 100.0), roundi(mid.y * 100.0))
 
 
+func _point_key(point: Vector2) -> Vector2i:
+	return Vector2i(roundi(point.x * 100.0), roundi(point.y * 100.0))
+
+
 func _create_tiles() -> void:
 	_tiles.clear()
 	if run == null or run.graph == null:
@@ -521,18 +496,21 @@ func _create_tiles() -> void:
 		_tiles[node.id] = entry
 
 
-## 沿蜂巢边界生成没有厚度的墙。
-func _create_walls() -> void:
-	_walls.clear()
-	if run == null or run.graph == null or _wall_root == null:
+## 沿蜂巢边界生成白色圆管，并在六边形顶点生成白色圆柱。
+func _create_grid() -> void:
+	_edge_meshes.clear()
+	_post_count = 0
+	if run == null or run.graph == null or _grid_root == null:
 		return
 
 	var edges := {}
+	var vertices := {}
 	for node in run.graph.nodes:
 		var center := _hex_center(node)
 		for index in range(6):
 			var a := _hex_corner(center, index)
 			var b := _hex_corner(center, index + 1)
+			vertices[_point_key(a)] = a
 			var key := _edge_key(a, b)
 			if not edges.has(key):
 				edges[key] = {"a": a, "b": b, "ids": [] as Array[int]}
@@ -542,86 +520,113 @@ func _create_walls() -> void:
 
 	for key in edges:
 		var edge: Dictionary = edges[key]
-		_create_wall(edge["a"], edge["b"], edge["ids"])
+		_create_tube(edge["a"], edge["b"], edge["ids"])
+	_create_posts(vertices.values())
 
 
-func _create_wall(a: Vector2, b: Vector2, ids: Array) -> void:
-	var top_points: Array[Vector3] = []
-	var bottom_points: Array[Vector3] = []
-	var lift := run.config.hex_lift
-	for segment in range(WALL_SEGMENTS + 1):
-		var t := float(segment) / float(WALL_SEGMENTS)
+## 一条边是一串小圆管，采样点贴着原始地表走。
+func _create_tube(a: Vector2, b: Vector2, ids: Array) -> void:
+	var points: Array[Vector3] = []
+	for segment in range(TUBE_SEGMENTS + 1):
+		var t := float(segment) / float(TUBE_SEGMENTS)
 		var point := a.lerp(b, t)
-		var top := maxf(_sample_height(point.x, point.y), _sample_raw(point.x, point.y)) + lift
-		var bottom := minf(_sample_raw(point.x, point.y) - WALL_SINK, top - WALL_MIN_HEIGHT)
-		top_points.append(Vector3(point.x, top, point.y))
-		bottom_points.append(Vector3(point.x, bottom, point.y))
+		var height := _sample_raw(point.x, point.y) + TUBE_CLEARANCE
+		points.append(Vector3(point.x, height, point.y))
 
-	var normal := Vector3(b.y - a.y, 0.0, a.x - b.x).normalized()
-	if normal.length_squared() < 0.0001:
-		normal = Vector3.RIGHT
-	var half := WALL_THICKNESS * 0.5
-	var front_offset := normal * half
-	var back_offset := -front_offset
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for segment in range(WALL_SEGMENTS):
-		var t0 := float(segment) / float(WALL_SEGMENTS)
-		var t1 := float(segment + 1) / float(WALL_SEGMENTS)
-		var top_a := top_points[segment]
-		var top_b := top_points[segment + 1]
-		var bottom_a := bottom_points[segment]
-		var bottom_b := bottom_points[segment + 1]
-
-		var front_top_a := top_a + front_offset
-		var front_top_b := top_b + front_offset
-		var front_bottom_a := bottom_a + front_offset
-		var front_bottom_b := bottom_b + front_offset
-		var back_top_a := top_a + back_offset
-		var back_top_b := top_b + back_offset
-		var back_bottom_a := bottom_a + back_offset
-		var back_bottom_b := bottom_b + back_offset
-
-		# 朝向相机的一面
-		_add_vertex(surface, front_top_a, normal, Vector2(t0, 1.0))
-		_add_vertex(surface, front_bottom_a, normal, Vector2(t0, 0.0))
-		_add_vertex(surface, front_bottom_b, normal, Vector2(t1, 0.0))
-		_add_vertex(surface, front_top_a, normal, Vector2(t0, 1.0))
-		_add_vertex(surface, front_bottom_b, normal, Vector2(t1, 0.0))
-		_add_vertex(surface, front_top_b, normal, Vector2(t1, 1.0))
-
-		# 背面，保证从任何方向看都有可见面
-		_add_vertex(surface, back_top_b, -normal, Vector2(t1, 1.0))
-		_add_vertex(surface, back_bottom_b, -normal, Vector2(t1, 0.0))
-		_add_vertex(surface, back_bottom_a, -normal, Vector2(t0, 0.0))
-		_add_vertex(surface, back_top_b, -normal, Vector2(t1, 1.0))
-		_add_vertex(surface, back_bottom_a, -normal, Vector2(t0, 0.0))
-		_add_vertex(surface, back_top_a, -normal, Vector2(t0, 1.0))
-
-		# 墙顶盖，让墙的正上方也有一条清晰的边
-		_add_vertex(surface, front_top_a, Vector3.UP, Vector2(0.0, 1.0))
-		_add_vertex(surface, front_top_b, Vector3.UP, Vector2(1.0, 1.0))
-		_add_vertex(surface, back_top_b, Vector3.UP, Vector2(1.0, 1.0))
-		_add_vertex(surface, front_top_a, Vector3.UP, Vector2(0.0, 1.0))
-		_add_vertex(surface, back_top_b, Vector3.UP, Vector2(1.0, 1.0))
-		_add_vertex(surface, back_top_a, Vector3.UP, Vector2(0.0, 1.0))
+	for segment in range(TUBE_SEGMENTS):
+		_add_tube_segment(surface, points[segment], points[segment + 1])
 
 	var mesh_instance := MeshInstance3D.new()
-	mesh_instance.name = "Wall"
+	mesh_instance.name = "GridEdge"
 	mesh_instance.mesh = surface.commit()
-	var material := ShaderMaterial.new()
-	material.shader = WALL_SHADER
-	material.set_shader_parameter("wall_color", WALL_COLOR)
-	material.set_shader_parameter("top_color", WALL_TOP)
-	material.set_shader_parameter("emissive", 0.0)
-	mesh_instance.material_override = material
-	_wall_root.add_child(mesh_instance)
-	_walls.append({
-		"mesh": mesh_instance,
-		"material": material,
-		"ids": ids,
-	})
+	mesh_instance.material_override = _tube_material()
+	_grid_root.add_child(mesh_instance)
+	_edge_meshes.append({"mesh": mesh_instance, "ids": ids})
 
+
+## 在两个采样点之间补一段六棱柱圆管。
+func _add_tube_segment(surface: SurfaceTool, from: Vector3, to: Vector3) -> void:
+	var direction := to - from
+	if direction.length_squared() < 0.000001:
+		return
+	direction = direction.normalized()
+	var side := direction.cross(Vector3.UP)
+	if side.length_squared() < 0.0001:
+		side = direction.cross(Vector3.RIGHT)
+	side = side.normalized()
+	var up := side.cross(direction).normalized()
+
+	for index in range(TUBE_SIDES):
+		var angle := TAU * float(index) / float(TUBE_SIDES)
+		var next_angle := TAU * float(index + 1) / float(TUBE_SIDES)
+		var offset_a := side * cos(angle) * TUBE_RADIUS + up * sin(angle) * TUBE_RADIUS
+		var offset_b := side * cos(next_angle) * TUBE_RADIUS + up * sin(next_angle) * TUBE_RADIUS
+		var normal_a := offset_a.normalized()
+		var normal_b := offset_b.normalized()
+		var p0 := from + offset_a
+		var p1 := from + offset_b
+		var p2 := to + offset_b
+		var p3 := to + offset_a
+		_add_vertex(surface, p0, normal_a, Vector2(0.0, 0.0))
+		_add_vertex(surface, p2, normal_b, Vector2(1.0, 1.0))
+		_add_vertex(surface, p1, normal_b, Vector2(1.0, 0.0))
+		_add_vertex(surface, p0, normal_a, Vector2(0.0, 0.0))
+		_add_vertex(surface, p3, normal_a, Vector2(0.0, 1.0))
+		_add_vertex(surface, p2, normal_b, Vector2(1.0, 1.0))
+
+
+## 每个六边形顶点放一根贴地短圆柱，盖住圆管接缝。
+func _create_posts(points: Array) -> void:
+	if points.is_empty():
+		return
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for point in points:
+		var ground := _sample_raw(point.x, point.y)
+		_add_post(surface, Vector3(point.x, ground, point.y))
+		_post_count += 1
+
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.name = "GridPosts"
+	mesh_instance.mesh = surface.commit()
+	mesh_instance.material_override = _tube_material()
+	_grid_root.add_child(mesh_instance)
+
+
+func _add_post(surface: SurfaceTool, base: Vector3) -> void:
+	var bottom := base + Vector3(0.0, -0.04, 0.0)
+	var top := base + Vector3(0.0, POST_HEIGHT, 0.0)
+	for index in range(POST_SIDES):
+		var angle := TAU * float(index) / float(POST_SIDES)
+		var next_angle := TAU * float(index + 1) / float(POST_SIDES)
+		var dir_a := Vector3(cos(angle), 0.0, sin(angle))
+		var dir_b := Vector3(cos(next_angle), 0.0, sin(next_angle))
+		var bottom_a := bottom + dir_a * POST_RADIUS
+		var bottom_b := bottom + dir_b * POST_RADIUS
+		var top_a := top + dir_a * POST_RADIUS
+		var top_b := top + dir_b * POST_RADIUS
+
+		_add_vertex(surface, bottom_a, dir_a, Vector2(0.0, 0.0))
+		_add_vertex(surface, top_b, dir_b, Vector2(1.0, 1.0))
+		_add_vertex(surface, bottom_b, dir_b, Vector2(1.0, 0.0))
+		_add_vertex(surface, bottom_a, dir_a, Vector2(0.0, 0.0))
+		_add_vertex(surface, top_a, dir_a, Vector2(0.0, 1.0))
+		_add_vertex(surface, top_b, dir_b, Vector2(1.0, 1.0))
+
+		# 顶盖，朝上
+		_add_vertex(surface, top, Vector3.UP, Vector2(0.5, 0.5))
+		_add_vertex(surface, top_b, Vector3.UP, Vector2(0.5, 0.0))
+		_add_vertex(surface, top_a, Vector3.UP, Vector2(0.0, 0.0))
+
+
+func _tube_material() -> ShaderMaterial:
+	if _tube_mat == null:
+		_tube_mat = ShaderMaterial.new()
+		_tube_mat.shader = TUBE_SHADER
+		_tube_mat.set_shader_parameter("base_color", Color(0.98, 0.98, 0.98))
+	return _tube_mat
 
 func _clear_tiles() -> void:
 	for node_id in _tiles.keys():
@@ -630,18 +635,18 @@ func _clear_tiles() -> void:
 		if is_instance_valid(holder):
 			holder.free()
 	_tiles.clear()
-	if _wall_root != null:
-		for child in _wall_root.get_children():
+	if _grid_root != null:
+		for child in _grid_root.get_children():
 			child.free()
-	_walls.clear()
+	_edge_meshes.clear()
 
 
-func _ensure_wall_root() -> void:
-	if _wall_root != null:
+func _ensure_grid_root() -> void:
+	if _grid_root != null:
 		return
-	_wall_root = Node3D.new()
-	_wall_root.name = "Walls"
-	tiles_root.add_child(_wall_root)
+	_grid_root = Node3D.new()
+	_grid_root.name = "Grid"
+	tiles_root.add_child(_grid_root)
 
 
 ## 每个格取邻域最大值。

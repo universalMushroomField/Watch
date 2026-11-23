@@ -32,7 +32,8 @@ func _run() -> void:
 	_check(view.run.layout != null, "地图使用六边形布局")
 	_check(view._hex_layer != null, "六边形层已创建")
 	_check(view._hex_layer._tiles.size() == view.run.graph.get_node_count(), "每个节点都生成了六边形")
-	_check(view._hex_layer.get_wall_count() > 0, "六边形边界生成了墙")
+	_check(view._hex_layer.get_edge_count() > 0, "六边形边界生成了圆管")
+	_check(view._hex_layer.get_post_count() > 0, "六边形顶点生成了圆柱")
 	var above_surface := true
 	for node in view.run.graph.nodes:
 		var center: Vector2 = view._hex_layer._hex_center(node)
