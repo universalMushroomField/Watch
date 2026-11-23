@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://4bln64glqcwl"]
 
-[ext_resource type="ArrayMesh" uid="uid://c4juulw3su538" path="res://map/res/terrain_mesh.res" id="1_st031"]
+[ext_resource type="ArrayMesh" uid="uid://wuvgp0awyx3n" path="res://map/res/terrain_mesh.res" id="1_st031"]
 [ext_resource type="Shader" uid="uid://ccd3qyxoh8yrv" path="res://map/shaders/camera_edge_breakup.gdshader" id="2_edge"]
 [ext_resource type="Script" path="res://map/scripts/map_hex_layer.gd" id="3_hex"]
 
