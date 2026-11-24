@@ -6,13 +6,17 @@
 class_name MapConfig
 extends Resource
 
+const DEFAULT_COLUMNS := 4
+const DEFAULT_ROWS := 4
+const DEFAULT_HEX_RADIUS := 4.2
+
 @export_group("Hex Board")
 ## 中间区域的最大列数。
-@export_range(2, 24) var max_columns: int = 4
+@export_range(2, 24) var max_columns: int = DEFAULT_COLUMNS
 ## 中间区域的最大行数。
-@export_range(2, 12) var max_rows: int = 4
+@export_range(2, 12) var max_rows: int = DEFAULT_ROWS
 ## 六边形外接圆半径的目标值，单位与世界坐标一致。
-@export var hex_radius: float = 4.2
+@export var hex_radius: float = DEFAULT_HEX_RADIUS
 ## 六边形在平滑地表高度之上额外抬升的距离。
 @export var hex_lift: float = 0.25
 ## 棋盘与地形边缘保留的空白，单位与世界坐标一致。

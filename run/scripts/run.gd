@@ -26,8 +26,6 @@ var map: MapRun
 ## 当前玩家的局内状态（生命、金币、卡组）。
 var player: MapPlayerState
 
-var _layout: HexLayout
-
 
 func _ready() -> void:
 	_ensure_seed()
@@ -36,18 +34,20 @@ func _ready() -> void:
 
 
 ## 初始化单局：用本局种子和给定棋盘布局创建地图。
-## [param layout] 为 null 时使用默认棋盘尺寸。
-func create_map(layout: HexLayout = null) -> MapRun:
+## [param layout] 由地图视图根据地形和相机可视范围拟合。
+func create_map(layout: HexLayout) -> MapRun:
+	if layout == null:
+		push_error("创建地图前必须提供拟合后的棋盘布局。")
+		return null
 	_ensure_seed()
 	if map_config == null:
 		map_config = MapConfig.new()
-	_layout = layout if layout != null else HexLayout.new()
 	if player == null:
 		var deck := starting_deck
 		if player_character != null and player_character.deck != null:
 			deck = player_character.deck
 		player = MapPlayerState.new(max_health, starting_gold, deck)
-	map = MapRun.new(map_config, player, run_seed, _layout)
+	map = MapRun.new(map_config, player, run_seed, layout)
 	return map
 
 

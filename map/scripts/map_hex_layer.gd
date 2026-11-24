@@ -61,11 +61,12 @@ func _ready() -> void:
 func make_layout(config: MapConfig) -> HexLayout:
 	_surface.build(terrain)
 	var rect := _available_rect(config)
-	var target_radius := maxf(config.hex_radius, 0.5)
+	var target := HexLayout.from_config(config)
+	var target_radius := target.hex_radius
 	var interior_columns := int(floor(rect.size.x / (SQRT3 * target_radius) - 2.5))
 	var interior_rows := int(floor((rect.size.y / target_radius - 0.5) / 1.5))
-	interior_columns = clampi(interior_columns, 2, maxi(config.max_columns, 2))
-	interior_rows = clampi(interior_rows, 2, maxi(config.max_rows, 2))
+	interior_columns = clampi(interior_columns, 2, target.columns)
+	interior_rows = clampi(interior_rows, 2, target.rows)
 
 	# 用实际列数重新拟合半径，保证棋盘完整落在可用矩形内。
 	var span_columns := SQRT3 * (float(interior_columns) + 2.5)
