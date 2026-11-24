@@ -1,24 +1,35 @@
 [gd_scene format=3 uid="uid://4bln64glqcwl"]
 
 [ext_resource type="ArrayMesh" uid="uid://wuvgp0awyx3n" path="res://map/res/terrain_mesh.res" id="1_st031"]
-[ext_resource type="Shader" uid="uid://ccd3qyxoh8yrv" path="res://map/shaders/camera_edge_breakup.gdshader" id="2_edge"]
+[ext_resource type="Shader" uid="uid://ccd3qyxoh8yrv" path="res://map/shaders/terrain/terrain_surface.gdshader" id="2_edge"]
 [ext_resource type="Script" uid="uid://bvgv55kuxw82a" path="res://map/scripts/map_hex_layer.gd" id="3_hex"]
 [ext_resource type="Script" uid="uid://dnbvsrsj08okk" path="res://map/scripts/map_camera.gd" id="4_camera"]
+[ext_resource type="Script" uid="uid://dhacqtgjng8e8" path="res://map/scripts/map_terrain_model.gd" id="6_model"]
+[ext_resource type="Shader" uid="uid://cxyfqtal2xfu0" path="res://map/shaders/terrain/particle_fog.gdshader" id="7_fog"]
+[ext_resource type="Script" uid="uid://0mri5ha6ciaj" path="res://map/scripts/map_particle_fog.gd" id="8_cloud"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_edge"]
 resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("2_edge")
 shader_parameter/terrain_color = Color(1, 1, 1, 1)
-shader_parameter/edge_width = 0.04999999888240999
-shader_parameter/block_size = 2.0
-shader_parameter/breakup = 0.6999999843536
-shader_parameter/flow_direction = Vector2(0.6, 0.8)
-shader_parameter/flow_speed = 1.999999955296
-shader_parameter/noise_detail = 2.0
-shader_parameter/contrast = 1.5
+
+[sub_resource type="ShaderMaterial" id="FogMaterial"]
+render_priority = 0
+shader = ExtResource("7_fog")
+shader_parameter/surface_tint = Color(0.72, 0.72, 0.72, 1)
+shader_parameter/mist_tint = Color(0.65, 0.65, 0.65, 1)
+shader_parameter/particle_size = 0.24000000814012
+shader_parameter/flow_speed = 0.65
+shader_parameter/fog_opacity = 0.4450000211375
 
 [sub_resource type="Environment" id="Environment_3g44r"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s4i45"]
+albedo_color = Color(0, 0, 0, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_6vd2c"]
+material = SubResource("StandardMaterial3D_s4i45")
 
 [node name="MapLayer0" type="Node3D" unique_id=2057812014 node_paths=PackedStringArray("terrain", "camera")]
 script = ExtResource("3_hex")
@@ -26,19 +37,32 @@ terrain = NodePath("MeshInstance3D")
 camera = NodePath("Camera3D")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1091666386]
-transform = Transform3D(-0.6380711, -0.6668213, 0.38498658, 0, 0.4999972, 0.86602706, -0.76997745, 0.55258685, -0.31903377, 43.31875, 103.85698, -34.6206)
+transform = Transform3D(-0.6380711, -0.4740455, 0.6067505, 0, 0.7880107, 0.6156615, -0.76997745, 0.39283583, -0.5028069, 72.81007, 73.07938, -60.33683)
 projection = 1
 fov = 128.1
-size = 64.161
+size = 58.5
 near = 0.001
 script = ExtResource("4_camera")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=617485418]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.125226, 3.8611574, 4.7587414)
 material_override = SubResource("ShaderMaterial_edge")
-mesh = ExtResource("1_st031")
+extra_cull_margin = 3.0
+script = ExtResource("6_model")
+source_mesh = ExtResource("1_st031")
+erosion_strength = 0.0
+
+[node name="ParticleFog" type="MultiMeshInstance3D" parent="MeshInstance3D" unique_id=2002054581]
+material_override = SubResource("FogMaterial")
+cast_shadow = 0
+script = ExtResource("8_cloud")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=210431350]
 transform = Transform3D(0.6156615, 0.59471923, 0.5169815, 0, -0.65605897, 0.7547096, 0.7880107, -0.46464565, -0.40391025, 0, 12.13, 33.631336)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1687985104]
 environment = SubResource("Environment_3g44r")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=2138926087]
+transform = Transform3D(1000, 0, 0, 0, 1000, 0, 0, 0, 1000, 0, -15.441961, 0)
+mesh = SubResource("PlaneMesh_6vd2c")
