@@ -29,6 +29,10 @@ window/stretch/aspect="expand"
 
 project/assembly_name="Watch"
 
+[gui]
+
+theme/custom_font="res://ui/fonts/fusion-pixel-12px-proportional-zh_hans.otf"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

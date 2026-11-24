@@ -277,7 +277,7 @@ func get_location(node_id: int) -> MapLocation:
 
 
 func _create_tiles() -> void:
-	var project_font := ThemeDB.fallback_font
+	var project_font := load(ProjectSettings.get_setting("gui/theme/custom_font")) as Font
 	for node in run.graph.nodes:
 		var scene: PackedScene = LOCATION_SCENES[node.type]
 		var location := scene.instantiate() as MapLocation

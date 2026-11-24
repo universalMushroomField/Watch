@@ -47,3 +47,9 @@ emm....少女折寿中
 | [IDEA.md](IDEA.md) | 玩法机制、设计意图与示例 |
 | [docs/Git协作指南.md](docs/Git协作指南.md) | 分支结构、提交规范、冲突处理与 Pull Request 流程 |
 | [docs/Godot项目命名规则.md](docs/Godot项目命名规则.md) | 文件目录、场景节点、脚本标识符与重命名约定 |
+
+## 字体与致谢
+
+游戏界面与地图地点标签默认使用 [Fusion Pixel Font（缝合像素字体）](https://github.com/TakWolf/fusion-pixel-font)，采用 [2026.11.10 发行版](https://github.com/TakWolf/fusion-pixel-font/releases/tag/2026.11.10)的 12 px 比例简体中文 OTF。字体按 [SIL Open Font License 1.1](ui/fonts/LICENSE-OFL) 随项目分发。
+
+感谢 TakWolf 和 Fusion Pixel Font 的贡献者维护这套开源字体。
