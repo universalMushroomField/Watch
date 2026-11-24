@@ -1,4 +1,5 @@
-## 从真实三角网格查询世界 XZ 对应的最高地表交点。
+@tool
+## 在采样坐标系中查询 XZ 对应的最高地表交点。
 class_name MapSurfaceSampler
 extends RefCounted
 
@@ -9,18 +10,24 @@ var _bins := {}
 
 
 func build(terrain: MeshInstance3D) -> void:
+	if terrain == null:
+		build_mesh(null)
+	else:
+		build_mesh(terrain.mesh, terrain.global_transform)
+
+
+func build_mesh(mesh: Mesh, mesh_transform := Transform3D.IDENTITY) -> void:
 	_triangles.clear()
 	_bins.clear()
-	if terrain == null or terrain.mesh == null:
+	if mesh == null:
 		bounds = AABB()
 		return
-	var transform := terrain.global_transform
-	bounds = transform * terrain.mesh.get_aabb()
-	var faces := terrain.mesh.get_faces()
+	bounds = mesh_transform * mesh.get_aabb()
+	var faces := mesh.get_faces()
 	for i in range(0, faces.size(), 3):
-		var a := transform * faces[i]
-		var b := transform * faces[i + 1]
-		var c := transform * faces[i + 2]
+		var a := mesh_transform * faces[i]
+		var b := mesh_transform * faces[i + 1]
+		var c := mesh_transform * faces[i + 2]
 		if (c - a).cross(b - a).y <= 0.000001:
 			continue
 		var index := _triangles.size()
