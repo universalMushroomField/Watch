@@ -67,7 +67,10 @@ func _run() -> void:
 	var ground := attachment.global_position.y
 	_check(absf(zoomed.y - ground) < absf(original_position.y - ground), "放大时节点高度向地表过渡")
 	_check(view._hex_layer.node_at_screen(camera.unproject_position(zoomed)) == pick_target, "高度变化后拾取仍对齐节点")
-	camera.reset_zoom()
+	var orbit_basis := camera.global_basis
+	camera.reset_zoom(layer.get_map_center())
+	_check(camera.unproject_position(layer.get_map_center()).distance_to(camera.get_viewport().get_visible_rect().get_center()) < 0.01, "缩放复位时底图中心回到屏幕中心")
+	_check(camera.global_basis.is_equal_approx(orbit_basis), "缩放复位保留旋转角度")
 	view._hex_layer._process(1.0)
 	_check(pick_holder.global_position.is_equal_approx(original_position), "缩放复位后恢复节点高度")
 	var path := _find_path(view.run, view.run.current_id, view.run.graph.boss_id)
