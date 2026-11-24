@@ -5,3 +5,6 @@
 # 地图布局目检输出
 map/tests/*.png
 map/tests/*.png.import
+# 单局入口目检输出
+run/tests/*.png
+run/tests/*.png.import

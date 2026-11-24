@@ -1,6 +1,6 @@
 extends SceneTree
 
-## 临时冒烟测试：验证地图生成、移动、崩解度与事件结算。
+## 临时冒烟测试：验证六边形地图生成、移动、崩解度与事件结算。
 
 
 func _init() -> void:
@@ -17,7 +17,10 @@ func _init() -> void:
 			failures.append(label + "缺少起点或 Boss")
 			continue
 		if not graph.is_fully_connected():
-			failures.append(label + "存在不可达节点 %s" % [graph.find_unreachable_ids()])
+			failures.append(label + "存在不可达节点")
+		if graph.layout == null:
+			failures.append(label + "缺少六边形布局")
+			continue
 
 		_check_layout(graph, label, failures)
 
@@ -28,8 +31,6 @@ func _init() -> void:
 					failures.append(label + "出现自环")
 				elif neighbor == null or not neighbor.neighbor_ids.has(node.id):
 					failures.append(label + "连边不对称")
-			if node.type == MapNode.Type.SHOP and (node.id == graph.start_id or node.id == graph.boss_id):
-				failures.append(label + "商店占用了起点或 Boss")
 
 		if run.get_visited_count() != 1 or run.get_decay_visited_count() != 0:
 			failures.append(label + "初始访问数异常")
@@ -152,103 +153,28 @@ func _reachable_matches(run: MapRun) -> bool:
 func _signature(graph: MapGraph) -> String:
 	var parts: Array[String] = []
 	for node in graph.nodes:
-		parts.append("%d:%d:%s:%s" % [node.id, node.type, node.position, node.neighbor_ids])
+		parts.append("%d:%d:%d:%d:%s" % [node.id, node.type, node.column, node.row, node.neighbor_ids])
 	return "|".join(parts)
 
 
-## 检查放射布局的结构约束：Boss 居中、每个节点只有一个内层父节点、环边只连相邻角度。
+## 检查唯一蜂巢顶点、合法边和全图连通。
 func _check_layout(graph: MapGraph, label: String, failures: Array[String]) -> void:
-	var band_count := graph.get_band_count()
-	if band_count < 3:
-		failures.append(label + "层数异常")
-		return
-
-	var boss := graph.get_node_by_id(graph.boss_id)
-	if boss == null or not boss.position.is_equal_approx(Vector2(0.5, 0.5)):
-		failures.append(label + "Boss 不在中心")
-
 	var start := graph.get_node_by_id(graph.start_id)
-	if start != null and start.neighbor_ids.size() != 1:
-		failures.append(label + "起点度数不是 1")
-
+	var boss := graph.get_node_by_id(graph.boss_id)
+	if start == null or start.type != MapNode.Type.START or boss == null or boss.type != MapNode.Type.BOSS:
+		failures.append(label + "缺少起点或 Boss")
+		return
+	var vertices := {}
 	for node in graph.nodes:
-		if node.id == graph.boss_id:
-			continue
-		var inward := 0
-		for neighbor_id in node.neighbor_ids:
-			var neighbor := graph.get_node_by_id(neighbor_id)
-			if neighbor != null and neighbor.band == node.band + 1:
-				inward += 1
-		if inward != 1:
-			failures.append(label + "节点 %d 的内层父节点数为 %d" % [node.id, inward])
-		var expected_radius := 0.5 * float(band_count - 1 - node.band) / float(band_count - 1)
-		var actual_radius := node.position.distance_to(Vector2(0.5, 0.5))
-		if absf(actual_radius - expected_radius) > 0.0001:
-			failures.append(label + "节点 %d 的环半径异常" % node.id)
-
-	var inner_band_count := 0
-	for node in graph.nodes:
-		if node.band == band_count - 2:
-			inner_band_count += 1
-	if boss != null and boss.neighbor_ids.size() != inner_band_count:
-		failures.append(label + "Boss 没有连到所有内层节点")
-
-	# 环边只能连接同层角度相邻的节点。
-	for band in range(1, band_count - 1):
-		var ring: Array[MapNode] = []
-		for node in graph.nodes:
-			if node.band == band:
-				ring.append(node)
-		ring.sort_custom(func(a: MapNode, b: MapNode) -> bool:
-			return _node_angle(a) < _node_angle(b))
-		var index_of := {}
-		for index in range(ring.size()):
-			index_of[ring[index].id] = index
-			if index > 0 and absf(_node_angle(ring[index]) - _node_angle(ring[index - 1])) < 0.0001:
-				failures.append(label + "同层节点角度重复")
-		for node in ring:
-			for neighbor_id in node.neighbor_ids:
-				var neighbor := graph.get_node_by_id(neighbor_id)
-				if neighbor == null or neighbor.band != band or not graph.is_ring_link(node.id, neighbor_id):
-					continue
-				var index_gap := absi(index_of[node.id] - index_of[neighbor_id])
-				if index_gap != 1 and index_gap != ring.size() - 1:
-					failures.append(label + "环边跳过了相邻节点")
-
-	# 树边必须是直线，且除共享端点外不能相交。
-	var tree_edges: Array = []
-	for node in graph.nodes:
-		for neighbor_id in node.neighbor_ids:
-			if neighbor_id < node.id or graph.is_ring_link(node.id, neighbor_id):
-				continue
-			var neighbor := graph.get_node_by_id(neighbor_id)
-			if neighbor == null:
-				continue
-			if absi(neighbor.band - node.band) != 1:
-				failures.append(label + "树边跨了多层")
-			tree_edges.append([node.id, neighbor_id, node.position, neighbor.position])
-	for i in range(tree_edges.size()):
-		for j in range(i + 1, tree_edges.size()):
-			var edge_a: Array = tree_edges[i]
-			var edge_b: Array = tree_edges[j]
-			if edge_a[0] == edge_b[0] or edge_a[0] == edge_b[1] or edge_a[1] == edge_b[0] or edge_a[1] == edge_b[1]:
-				continue
-			if _segments_intersect(edge_a[2], edge_a[3], edge_b[2], edge_b[3]):
-				failures.append(label + "树边交叉")
-
-
-func _node_angle(node: MapNode) -> float:
-	return atan2(node.position.y - 0.5, node.position.x - 0.5)
-
-
-func _segments_intersect(a: Vector2, b: Vector2, c: Vector2, d: Vector2) -> bool:
-	var d1 := _cross(c, d, a)
-	var d2 := _cross(c, d, b)
-	var d3 := _cross(a, b, c)
-	var d4 := _cross(a, b, d)
-	return ((d1 > 0.0 and d2 < 0.0) or (d1 < 0.0 and d2 > 0.0)) \
-		and ((d3 > 0.0 and d4 < 0.0) or (d3 < 0.0 and d4 > 0.0))
-
-
-func _cross(origin: Vector2, target: Vector2, point: Vector2) -> float:
-	return (target.x - origin.x) * (point.y - origin.y) - (target.y - origin.y) * (point.x - origin.x)
+		if vertices.has(node.vertex):
+			failures.append(label + "出现重复顶点")
+		vertices[node.vertex] = true
+		if node.neighbor_ids.size() > 3:
+			failures.append(label + "顶点超过三条蜂巢边")
+		for id in node.neighbor_ids:
+			var neighbor := graph.get_node_by_id(id)
+			var delta := neighbor.vertex - node.vertex
+			if 3 * delta.x * delta.x + delta.y * delta.y != 4 or not neighbor.neighbor_ids.has(node.id):
+				failures.append(label + "存在无效蜂巢边")
+	if graph.collect_reachable_ids(start.id).size() != graph.get_node_count():
+		failures.append(label + "网络未完全连通")

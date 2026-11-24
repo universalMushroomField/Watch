@@ -28,7 +28,51 @@ func _run() -> void:
 	_check(is_zero_approx(view.run.get_decay_ratio()), "开局崩解度为 0")
 	_check(view.content_pool.events.size() > 0, "内容池包含事件")
 	_check(view.content_pool.shop_stock != null, "内容池包含商店库存")
+	_check(view.run_state != null, "单局状态已接入")
+	_check(view.run.layout != null, "地图使用六边形布局")
+	_check(view._hex_layer != null, "六边形层已创建")
+	_check(view._hex_layer._tiles.size() == view.run.graph.get_node_count(), "每个节点都生成了六边形")
+	var layer: MapHexLayer = view._hex_layer
+	var attached := true
+	var planar := true
+	var edges := 0
+	for node in view.run.graph.nodes:
+		var attachment: Node3D = layer._tiles[node.id]["attachment"]
+		var holder: Node3D = layer._tiles[node.id]["holder"]
+		var point := attachment.global_position
+		var xz := Vector2(point.x, point.z)
+		attached = attached and is_equal_approx(point.y, layer._surface.height_at(xz))
+		planar = planar and is_equal_approx(holder.global_position.y, layer._interaction_plane)
+		edges += node.neighbor_ids.size()
+	_check(attached, "附着点位于真实地表")
+	_check(planar, "交互点初始共面")
+	_check(layer._paths.size() * 2 == edges and layer._attachment_paths.mesh != null and layer._interaction_paths.mesh != null, "两组路径覆盖图的每条边")
+	var start_node: MapNode = view.run.graph.get_node_by_id(view.run.graph.start_id)
+	var pick_target: MapNode = view.run.graph.get_node_by_id(start_node.neighbor_ids[0])
+	var pick_holder: Node3D = view._hex_layer._tiles[pick_target.id]["holder"]
+	var pick_top := pick_holder.global_position
+	var pick_screen: Vector2 = view._hex_layer.camera.unproject_position(pick_top)
+	_check(view._hex_layer.node_at_screen(pick_screen) == pick_target, "屏幕拾取命中正确的顶点")
+	_check(view._board_input._node_at(pick_screen - view._board_input.get_global_rect().position) == pick_target, "覆盖层坐标换算正确")
 
+	var camera := view._hex_layer.camera as MapCamera
+	var original_position := pick_holder.global_position
+	camera.orbit_drag(-20.0)
+	var zoom_point := camera.unproject_position(original_position)
+	camera.zoom_at(zoom_point)
+	view._hex_layer._process(1.0)
+	var zoomed := pick_holder.global_position
+	_check(Vector2(zoomed.x, zoomed.z).is_equal_approx(Vector2(original_position.x, original_position.z)), "旋转和缩放后节点的世界 XZ 不变")
+	var attachment: Node3D = layer._tiles[pick_target.id]["attachment"]
+	var ground := attachment.global_position.y
+	_check(absf(zoomed.y - ground) < absf(original_position.y - ground), "放大时节点高度向地表过渡")
+	_check(view._hex_layer.node_at_screen(camera.unproject_position(zoomed)) == pick_target, "高度变化后拾取仍对齐节点")
+	var orbit_basis := camera.global_basis
+	camera.reset_zoom(layer.get_map_center())
+	_check(camera.unproject_position(layer.get_map_center()).distance_to(camera.get_viewport().get_visible_rect().get_center()) < 0.01, "缩放复位时底图中心回到屏幕中心")
+	_check(camera.global_basis.is_equal_approx(orbit_basis), "缩放复位保留旋转角度")
+	view._hex_layer._process(1.0)
+	_check(pick_holder.global_position.is_equal_approx(original_position), "缩放复位后恢复节点高度")
 	var path := _find_path(view.run, view.run.current_id, view.run.graph.boss_id)
 	_check(path.size() > 1, "起点到 Boss 存在路径")
 	for node_id in path:
