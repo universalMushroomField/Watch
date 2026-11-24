@@ -15,8 +15,10 @@ extends Camera3D
 
 
 func orbit_drag(horizontal_delta: float, vertical_delta: float = 0.0) -> void:
+	#TODO 这里可以在设置中设置两个翻转
 	var horizontal := _axis_delta(horizontal_delta)
-	var vertical := _axis_delta(vertical_delta)
+
+	var vertical := -_axis_delta(vertical_delta)
 	if is_zero_approx(horizontal) and is_zero_approx(vertical):
 		return
 	var yaw := Basis(Vector3.UP, -horizontal * orbit_speed)
