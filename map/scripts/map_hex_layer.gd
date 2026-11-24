@@ -4,15 +4,19 @@ extends Node3D
 
 const SQRT3 := 1.7320508075688772
 const PATH_LIFT := 0.035
-const TYPE_COLORS := {
-	MapNode.Type.START: Color(0.30, 0.72, 0.42),
-	MapNode.Type.BATTLE: Color(0.36, 0.55, 0.82),
-	MapNode.Type.ELITE: Color(0.62, 0.36, 0.82),
-	MapNode.Type.EVENT: Color(0.30, 0.68, 0.70),
-	MapNode.Type.TREASURE: Color(0.85, 0.66, 0.25),
-	MapNode.Type.SHOP: Color(0.85, 0.50, 0.30),
-	MapNode.Type.REST: Color(0.80, 0.36, 0.44),
-	MapNode.Type.BOSS: Color(0.82, 0.22, 0.22),
+const ATTACHMENT_PATH := preload("res://map/templates/path/attachment_path.tscn")
+const INTERACTION_PATH := preload("res://map/templates/path/interaction_path.tscn")
+const VERTICAL_TRIM := preload("res://map/templates/path/vertical_trim.tscn")
+
+const LOCATION_SCENES := {
+	MapNode.Type.START: preload("res://map/templates/node/start.tscn"),
+	MapNode.Type.BATTLE: preload("res://map/templates/node/battle.tscn"),
+	MapNode.Type.ELITE: preload("res://map/templates/node/elite.tscn"),
+	MapNode.Type.EVENT: preload("res://map/templates/node/event.tscn"),
+	MapNode.Type.TREASURE: preload("res://map/templates/node/treasure.tscn"),
+	MapNode.Type.SHOP: preload("res://map/templates/node/shop.tscn"),
+	MapNode.Type.REST: preload("res://map/templates/node/rest.tscn"),
+	MapNode.Type.BOSS: preload("res://map/templates/node/boss.tscn"),
 }
 
 
@@ -25,18 +29,17 @@ const TYPE_COLORS := {
 var run: MapRun
 var layout: HexLayout
 
-var _tiles := {}
+var _locations: Dictionary[int, MapLocation] = {}
 var _hover_id := -1
-var _label_font: SystemFont
 var _surface := MapSurfaceSampler.new()
 var _board_offset := Vector2.ZERO
 var _board_angle := 0.0
 var _zoom_height_blend := 0.0
+var _path_view_depth := Vector3.BACK
 var _interaction_plane := 0.0
-var _attachment_root: Node3D
-var _attachment_paths: MeshInstance3D
-var _interaction_paths: MeshInstance3D
-var _vertical_trim: MeshInstance3D
+var _attachment_paths: MapPath
+var _interaction_paths: MapPath
+var _vertical_trim: MapPath
 var _paths: Array[PackedVector3Array] = []
 
 func _ready() -> void:
@@ -48,13 +51,6 @@ func _ready() -> void:
 		tiles_root = Node3D.new()
 		tiles_root.name = "Tiles"
 		add_child(tiles_root)
-	_label_font = SystemFont.new()
-	_label_font.font_names = PackedStringArray([
-		"Microsoft YaHei UI",
-		"Microsoft YaHei",
-		"Noto Sans CJK SC",
-		"sans-serif",
-	])
 
 
 ## 根据地形和相机可视范围计算棋盘布局。
@@ -88,6 +84,7 @@ func show_run(map_run: MapRun) -> void:
 	_interaction_plane = _surface.bounds.end.y + run.config.hex_lift
 	_create_tiles()
 	_create_paths()
+	_update_node_positions()
 	refresh()
 
 ## 按当前进度刷新标签和可达状态。
@@ -95,18 +92,24 @@ func _process(delta: float) -> void:
 	if run == null or not camera is MapCamera:
 		return
 	var target: float = camera.get_zoom_progress()
+	var view_depth := camera.global_basis.z.normalized()
+	if not _path_view_depth.is_equal_approx(view_depth):
+		_path_view_depth = view_depth
+		_update_paths()
+		_update_vertical_trim()
 	if _zoom_height_blend != target:
 		_zoom_height_blend = move_toward(_zoom_height_blend, target, delta * 5.0)
 		_update_node_positions()
 
 
 func _update_node_positions() -> void:
-	for entry: Dictionary in _tiles.values():
-		var attachment: Node3D = entry["attachment"]
-		var holder: Node3D = entry["holder"]
+	for location in _locations.values():
+		var attachment: Node3D = location.attachment
+		var holder: Node3D = location.interaction
 		var point := attachment.global_position
 		point.y = lerpf(_interaction_plane, point.y, _zoom_height_blend)
 		holder.global_position = point
+		location.update_zoom_scale(_zoom_scale())
 	_update_paths()
 	_update_vertical_trim()
 
@@ -118,10 +121,10 @@ func refresh() -> void:
 		reachable[node.id] = true
 
 	for node in run.graph.nodes:
-		var entry: Dictionary = _tiles.get(node.id, {})
-		if entry.is_empty():
+		var location := get_location(node.id)
+		if location == null:
 			continue
-		var type_color: Color = TYPE_COLORS.get(node.type, Color(0.5, 0.5, 0.5))
+		var type_color: Color = location.label_color
 		var label_color := type_color.lightened(0.55)
 		if node.visited and node.id != run.current_id:
 			label_color = Color(0.62, 0.65, 0.70)
@@ -133,12 +136,10 @@ func refresh() -> void:
 		elif node.id == _hover_id:
 			label_color = Color(1.0, 0.95, 0.72)
 
-		var label: Label3D = entry["label"]
+		var label: Label3D = location.label
 		label.text = node.get_short_label()
 		label.modulate = label_color
 		label.scale = Vector3.ONE * (1.22 if node.id == run.current_id else 1.0)
-
-	_update_node_positions()
 
 
 
@@ -165,7 +166,7 @@ func get_map_center() -> Vector3:
 
 ## 已经生成的六边形数量。
 func get_tile_count() -> int:
-	return _tiles.size()
+	return _locations.size()
 
 
 func get_path_count() -> int:
@@ -180,15 +181,15 @@ func node_at_screen(screen_position: Vector2) -> MapNode:
 	var best: MapNode = null
 	var best_distance := INF
 	for node in run.graph.nodes:
-		var entry: Dictionary = _tiles.get(node.id, {})
-		if entry.is_empty():
+		var location := get_location(node.id)
+		if location == null:
 			continue
-		var holder: Node3D = entry["holder"]
+		var holder: Node3D = location.interaction
 		var position := holder.global_position
 		if camera.is_position_behind(position):
 			continue
 		var vertex_screen := camera.unproject_position(position)
-		var label: Label3D = entry["label"]
+		var label: Label3D = location.label
 		var label_screen := camera.unproject_position(label.global_position)
 		var radius_point := position + camera.global_basis.x.normalized() * layout.hex_radius
 		var radius := clampf(vertex_screen.distance_to(camera.unproject_position(radius_point)) * 0.35, 12.0, 34.0)
@@ -271,152 +272,93 @@ func _camera_board_angle() -> float:
 func _node_vertex(node: MapNode) -> Vector2:
 	return _vertex_offset(node) + _board_offset
 
+func get_location(node_id: int) -> MapLocation:
+	return _locations.get(node_id)
+
+
 func _create_tiles() -> void:
-	_attachment_root = Node3D.new()
-	_attachment_root.name = "AttachmentPoints"
-	tiles_root.add_child(_attachment_root)
-	var marker := SphereMesh.new()
-	marker.radius = 0.09
-	marker.height = 0.18
-	marker.material = _line_material(Color(0.3, 0.74, 0.81))
-	var interactive_marker := SphereMesh.new()
-	interactive_marker.radius = 0.14
-	interactive_marker.height = 0.28
-	interactive_marker.material = _line_material(Color(1.0, 0.78, 0.4))
-	_tiles.clear()
-	if run == null or run.graph == null:
-		return
+	var project_font := ThemeDB.fallback_font
 	for node in run.graph.nodes:
-		var entry := {}
+		var scene: PackedScene = LOCATION_SCENES[node.type]
+		var location := scene.instantiate() as MapLocation
+		location.name = "Hex_%d" % node.id
+		tiles_root.add_child(location)
 		var center := _node_vertex(node)
 		var ground := _surface.height_at(center)
 		if ground == -INF:
 			ground = _surface.bounds.end.y
-		var attachment := MeshInstance3D.new()
-		attachment.name = "Attachment_%d" % node.id
-		attachment.mesh = marker
-		attachment.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		_attachment_root.add_child(attachment)
-		attachment.global_position = Vector3(center.x, ground, center.y)
-
-		var holder := Node3D.new()
-		holder.name = "Hex_%d" % node.id
-		tiles_root.add_child(holder)
-		var dot := MeshInstance3D.new()
-		dot.mesh = interactive_marker
-		dot.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		holder.add_child(dot)
-
-		var label := Label3D.new()
-		label.name = "Label"
-		label.font = _label_font
-		label.font_size = 56
-		label.pixel_size = 0.02
-		label.outline_size = 14
-		label.outline_modulate = Color(0.0, 0.0, 0.0, 0.9)
-		label.modulate = Color.WHITE
-		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		label.no_depth_test = true
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.position = Vector3(0.0, 0.62, 0.0)
-		label.text = node.get_short_label()
-		holder.add_child(label)
-
-		entry["holder"] = holder
-		entry["label"] = label
-		entry["attachment"] = attachment
-		_tiles[node.id] = entry
+		location.attachment.global_position = Vector3(center.x, ground, center.y)
+		if location.label.font == null:
+			location.label.font = project_font
+		_locations[node.id] = location
 
 
 func _create_paths() -> void:
-	_attachment_paths = _make_path_mesh("AttachmentPaths", Color(0.28, 0.66, 0.75, 0.25), 0)
-	_interaction_paths = _make_path_mesh("InteractionPaths", Color(1.0, 0.78, 0.4), 1)
-	_vertical_trim = _make_path_mesh("edge_beautify_vertical", Color.WHITE, 0)
-	var trim_material := _vertical_trim.material_override as StandardMaterial3D
-	trim_material.vertex_color_use_as_albedo = true
+	_attachment_paths = _instantiate_path(ATTACHMENT_PATH)
+	_interaction_paths = _instantiate_path(INTERACTION_PATH)
+	_vertical_trim = _instantiate_path(VERTICAL_TRIM)
+	if camera != null:
+		_path_view_depth = camera.global_basis.z.normalized()
 	for node in run.graph.nodes:
-		var attachment: Node3D = _tiles[node.id]["attachment"]
+		var attachment: Node3D = _locations[node.id].attachment
 		for neighbor_id in node.neighbor_ids:
 			if neighbor_id <= node.id:
 				continue
-			var end: Node3D = _tiles[neighbor_id]["attachment"]
+			var end: Node3D = _locations[neighbor_id].attachment
 			var a := attachment.global_position
 			var b := end.global_position
 			_paths.append(_surface.trace(a, b))
-	_attachment_paths.mesh = _build_paths_mesh(true)
-	_update_paths()
 
 
-func _make_path_mesh(node_name: String, color: Color, priority: int) -> MeshInstance3D:
-	var instance := MeshInstance3D.new()
-	instance.name = node_name
-	var material := _line_material(color)
-	# 两组路径都进入透明队列，按优先级绘制且互不写入深度。
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
-	material.render_priority = priority
-	instance.material_override = material
-	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	tiles_root.add_child(instance)
-	return instance
+func _instantiate_path(scene: PackedScene) -> MapPath:
+	var path := scene.instantiate() as MapPath
+	tiles_root.add_child(path)
+	return path
 
 
-func _line_material(color: Color) -> StandardMaterial3D:
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = color
-	return material
+func _zoom_scale() -> float:
+	return lerpf(1.0, 1.25, _zoom_height_blend)
 
 
 func _update_paths() -> void:
 	if _interaction_paths == null:
 		return
-	_interaction_paths.mesh = _build_paths_mesh(false)
+	var attached := SurfaceTool.new()
+	var interaction := SurfaceTool.new()
+	attached.begin(Mesh.PRIMITIVE_TRIANGLES)
+	interaction.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var factor := _zoom_scale()
+	var lift := Vector3.UP * PATH_LIFT
+	for path in _paths:
+		for i in range(path.size() - 1):
+			_attachment_paths.add_segment(attached, path[i] + lift, path[i + 1] + lift, _path_view_depth, factor)
+		var a := path[0]
+		var b := path[path.size() - 1]
+		a.y = lerpf(_interaction_plane, a.y + PATH_LIFT, _zoom_height_blend)
+		b.y = lerpf(_interaction_plane, b.y + PATH_LIFT, _zoom_height_blend)
+		_interaction_paths.add_segment(interaction, a, b, _path_view_depth, factor)
+	_attachment_paths.mesh = attached.commit()
+	_interaction_paths.mesh = interaction.commit()
 
 
 func _update_vertical_trim() -> void:
 	if _vertical_trim == null:
 		return
 	var surface := SurfaceTool.new()
-	surface.begin(Mesh.PRIMITIVE_LINES)
-	var has_segments := false
-	for entry: Dictionary in _tiles.values():
-		var holder: Node3D = entry["holder"]
-		var attachment: Node3D = entry["attachment"]
-		if holder.global_position.distance_squared_to(attachment.global_position) <= 0.000001:
-			continue
-		has_segments = true
-		surface.set_color(Color(1.0, 0.78, 0.4, 1.0))
-		surface.add_vertex(tiles_root.to_local(holder.global_position))
-		surface.set_color(Color(1.0, 0.78, 0.4, 0.0))
-		surface.add_vertex(tiles_root.to_local(attachment.global_position))
-	_vertical_trim.mesh = surface.commit() if has_segments else null
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for location in _locations.values():
+		_vertical_trim.add_segment(surface, location.interaction.global_position,
+			location.attachment.global_position, _path_view_depth, _zoom_scale(), 0.0)
+	_vertical_trim.mesh = surface.commit()
 
-
-func _build_paths_mesh(attached: bool) -> ArrayMesh:
-	var surface := SurfaceTool.new()
-	surface.begin(Mesh.PRIMITIVE_LINES)
-	for path in _paths:
-		if attached:
-			for i in range(path.size() - 1):
-				surface.add_vertex(tiles_root.to_local(path[i] + Vector3.UP * PATH_LIFT))
-				surface.add_vertex(tiles_root.to_local(path[i + 1] + Vector3.UP * PATH_LIFT))
-		else:
-			for endpoint in [path[0], path[path.size() - 1]]:
-				endpoint.y = lerpf(_interaction_plane, endpoint.y, _zoom_height_blend) + PATH_LIFT * _zoom_height_blend
-				surface.add_vertex(tiles_root.to_local(endpoint))
-	return surface.commit()
 
 func _clear_tiles() -> void:
-	for entry: Dictionary in _tiles.values():
-		var holder: Node3D = entry["holder"]
-		holder.free()
-	_tiles.clear()
-	for node in [_attachment_root, _attachment_paths, _interaction_paths, _vertical_trim]:
+	for location in _locations.values():
+		location.free()
+	_locations.clear()
+	for node in [_attachment_paths, _interaction_paths, _vertical_trim]:
 		if is_instance_valid(node):
 			node.free()
-	_attachment_root = null
 	_attachment_paths = null
 	_interaction_paths = null
 	_vertical_trim = null

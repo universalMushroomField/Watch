@@ -26,19 +26,22 @@ func _run() -> void:
 		return
 	_check(view.run.get_visited_count() == 1, "开局只访问了起点")
 	_check(is_zero_approx(view.run.get_decay_ratio()), "开局崩解度为 0")
-	_check(view.content_pool.events.size() > 0, "内容池包含事件")
-	_check(view.content_pool.shop_stock != null, "内容池包含商店库存")
 	_check(view.run_state != null, "单局状态已接入")
 	_check(view.run.layout != null, "地图使用六边形布局")
 	_check(view._hex_layer != null, "六边形层已创建")
-	_check(view._hex_layer._tiles.size() == view.run.graph.get_node_count(), "每个节点都生成了六边形")
+	_check(view._hex_layer.get_tile_count() == view.run.graph.get_node_count(), "每个节点都生成了六边形")
 	var layer: MapHexLayer = view._hex_layer
+	var locations_valid := true
+	for node in view.run.graph.nodes:
+		var location := layer.get_location(node.id)
+		locations_valid = locations_valid and location != null and location.scene_file_path == layer.LOCATION_SCENES[node.type].resource_path and location.content_scene != null
+	_check(locations_valid, "每个地点加载对应类型的独立场景及内容资源")
 	var attached := true
 	var planar := true
 	var edges := 0
 	for node in view.run.graph.nodes:
-		var attachment: Node3D = layer._tiles[node.id]["attachment"]
-		var holder: Node3D = layer._tiles[node.id]["holder"]
+		var attachment: Node3D = layer.get_location(node.id).attachment
+		var holder: Node3D = layer.get_location(node.id).interaction
 		var point := attachment.global_position
 		var xz := Vector2(point.x, point.z)
 		attached = attached and is_equal_approx(point.y, layer._surface.height_at(xz))
@@ -49,7 +52,7 @@ func _run() -> void:
 	_check(layer._paths.size() * 2 == edges and layer._attachment_paths.mesh != null and layer._interaction_paths.mesh != null, "两组路径覆盖图的每条边")
 	var start_node: MapNode = view.run.graph.get_node_by_id(view.run.graph.start_id)
 	var pick_target: MapNode = view.run.graph.get_node_by_id(start_node.neighbor_ids[0])
-	var pick_holder: Node3D = view._hex_layer._tiles[pick_target.id]["holder"]
+	var pick_holder: Node3D = layer.get_location(pick_target.id).interaction
 	var pick_top := pick_holder.global_position
 	var pick_screen: Vector2 = view._hex_layer.camera.unproject_position(pick_top)
 	_check(view._hex_layer.node_at_screen(pick_screen) == pick_target, "屏幕拾取命中正确的顶点")
@@ -57,13 +60,19 @@ func _run() -> void:
 
 	var camera := view._hex_layer.camera as MapCamera
 	var original_position := pick_holder.global_position
+	var original_marker_scale := pick_holder.scale
+	var path_vertices: PackedVector3Array = layer._interaction_paths.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var original_path_width := path_vertices[0].distance_to(path_vertices[1])
 	camera.orbit_drag(-20.0)
 	var zoom_point := camera.unproject_position(original_position)
 	camera.zoom_at(zoom_point)
 	view._hex_layer._process(1.0)
 	var zoomed := pick_holder.global_position
+	path_vertices = layer._interaction_paths.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	_check(pick_holder.scale.length() > original_marker_scale.length(), "放大时地点标记变大")
+	_check(path_vertices[0].distance_to(path_vertices[1]) > original_path_width, "放大时连线变宽")
 	_check(Vector2(zoomed.x, zoomed.z).is_equal_approx(Vector2(original_position.x, original_position.z)), "旋转和缩放后节点的世界 XZ 不变")
-	var attachment: Node3D = layer._tiles[pick_target.id]["attachment"]
+	var attachment: Node3D = layer.get_location(pick_target.id).attachment
 	var ground := attachment.global_position.y
 	_check(absf(zoomed.y - ground) < absf(original_position.y - ground), "放大时节点高度向地表过渡")
 	_check(view._hex_layer.node_at_screen(camera.unproject_position(zoomed)) == pick_target, "高度变化后拾取仍对齐节点")
@@ -75,13 +84,19 @@ func _run() -> void:
 	_check(pick_holder.global_position.is_equal_approx(original_position), "缩放复位后恢复节点高度")
 	var path := _find_path(view.run, view.run.current_id, view.run.graph.boss_id)
 	_check(path.size() > 1, "起点到 Boss 存在路径")
+	var initial_gold: int = view.run.player.gold
 	for node_id in path:
+		if node_id == view.run.current_id:
+			continue
 		view.run.travel_to(node_id)
 		await process_frame
+		var expected := layer.get_location(node_id).content_scene.resource_path
+		_check(view._choices.get_child_count() > 0 and view._choices.get_child(0).scene_file_path == expected, "进入地点挂载已配置的内容场景")
 		view._close_panel()
 		await process_frame
 
 	_check(view.run.graph.get_node_by_id(view.run.graph.boss_id).visited, "可以走到 Boss")
+	_check(view.run.player.gold == initial_gold, "地点占位内容不结算金币")
 	_check(view.run.is_act_cleared(), "Boss 节点标记本幕完成")
 	_check(view.run.get_decay_ratio() > 0.0, "探索后崩解度上升")
 

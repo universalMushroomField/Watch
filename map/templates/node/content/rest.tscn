@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[node name="RestContent" type="Label"]
+text = "休息点场景占位"
+horizontal_alignment = 1
+autowrap_mode = 3

@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://cgwl564cojqsx"]
+
+[ext_resource type="Script" path="res://map/scripts/map_location.gd" id="1"]
+[ext_resource type="PackedScene" path="res://map/templates/node/content/battle.tscn" id="2"]
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial"]
+shading_mode = 0
+albedo_color = Color(0.45, 0.67, 0.96, 1)
+
+[sub_resource type="SphereMesh" id="GroundMesh"]
+material = SubResource("GroundMaterial")
+radius = 0.09
+height = 0.18
+
+[sub_resource type="StandardMaterial3D" id="InteractionMaterial"]
+shading_mode = 0
+albedo_color = Color(0.45, 0.67, 0.96, 1)
+
+[sub_resource type="SphereMesh" id="InteractionMesh"]
+material = SubResource("InteractionMaterial")
+radius = 0.14
+height = 0.28
+
+[node name="BattleLocation" type="Node3D" unique_id=2066642142]
+script = ExtResource("1")
+content_scene = ExtResource("2")
+
+[node name="AttachmentPoint" type="Node3D" parent="." unique_id=836065600]
+
+[node name="Marker" type="MeshInstance3D" parent="AttachmentPoint" unique_id=1248194275]
+cast_shadow = 0
+mesh = SubResource("GroundMesh")
+
+[node name="InteractionPoint" type="Node3D" parent="." unique_id=1350557902]
+
+[node name="Marker" type="MeshInstance3D" parent="InteractionPoint" unique_id=56805083]
+cast_shadow = 0
+mesh = SubResource("InteractionMesh")
+
+[node name="Label" type="Label3D" parent="InteractionPoint" unique_id=1742036438]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, 0)
+pixel_size = 0.02
+billboard = 1
+no_depth_test = true
+modulate = Color(0.45, 0.67, 0.96, 1)
+font_size = 56
+outline_size = 14

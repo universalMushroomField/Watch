@@ -3,7 +3,6 @@
 [ext_resource type="Theme" uid="uid://dhh77svvkoqgy" path="res://ui/theme/main_theme.tres" id="1_tlr4o"]
 [ext_resource type="Script" uid="uid://f1hv8w8jc082" path="res://map/scripts/map_view.gd" id="2_ev6oa"]
 [ext_resource type="Resource" uid="uid://c1mrlxnd8gwjl" path="res://map/res/data/map_config.tres" id="3_ev6oa"]
-[ext_resource type="Resource" uid="uid://dh6b88fdu2ucb" path="res://map/res/data/map_content_pool.tres" id="4_oxnmh"]
 [ext_resource type="Resource" uid="uid://d4bjheop27cpm" path="res://cards/templates/character_a/deck.tres" id="5_f7jus"]
 [ext_resource type="PackedScene" uid="uid://4bln64glqcwl" path="res://map/templates/map_layer_0.tscn" id="6_8nppi"]
 [ext_resource type="Script" uid="uid://4y47wixti8gt" path="res://map/scripts/map_board_input.gd" id="7_board"]
@@ -18,7 +17,6 @@ grow_vertical = 2
 theme = ExtResource("1_tlr4o")
 script = ExtResource("2_ev6oa")
 map_config = ExtResource("3_ev6oa")
-content_pool = ExtResource("4_oxnmh")
 starting_deck = ExtResource("5_f7jus")
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=1748054498]
@@ -32,7 +30,7 @@ stretch = true
 
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer" unique_id=1877666176]
 handle_input_locally = false
-size = Vector2i(1152, 648)
+size = Vector2i(1920, 1080)
 render_target_update_mode = 4
 
 [node name="MapLayer0" parent="SubViewportContainer/SubViewport" unique_id=2057812014 instance=ExtResource("6_8nppi")]
@@ -168,14 +166,6 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "节点"
-
-[node name="PanelBody" type="Label" parent="Overlay/Panel/PanelMargin/PanelVBox" unique_id=1281109687]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(1, 0)
-layout_mode = 2
-size_flags_vertical = 3
-text = "内容"
-autowrap_mode = 2
 
 [node name="Choices" type="VBoxContainer" parent="Overlay/Panel/PanelMargin/PanelVBox" unique_id=637160462]
 unique_name_in_owner = true

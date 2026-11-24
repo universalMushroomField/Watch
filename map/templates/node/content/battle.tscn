@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://c7mythoqdoa4g"]
+
+[node name="BattleContent" type="Label" unique_id=1216571342]
+text = "战斗场景占位"
+horizontal_alignment = 1
+autowrap_mode = 3
