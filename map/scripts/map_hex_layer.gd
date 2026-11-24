@@ -154,6 +154,14 @@ func get_hover_id() -> int:
 	return _hover_id
 
 
+## 底图在相机参考平面上的中心。
+func get_map_center() -> Vector3:
+	if terrain == null or terrain.mesh == null:
+		return global_position
+	var center := terrain.mesh.get_aabb().get_center()
+	return terrain.to_global(Vector3(center.x, 0.0, center.z))
+
+
 ## 已经生成的六边形数量。
 func get_tile_count() -> int:
 	return _tiles.size()

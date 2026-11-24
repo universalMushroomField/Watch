@@ -18,11 +18,17 @@ signal node_pressed(node: MapNode)
 
 var run: MapRun
 
+const PAN_THRESHOLD := 5.0
 var _hover_id := -1
+var _left_pressed := false
+var _panning := false
+var _press_position := Vector2.ZERO
 
 
 func set_run(map_run: MapRun) -> void:
 	run = map_run
+	_left_pressed = false
+	_panning = false
 	_hover_id = -1
 	if hex_layer != null:
 		hex_layer.set_hover_id(-1)
@@ -34,7 +40,8 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	var camera := hex_layer.camera as MapCamera if hex_layer != null else null
 	if event is InputEventMouseMotion and camera != null and event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
-		camera.orbit_drag(event.relative.x)
+		camera.orbit_drag(event.relative.x, event.relative.y)
+		_left_pressed = false
 		_update_hover(Vector2(-100000.0, -100000.0))
 		accept_event()
 		return
@@ -46,20 +53,40 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 				return
 			MOUSE_BUTTON_WHEEL_DOWN:
-				camera.reset_zoom()
+				camera.reset_zoom(hex_layer.get_map_center())
 				_update_hover(event.position)
 				accept_event()
 				return
 	if event is InputEventMouseMotion:
-		_update_hover(event.position)
-	elif event is InputEventMouseButton:
-		var button := event as InputEventMouseButton
-		if button.button_index == MOUSE_BUTTON_LEFT and button.pressed:
-			var node := _node_at(button.position)
-			if node != null:
+		if _left_pressed and camera != null and camera.is_zoomed() and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+			var previous: Vector2 = event.position - event.relative
+			if not _panning and event.position.distance_to(_press_position) >= PAN_THRESHOLD:
+				_panning = true
+				previous = _press_position
+			if _panning:
+				camera.pan_drag(_viewport_position(event.position) - _viewport_position(previous))
+				_update_hover(Vector2(-100000.0, -100000.0))
+				mouse_default_cursor_shape = Control.CURSOR_DRAG
 				accept_event()
-				node_pressed.emit(node)
-
+				return
+		_update_hover(event.position)
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_left_pressed = true
+			_panning = false
+			_press_position = event.position
+			accept_event()
+		elif _left_pressed:
+			_left_pressed = false
+			var was_panning := _panning
+			_panning = false
+			mouse_default_cursor_shape = Control.CURSOR_ARROW
+			_update_hover(event.position)
+			accept_event()
+			if not was_panning and event.position.distance_to(_press_position) < PAN_THRESHOLD:
+				var node := _node_at(event.position)
+				if node != null:
+					node_pressed.emit(node)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_MOUSE_EXIT:
