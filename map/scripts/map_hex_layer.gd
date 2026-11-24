@@ -36,6 +36,7 @@ var _interaction_plane := 0.0
 var _attachment_root: Node3D
 var _attachment_paths: MeshInstance3D
 var _interaction_paths: MeshInstance3D
+var _vertical_trim: MeshInstance3D
 var _paths: Array[PackedVector3Array] = []
 
 func _ready() -> void:
@@ -106,6 +107,7 @@ func _update_node_positions() -> void:
 		point.y = lerpf(_interaction_plane, point.y, _zoom_height_blend)
 		holder.global_position = point
 	_update_paths()
+	_update_vertical_trim()
 
 func refresh() -> void:
 	if run == null or run.graph == null:
@@ -319,8 +321,11 @@ func _create_tiles() -> void:
 
 
 func _create_paths() -> void:
-	_attachment_paths = _make_path_mesh("AttachmentPaths", Color(0.28, 0.66, 0.75))
-	_interaction_paths = _make_path_mesh("InteractionPaths", Color(1.0, 0.78, 0.4))
+	_attachment_paths = _make_path_mesh("AttachmentPaths", Color(0.28, 0.66, 0.75, 0.25), 0)
+	_interaction_paths = _make_path_mesh("InteractionPaths", Color(1.0, 0.78, 0.4), 1)
+	_vertical_trim = _make_path_mesh("edge_beautify_vertical", Color.WHITE, 0)
+	var trim_material := _vertical_trim.material_override as StandardMaterial3D
+	trim_material.vertex_color_use_as_albedo = true
 	for node in run.graph.nodes:
 		var attachment: Node3D = _tiles[node.id]["attachment"]
 		for neighbor_id in node.neighbor_ids:
@@ -334,10 +339,15 @@ func _create_paths() -> void:
 	_update_paths()
 
 
-func _make_path_mesh(node_name: String, color: Color) -> MeshInstance3D:
+func _make_path_mesh(node_name: String, color: Color, priority: int) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()
 	instance.name = node_name
-	instance.material_override = _line_material(color)
+	var material := _line_material(color)
+	# 两组路径都进入透明队列，按优先级绘制且互不写入深度。
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	material.render_priority = priority
+	instance.material_override = material
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	tiles_root.add_child(instance)
 	return instance
@@ -353,9 +363,26 @@ func _line_material(color: Color) -> StandardMaterial3D:
 func _update_paths() -> void:
 	if _interaction_paths == null:
 		return
-	_interaction_paths.visible = _zoom_height_blend < 0.999
-	if _interaction_paths.visible:
-		_interaction_paths.mesh = _build_paths_mesh(false)
+	_interaction_paths.mesh = _build_paths_mesh(false)
+
+
+func _update_vertical_trim() -> void:
+	if _vertical_trim == null:
+		return
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_LINES)
+	var has_segments := false
+	for entry: Dictionary in _tiles.values():
+		var holder: Node3D = entry["holder"]
+		var attachment: Node3D = entry["attachment"]
+		if holder.global_position.distance_squared_to(attachment.global_position) <= 0.000001:
+			continue
+		has_segments = true
+		surface.set_color(Color(1.0, 0.78, 0.4, 1.0))
+		surface.add_vertex(tiles_root.to_local(holder.global_position))
+		surface.set_color(Color(1.0, 0.78, 0.4, 0.0))
+		surface.add_vertex(tiles_root.to_local(attachment.global_position))
+	_vertical_trim.mesh = surface.commit() if has_segments else null
 
 
 func _build_paths_mesh(attached: bool) -> ArrayMesh:
@@ -368,7 +395,7 @@ func _build_paths_mesh(attached: bool) -> ArrayMesh:
 				surface.add_vertex(tiles_root.to_local(path[i + 1] + Vector3.UP * PATH_LIFT))
 		else:
 			for endpoint in [path[0], path[path.size() - 1]]:
-				endpoint.y = lerpf(_interaction_plane, endpoint.y, _zoom_height_blend)
+				endpoint.y = lerpf(_interaction_plane, endpoint.y, _zoom_height_blend) + PATH_LIFT * _zoom_height_blend
 				surface.add_vertex(tiles_root.to_local(endpoint))
 	return surface.commit()
 
@@ -377,10 +404,11 @@ func _clear_tiles() -> void:
 		var holder: Node3D = entry["holder"]
 		holder.free()
 	_tiles.clear()
-	for node in [_attachment_root, _attachment_paths, _interaction_paths]:
+	for node in [_attachment_root, _attachment_paths, _interaction_paths, _vertical_trim]:
 		if is_instance_valid(node):
 			node.free()
 	_attachment_root = null
 	_attachment_paths = null
 	_interaction_paths = null
+	_vertical_trim = null
 	_paths.clear()
