@@ -13,7 +13,7 @@ var _rng := RandomNumberGenerator.new()
 
 func _init(map_config: MapConfig = null, hex_layout: HexLayout = null) -> void:
 	config = map_config if map_config != null else MapConfig.new()
-	layout = hex_layout if hex_layout != null else HexLayout.new()
+	layout = hex_layout if hex_layout != null else HexLayout.from_config(config)
 
 
 ## 生成一张地图。[param seed_value] 小于 0 时随机取种子。

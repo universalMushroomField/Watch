@@ -8,17 +8,26 @@ extends RefCounted
 const SQRT3 := 1.7320508075688772
 
 ## 中间区域的列数，不含起点列和 Boss 列。
-var columns: int = 7
+var columns: int
 ## 中间区域的行数。
-var rows: int = 5
+var rows: int
 ## 六边形的外接圆半径，世界单位。
-var hex_radius: float = 3.2
+var hex_radius: float
 
 
-func _init(interior_columns: int = 7, interior_rows: int = 5, radius: float = 3.2) -> void:
+func _init(
+		interior_columns: int = MapConfig.DEFAULT_COLUMNS,
+		interior_rows: int = MapConfig.DEFAULT_ROWS,
+		radius: float = MapConfig.DEFAULT_HEX_RADIUS,
+) -> void:
 	columns = maxi(interior_columns, 1)
 	rows = maxi(interior_rows, 2)
 	hex_radius = maxf(radius, 0.1)
+
+
+## 无地形和相机的逻辑生成使用配置目标值。
+static func from_config(config: MapConfig) -> HexLayout:
+	return HexLayout.new(maxi(config.max_columns, 2), maxi(config.max_rows, 2), maxf(config.hex_radius, 0.5))
 
 
 ## 包含起点列和 Boss 列的总列数。

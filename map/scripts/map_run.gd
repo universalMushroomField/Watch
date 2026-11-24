@@ -42,7 +42,7 @@ func _init(
 		hex_layout: HexLayout = null,
 ) -> void:
 	config = map_config if map_config != null else MapConfig.new()
-	layout = hex_layout if hex_layout != null else HexLayout.new()
+	layout = hex_layout if hex_layout != null else HexLayout.from_config(config)
 	player = player_state if player_state != null else MapPlayerState.new()
 	if seed_value >= 0:
 		_run_seed = seed_value
