@@ -13,4 +13,6 @@ func add_segment(surface: SurfaceTool, a: Vector3, b: Vector3, view_depth: Vecto
 	var corners := [a - offset, a + offset, b - offset, b + offset]
 	for index in [0, 1, 2, 1, 3, 2]:
 		surface.set_color(Color(1.0, 1.0, 1.0, end_alpha if index >= 2 else 1.0))
+		surface.set_uv(Vector2((1.0 if index >= 2 else 0.0), float(index % 2)))
+		surface.set_normal((global_basis.inverse() * perpendicular).normalized())
 		surface.add_vertex(to_local(corners[index]))
