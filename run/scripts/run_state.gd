@@ -22,7 +22,7 @@ var act_index := 0
 ## 玩家初始金币。
 @export var starting_gold: int = 50
 ### 战斗场景，根据实际战斗节点提供
-var fight_system: BaseFightScene
+var fight_system: BaseFight
 ### 玩家角色，存在时优先使用它自己的卡组，由单局开始后角色选择后提供
 var player_character: CharacterSelectable
 

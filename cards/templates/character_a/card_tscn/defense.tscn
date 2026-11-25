@@ -5,7 +5,7 @@
 
 [ext_resource type="PackedScene" path="res://cards/templates/sprite_tscn/default_card_sprite.tscn" id="3_sprite"]
 
-[node name="defense" type="Control" unique_id=127464725 node_paths=PackedStringArray("sprite")]
+[node name="Defense" type="Control" unique_id=127464725 node_paths=PackedStringArray("sprite")]
 custom_minimum_size = Vector2(128, 128)
 offset_right = 128.0
 offset_bottom = 128.0

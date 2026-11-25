@@ -1,5 +1,5 @@
 ## 战斗场景的回合流程。
-class_name BaseFightScene
+class_name BaseFight
 extends Node2D
 
 const CARD_VIEW := preload("res://cards/templates/sprite_tscn/default_card_sprite.tscn")
@@ -41,7 +41,7 @@ func start_fight(player: CharacterSelectable) -> bool:
 	for enemy in enemies:
 		if is_instance_valid(enemy):
 			enemy.reset_action_state()
-	if fight_ui is FightingGUI:
+	if fight_ui is FightingGui:
 		fight_ui.bind_fight(self)
 	if fight_ui != null:
 		fight_ui.show()
@@ -84,7 +84,7 @@ func _refresh_hand() -> void:
 func end_player_turn() -> void:
 	if cur_stage != BattlePhase.Stage.PLAYER:
 		return
-	if fight_ui is FightingGUI:
+	if fight_ui is FightingGui:
 		fight_ui.cancel_play()
 	_enter_stage(BattlePhase.Stage.END)
 	if _finish_if_decided():

@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://b6wsnffuu8uia" path="res://ui/gui/fighting_gui.gd" id="1_gui"]
 [ext_resource type="Script" uid="uid://rqls3gamiye0" path="res://ui/gui/sequence_selector.gd" id="2_sequence"]
 
-[node name="Gui" type="Control" unique_id=202914131]
+[node name="FightingGui" type="Control" unique_id=202914131]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

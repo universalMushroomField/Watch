@@ -12,7 +12,7 @@
 
 - `Enemy extends Character`，持有 `action_states: Array[EnemyActionState]` 与 `initial_state`。
 - 每个 `EnemyActionState`：`intent_text`（意图文案）、`effects`（效果列表）、`next_state`（后继状态）。
-- 敌方回合按 `BaseFightScene.enemies` 数组顺序行动，每个敌人每回合行动一次。
+- 敌方回合按 `BaseFight.enemies` 数组顺序行动，每个敌人每回合行动一次。
 - 行动结算后 `current_state = next_state`，`reset_action_state()` 可在战斗开始时复位。
 - 意图文案显示在精灵上方，死亡后隐藏。
 - 状态机是线性的：没有随机分支，也没有条件分支。
