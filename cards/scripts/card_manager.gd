@@ -35,7 +35,7 @@ func get_deck(deck: CardDeck, player_unit: Character = null) -> void:
 		if _default_player == null:
 			_default_player = Character.new()
 			add_child(_default_player)
-		_default_player.life_count = 1
+		_default_player.health = 1
 		_default_player.armor = 0
 		_default_player.clear_damage_blocks()
 		player_unit = _default_player

@@ -31,7 +31,7 @@ func _refresh_intent() -> void:
 	if _intent_view == null:
 		return
 	var text := ""
-	if life_count > 0 and current_state >= 0 and current_state < action_states.size():
+	if health > 0 and current_state >= 0 and current_state < action_states.size():
 		var action := action_states[current_state]
 		if action != null:
 			text = action.intent_text
@@ -51,7 +51,7 @@ func _hide_intent(_character: Character) -> void:
 
 ## 每个敌方回合只结算一次行动，成功后切换到后继状态。
 func take_turn(target: Character, sequence: CardSequence, processor: EffectProcessor = null) -> bool:
-	if life_count <= 0 or not is_instance_valid(target) or target.life_count <= 0:
+	if health <= 0 or not is_instance_valid(target) or target.health <= 0:
 		return false
 	if current_state < 0 or current_state >= action_states.size():
 		return false

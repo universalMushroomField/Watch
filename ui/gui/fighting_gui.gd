@@ -113,7 +113,7 @@ func _drop_data(at_position: Vector2, data: Variant) -> void:
 func _enemy_at(viewport_position: Vector2) -> Enemy:
 	for index in range(_fight.enemies.size() - 1, -1, -1):
 		var enemy := _fight.enemies[index]
-		if is_instance_valid(enemy) and enemy.life_count > 0 and enemy.has_sprite_at(viewport_position):
+		if is_instance_valid(enemy) and enemy.health > 0 and enemy.has_sprite_at(viewport_position):
 			return enemy
 	return null
 

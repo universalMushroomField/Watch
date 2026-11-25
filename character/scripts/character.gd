@@ -4,9 +4,9 @@ extends Node
 class_name Character
 @export var character_id:String;
 @export var character_name:String;
-@export var life_count: int = 10:
+@export var health: int = 10:
 	set(value):
-		life_count = value
+		health = value
 		_refresh_health_bar()
 @export var sprite:AnimatedSprite2D
 signal died(character: Character)
@@ -23,7 +23,7 @@ var _blocked_sources: Array[Character] = []
 
 
 func _ready() -> void:
-	_initial_health = maxi(1, life_count)
+	_initial_health = maxi(1, health)
 	if sprite == null:
 		return
 	_health_bar = HEALTH_BAR.instantiate() as ProgressBar
@@ -35,11 +35,11 @@ func _ready() -> void:
 func _refresh_health_bar() -> void:
 	if _health_bar == null:
 		return
-	var capacity := maxi(_initial_health, life_count)
+	var capacity := maxi(_initial_health, health)
 	_health_bar.max_value = capacity
-	_health_bar.value = life_count
+	_health_bar.value = health
 	var text := _health_bar.get_node("HealthText") as Label
-	text.text = "%d / %d" % [maxi(0, life_count), capacity]
+	text.text = "%d / %d" % [maxi(0, health), capacity]
 	var armor_text := _health_bar.get_node("ArmorText") as Label
 	armor_text.text = "甲 %d" % armor
 	var bounds := _sprite_bounds()
@@ -71,7 +71,7 @@ func take_damage(amount: int, source: Character = null) -> int:
 
 ## 提交伤害时消耗护甲或一次抵消，锁定待结算的伤害。
 func prepare_damage(amount: int, source: Character = null) -> int:
-	if amount <= 0 or life_count <= 0:
+	if amount <= 0 or health <= 0:
 		return 0
 	var blocked := _blocked_sources.find(source)
 	if blocked >= 0:
@@ -83,11 +83,11 @@ func prepare_damage(amount: int, source: Character = null) -> int:
 
 
 func apply_resolved_damage(amount: int) -> int:
-	if amount <= 0 or life_count <= 0:
+	if amount <= 0 or health <= 0:
 		return 0
-	var lost := mini(life_count, amount)
-	life_count -= lost
-	if life_count == 0:
+	var lost := mini(health, amount)
+	health -= lost
+	if health == 0:
 		_on_death()
 	return lost
 

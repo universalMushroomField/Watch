@@ -94,7 +94,7 @@ func end_player_turn() -> void:
 	if _finish_if_decided():
 		return
 	for enemy in enemies.duplicate():
-		if not is_instance_valid(player_character) or player_character.life_count <= 0:
+		if not is_instance_valid(player_character) or player_character.health <= 0:
 			break
 		if is_instance_valid(enemy):
 			enemy.take_turn(player_character, card_manager.sequence, card_manager.effect_processor)
@@ -105,11 +105,11 @@ func play_card(instance: CardInstance, target: Enemy, sequence_start: int) -> bo
 	if cur_stage != BattlePhase.Stage.PLAYER or not is_instance_valid(instance):
 		return false
 	if instance.card.requires_target():
-		if not is_instance_valid(target) or target.life_count <= 0 or not enemies.has(target):
+		if not is_instance_valid(target) or target.health <= 0 or not enemies.has(target):
 			return false
 	var living_enemies: Array[Enemy] = []
 	for enemy in enemies:
-		if is_instance_valid(enemy) and enemy.life_count > 0:
+		if is_instance_valid(enemy) and enemy.health > 0:
 			living_enemies.append(enemy)
 	var context := {&"target": target, &"enemies": living_enemies}
 	if not card_manager.play(card_manager.hand.find(instance), context, sequence_start):
@@ -135,7 +135,7 @@ func _begin_player_turn() -> void:
 
 
 func _finish_if_decided() -> bool:
-	if is_instance_valid(player_character) and player_character.life_count > 0 and _has_living_enemy():
+	if is_instance_valid(player_character) and player_character.health > 0 and _has_living_enemy():
 		return false
 	_enter_stage(BattlePhase.Stage.FINISHED)
 	return true
@@ -148,6 +148,6 @@ func _enter_stage(next_stage: BattlePhase.Stage) -> void:
 
 func _has_living_enemy() -> bool:
 	for enemy in enemies:
-		if is_instance_valid(enemy) and enemy.life_count > 0:
+		if is_instance_valid(enemy) and enemy.health > 0:
 			return true
 	return false

@@ -14,7 +14,7 @@ func can_apply(context: Dictionary) -> bool:
 	if all_enemies:
 		return context.get(&"enemies") is Array
 	var target = context.get(&"target")
-	return target is Character and target.life_count > 0
+	return target is Character and target.health > 0
 
 
 func prepare(_sequence: CardSequence, context: Dictionary) -> Callable:

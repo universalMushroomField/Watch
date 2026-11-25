@@ -9,7 +9,7 @@ func requires_target() -> bool:
 
 func can_apply(context: Dictionary) -> bool:
 	var target = context.get(&"target")
-	return context.get(&"player") is Character and target is Character and target.life_count > 0
+	return context.get(&"player") is Character and target is Character and target.health > 0
 
 
 func apply(_sequence: CardSequence, context: Dictionary) -> void:
