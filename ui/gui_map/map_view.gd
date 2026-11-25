@@ -21,6 +21,7 @@ extends Control
 
 @onready var _act_label: Label = %ActLabel
 @onready var _health_label: Label = %HealthLabel
+@onready var _currency_icon: TextureRect = %CurrencyIcon
 @onready var _gold_label: Label = %GoldLabel
 @onready var _deck_label: Label = %DeckLabel
 @onready var _decay_label: Label = %DecayLabel
@@ -45,6 +46,7 @@ func _ready() -> void:
 		add_child(run_state)
 
 	run_state.prepare()
+	_status_label.text = GameText.shared().travel_hint
 	var layout := _hex_layer.make_layout(run_state.map_config)
 	run = run_state.create_map(layout)
 
@@ -58,12 +60,17 @@ func _ready() -> void:
 
 
 func _refresh() -> void:
-	_act_label.text = "第 %d 幕" % (run_state.act_index + 1)
-	_health_label.text = "生命 %d/%d" % [run_state.player.health, run_state.player.max_health]
-	_gold_label.text = "金币 %d" % run_state.player.gold
-	_deck_label.text = "卡组 %d 张" % run_state.player.get_deck_size()
+	var copy := GameText.shared()
+	_act_label.text = copy.act_label_format % (run_state.act_index + 1)
+	_health_label.text = copy.health_label_format % [
+		run_state.player.health, run_state.player.max_health]
+	_gold_label.text = copy.currency_amount_format % [copy.currency_name, run_state.player.gold]
+	_currency_icon.texture = copy.currency_icon
+	_currency_icon.visible = copy.currency_icon != null
+	_deck_label.text = copy.deck_label_format % run_state.player.get_deck_size()
 	var percent := roundi(run.get_decay_ratio() * 100.0)
-	_decay_label.text = "崩解度 %d%%（%d/%d）" % [percent, run.get_decay_visited_count(), run.get_decay_total_count()]
+	_decay_label.text = copy.decay_label_format % [
+		percent, run.get_decay_visited_count(), run.get_decay_total_count()]
 	_decay_bar.value = run.get_decay_ratio()
 	_hex_layer.refresh()
 
@@ -72,7 +79,7 @@ func _on_act_started(_act_index: int, _graph: MapGraph) -> void:
 	_hex_layer.show_run(run)
 	_board_input.set_run(run)
 	_refresh()
-	_show_status("第 %d 幕开始，崩解度已重置。" % (run_state.act_index + 1))
+	_show_status(GameText.shared().act_started_format % (run_state.act_index + 1))
 
 
 func _on_node_entered(node: MapNode) -> void:
@@ -82,12 +89,13 @@ func _on_node_entered(node: MapNode) -> void:
 	if content != null:
 		_choices.add_child(content.instantiate())
 	if node.type == MapNode.Type.BOSS:
-		_add_action("进入下一幕", _advance_act)
+		var copy := GameText.shared()
+		_add_action(copy.next_act_action, _advance_act)
 	else:
-		_add_action("返回地图", _close_panel)
+		_add_action(GameText.shared().close_panel_action, _close_panel)
 
 func _on_node_travel_rejected(_node_id: int) -> void:
-	_show_status("只能前往已探索节点的未探索邻居。")
+	_show_status(GameText.shared().travel_rejected_message)
 
 
 func _on_node_pressed(node: MapNode) -> void:
