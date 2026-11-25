@@ -14,6 +14,8 @@
 | 资源 | 描述用途；同类资产较多时加上类型或用途后缀 | `iron_sword.tres`、`stone_albedo.png`、`door_open.ogg` |
 | 编号资产 | 同系列使用统一位数 | `level_01.tscn`、`level_02.tscn` |
 
+例外：`docs/` 下的设计文档用中文主题名（如 `docs/战斗系统.md`），不受 `snake_case` 约束，因为它们是给人读的索引目标，不是引擎资源。文档目录结构见 `docs/Git协作指南.md` 的“文档维护”。
+
 ## 场景和节点
 
 - 节点名使用 `PascalCase`，优先表达职责，例如 `Player`、`HealthBar`、`Hitbox`。保留 `Timer` 等已经足够明确的默认名称，有多个同类节点时使用 `AttackCooldown`、`RespawnTimer` 等语义名称。
