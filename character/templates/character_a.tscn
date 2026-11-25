@@ -22,8 +22,6 @@ animations = [{
 [node name="CharacterA" type="Node" unique_id=147786586 node_paths=PackedStringArray("sprite")]
 script = ExtResource("1_r1ich")
 deck = ExtResource("2_tepe0")
-turn_draw_count = 8
-sequence_limit = 6
 character_id = "a_1_t"
 character_name = "A"
 sprite = NodePath("AnimatedSprite2D")

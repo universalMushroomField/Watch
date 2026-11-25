@@ -2,12 +2,8 @@ extends Character
 
 class_name CharacterSelectable
 
-## 玩家的卡组
+## 玩家的卡组，回合抽牌数与序列上限等数值随卡组资源一起配置。
 @export var deck:CardDeck
-## 回合开始时的抽牌数量。
-@export var turn_draw_count: int = 0
-## 战斗的序列长度上限，-1 表示不限。
-@export var sequence_limit: int = -1
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
