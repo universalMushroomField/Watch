@@ -52,10 +52,10 @@ terrain = NodePath("MeshInstance3D")
 camera = NodePath("Camera3D")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1091666386]
-transform = Transform3D(-0.6380711, -0.4740455, 0.6067505, 0, 0.7880107, 0.6156615, -0.76997745, 0.39283583, -0.5028069, 72.81007, 73.07938, -60.33683)
+transform = Transform3D(-0.61769617, -0.40503466, 0.6740908, 0, 0.8571673, 0.51503813, -0.7864168, 0.31813708, -0.52946895, 47.840153, 52.851784, -41.440056)
 projection = 1
 fov = 128.1
-size = 58.5
+size = 36.14
 near = 0.001
 script = ExtResource("4_camera")
 
@@ -70,7 +70,6 @@ erosion_strength = 0.5
 intact_depth = 0.1
 
 [node name="ParticleFog" type="MultiMeshInstance3D" parent="MeshInstance3D" unique_id=2002054581]
-visible = false
 material_override = SubResource("FogMaterial")
 cast_shadow = 0
 script = ExtResource("8_cloud")

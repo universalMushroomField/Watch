@@ -21,29 +21,13 @@ uniform float noise_detail : hint_range(1.0, 4.0, 1.0) = 2.0;
 /** 噪声围绕中间值的对比度，值越大，亮暗分区越明显。 */
 uniform float contrast : hint_range(0.5, 4.0, 0.1) = 1.5;
 
-#include "res://shaders/include/viewport_edge_noise.gdshaderinc"
+#include "res://map/shaders/terrain/terrain_surface.gdshaderinc"
 
 // 在边带内比较覆盖率与流动噪声，保留的白模片元接受光照和补光。
 void fragment() {
-    vec2 pixel = SCREEN_UV * VIEWPORT_SIZE;
-    float band = edge_width * min(VIEWPORT_SIZE.x, VIEWPORT_SIZE.y);
-    vec2 center = (floor(pixel / block_size) + 0.5) * block_size;
-    vec2 edge_sample = mix(pixel, center, breakup);
-    float edge_distance = distance_to_edge(edge_sample, VIEWPORT_SIZE);
-
-    if (edge_distance < band) {
-        float coverage = smoothstep(0.0, band, edge_distance);
-        float boundary = smoothstep(0.0, min(block_size, band * 0.3), edge_distance);
-        float alpha = coverage * boundary;
-
-        // —— 替换点：用流动 fbm 代替离散哈希 ——
-        vec2 dir = normalize(flow_direction + vec2(0.0001));
-        vec2 noise_uv = edge_sample / block_size + dir * TIME * flow_speed;
-        float n = fbm(noise_uv, noise_detail);
-        // 提高对比度，避免整片“糊成一团”
-        n = clamp((n - 0.5) * contrast + 0.5, 0.0, 1.0);
-
-        if (alpha <= n) discard;
+    if (terrain_edge_missing(SCREEN_UV, VIEWPORT_SIZE, TIME, edge_width, block_size, breakup,
+            flow_direction, flow_speed, noise_detail, contrast)) {
+        discard;
     }
 
     ALBEDO = terrain_color.rgb;
