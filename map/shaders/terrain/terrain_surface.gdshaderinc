@@ -49,22 +49,18 @@ float distance_to_edge(vec2 pixel, vec2 viewport_size) {
 void fragment() {
     vec2 pixel = SCREEN_UV * VIEWPORT_SIZE;
     float band = edge_width * min(VIEWPORT_SIZE.x, VIEWPORT_SIZE.y);
-    float edge_distance = distance_to_edge(pixel, VIEWPORT_SIZE);
+    vec2 center = (floor(pixel / block_size) + 0.5) * block_size;
+    vec2 edge_sample = mix(pixel, center, breakup);
+    float edge_distance = distance_to_edge(edge_sample, VIEWPORT_SIZE);
 
     if (edge_distance < band) {
-        // 边缘形状：保留原来的方块化采样 + breakup
-        vec2 cell = floor(pixel / block_size);
-        vec2 center = (cell + 0.5) * block_size;
-        float cell_distance = max(0.0, distance_to_edge(center, VIEWPORT_SIZE));
-        float sample_distance = mix(edge_distance, cell_distance, breakup);
-
-        float coverage = smoothstep(0.0, band, sample_distance);
+        float coverage = smoothstep(0.0, band, edge_distance);
         float boundary = smoothstep(0.0, min(block_size, band * 0.3), edge_distance);
         float alpha = coverage * boundary;
 
         // —— 替换点：用流动 fbm 代替离散哈希 ——
         vec2 dir = normalize(flow_direction + vec2(0.0001));
-        vec2 noise_uv = pixel / block_size + dir * TIME * flow_speed;
+        vec2 noise_uv = edge_sample / block_size + dir * TIME * flow_speed;
         float n = fbm(noise_uv, noise_detail);
         // 提高对比度，避免整片“糊成一团”
         n = clamp((n - 0.5) * contrast + 0.5, 0.0, 1.0);
