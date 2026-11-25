@@ -1,4 +1,4 @@
-class_name FightingGUI
+class_name FightingGui
 extends Control
 
 const CARD_VIEW := preload("res://cards/templates/sprite_tscn/default_card_sprite.tscn")
@@ -6,7 +6,7 @@ const CARD_VIEW := preload("res://cards/templates/sprite_tscn/default_card_sprit
 @export_range(1, 20, 1, "or_greater") var cards_per_row: int = 6
 
 var card_manager: CardManager
-var _fight: BaseFightScene
+var _fight: BaseFight
 var _pending_card: CardInstance
 var _pending_target: Enemy
 var _selected_start := -1
@@ -68,7 +68,7 @@ func _show_pile(title: String, cards: Array[CardInstance]) -> void:
 	pile_scroll.scroll_horizontal = 0
 
 
-func bind_fight(fight: BaseFightScene) -> void:
+func bind_fight(fight: BaseFight) -> void:
 	_fight = fight
 	card_manager = fight.card_manager
 	card_manager.sequence.changed.connect(_refresh_sequence)
