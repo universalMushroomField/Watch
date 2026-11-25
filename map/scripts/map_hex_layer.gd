@@ -61,23 +61,10 @@ func _on_terrain_rebuilt() -> void:
 		show_run(run)
 
 
-## 根据地形和相机可视范围计算棋盘布局。
+## 根据地形和相机可视范围计算棋盘布局，几何拟合见 [method HexLayout.fit]。
 func make_layout(config: MapConfig) -> HexLayout:
 	_surface.build(terrain)
-	var rect := _available_rect(config)
-	var target := HexLayout.from_config(config)
-	var target_radius := target.hex_radius
-	var interior_columns := int(floor(rect.size.x / (SQRT3 * target_radius) - 2.5))
-	var interior_rows := int(floor((rect.size.y / target_radius - 0.5) / 1.5))
-	interior_columns = clampi(interior_columns, 2, target.columns)
-	interior_rows = clampi(interior_rows, 2, target.rows)
-
-	# 用实际列数重新拟合半径，保证棋盘完整落在可用矩形内。
-	var span_columns := SQRT3 * (float(interior_columns) + 2.5)
-	var span_rows := 1.5 * float(interior_rows) + 0.5
-	var radius := minf(rect.size.x / span_columns, rect.size.y / span_rows)
-	radius = minf(radius, target_radius)
-	return HexLayout.new(interior_columns, interior_rows, radius)
+	return HexLayout.fit(_available_rect(config), config)
 
 
 ## 显示当前幕的顶点网络。

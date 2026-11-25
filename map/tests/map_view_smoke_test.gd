@@ -29,6 +29,15 @@ func _run() -> void:
 	_check(view.run_state != null, "单局状态已接入")
 	_check(view.run.layout != null, "地图使用六边形布局")
 	_check(view._hex_layer != null, "六边形层已创建")
+	var board: HexLayout = view.run.layout
+	var board_rect: Rect2 = view._hex_layer._available_rect(view.run_state.map_config)
+	print("  实机布局 %d×%d R=%.3f span=%.3f×%.3f nodes=%d 可用矩形=%.3f×%.3f" % [
+		board.columns, board.rows, board.hex_radius, board.get_world_width(), board.get_world_depth(),
+		view.run.graph.get_node_count(), board_rect.size.x, board_rect.size.y])
+	_check(board.get_world_width() <= board_rect.size.x + 0.001 and board.get_world_depth() <= board_rect.size.y + 0.001,
+		"棋盘完整落在可用矩形内")
+	_check(board.columns <= view.run_state.map_config.max_columns and board.rows <= view.run_state.map_config.max_rows,
+		"棋盘不超过配置的列/行上限")
 	_check(view._hex_layer.get_tile_count() == view.run.graph.get_node_count(), "每个节点都生成了六边形")
 	var layer: MapHexLayer = view._hex_layer
 	var model := layer.terrain as MapTerrainModel
