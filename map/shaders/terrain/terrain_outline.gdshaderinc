@@ -1,11 +1,16 @@
+// 地形外扩轮廓通道，共享碎块位移与侵蚀判定。
 #include "res://map/shaders/terrain/terrain_fragment_motion.gdshaderinc"
 #include "res://map/shaders/terrain/terrain_breakup.gdshaderinc"
 
 // 沿真实断面外扩一层，深度测试保留露在实体轮廓外的部分。
+/** 外扩轮廓的颜色和不透明度。 */
 uniform vec4 outline_color : source_color = vec4(0.27, 0.82, 0.96, 0.48);
+/** 沿模型法线外扩的宽度，体素表层使用较窄的轮廓。 */
 uniform float outline_width : hint_range(0.0, 0.3, 0.005) = 0.045;
+/** 无光照轮廓的颜色亮度倍率。 */
 uniform float emission_strength : hint_range(0.0, 3.0, 0.05) = 1.15;
 
+// 记录外扩前的采样位置，使轮廓跟随碎块下沉并沿法线扩张。
 void vertex() {
 	intact_position = VERTEX - NORMAL * 0.0001;
 	VERTEX.y -= debris_drop(COLOR, TIME);
@@ -13,6 +18,7 @@ void vertex() {
 	VERTEX += NORMAL * outline_width * width;
 }
 
+// 剔除侵蚀样本，再绘制半透明轮廓。
 void fragment() {
 	if (terrain_sample_missing(intact_position, use_voxel_depth ? COLOR.r : 0.0, TIME)) {
 		discard;

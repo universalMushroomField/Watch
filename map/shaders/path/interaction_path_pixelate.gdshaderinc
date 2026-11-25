@@ -1,6 +1,10 @@
+// 交互路线的像素化通道，以屏幕方格中心判定路线覆盖范围。
+/** 屏幕采样格边长，单位为像素。 */
 uniform float pixel_size : hint_range(1.0, 16.0, 1.0) = 4.0;
+/** 交互路径的颜色，透明通道控制路线的不透明度。 */
 uniform vec4 pixel_color : source_color = vec4(0.12, 0.75, 0.70, 0.65);
 
+// 扩大线带在裁剪空间的边距，为像素格采样留出空间。
 void vertex() {
 	// Expand the overlay so grid cells can extend past the original ribbon.
 	vec4 clip = PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
@@ -11,6 +15,7 @@ void vertex() {
 	POSITION = clip;
 }
 
+// 将屏幕格心还原到线带 UV，裁掉线宽和端点以外的片元。
 void fragment() {
 	// Classify the whole screen cell by its center rather than the current fragment.
 	vec2 pixel = SCREEN_UV * VIEWPORT_SIZE;

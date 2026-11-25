@@ -1,10 +1,15 @@
+// 白模的后处理通道，以屏幕方格中心的颜色重绘可见地形。
 shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_never, fog_disabled, shadows_disabled;
 
+/** 引擎提供的不透明通道颜色，用于读取像素格中心的底模颜色。 */
 uniform sampler2D opaque_color : hint_screen_texture, repeat_disable, filter_nearest;
+/** 引擎提供的不透明通道深度，用于保护前景标记和已有缺口。 */
 uniform sampler2D opaque_depth : hint_depth_texture, repeat_disable, filter_nearest;
+/** 屏幕采样格边长，单位为像素。 */
 uniform int pixel_size : hint_range(1, 16, 1) = 4;
 
+// 核对底模深度后采样格心颜色，跳过前景和崩解缺口。
 void fragment() {
 	// 只覆盖上一遍实际写入深度的白模表面，崩解缺口保持贯通。
 	float depth = textureLod(opaque_depth, SCREEN_UV, 0.0).r;
