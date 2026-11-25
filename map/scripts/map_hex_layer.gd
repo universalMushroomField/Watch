@@ -45,12 +45,20 @@ var _paths: Array[PackedVector3Array] = []
 func _ready() -> void:
 	if terrain == null:
 		terrain = get_node_or_null("MeshInstance3D") as MeshInstance3D
+	if terrain is MapTerrainModel:
+		(terrain as MapTerrainModel).terrain_rebuilt.connect(_on_terrain_rebuilt)
 	if camera == null:
 		camera = get_node_or_null("Camera3D") as Camera3D
 	if tiles_root == null:
 		tiles_root = Node3D.new()
 		tiles_root.name = "Tiles"
 		add_child(tiles_root)
+
+
+func _on_terrain_rebuilt() -> void:
+	if run != null:
+		_surface.build(terrain)
+		show_run(run)
 
 
 ## 根据地形和相机可视范围计算棋盘布局。

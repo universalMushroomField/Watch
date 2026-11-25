@@ -18,8 +18,8 @@ albedo_color = Color(0.44, 0.82, 0.81, 1)
 
 [sub_resource type="SphereMesh" id="InteractionMesh"]
 material = SubResource("InteractionMaterial")
-radius = 0.14
-height = 0.28
+radius = 0.22
+height = 0.44
 
 [node name="EventLocation" type="Node3D"]
 script = ExtResource("1")
@@ -41,6 +41,8 @@ cast_shadow = 0
 position = Vector3(0, 0.62, 0)
 billboard = 1
 no_depth_test = true
+render_priority = 2
+outline_render_priority = 1
 font_size = 56
 outline_size = 14
 pixel_size = 0.02
