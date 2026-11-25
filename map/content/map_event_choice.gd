@@ -15,7 +15,7 @@ extends Resource
 
 
 ## 把选项结果结算到玩家状态。
-func apply(player: MapPlayerState) -> void:
+func apply(player: RunPlayerState) -> void:
 	if player == null:
 		return
 	if max_health_delta != 0:

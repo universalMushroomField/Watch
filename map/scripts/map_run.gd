@@ -6,10 +6,6 @@
 class_name MapRun
 extends RefCounted
 
-## 新的一幕开始，地图已生成。
-signal act_started(act_index: int, graph: MapGraph)
-## 一幕结束（调用 advance_act 时触发）。
-signal act_completed(act_index: int, decay_ratio: float)
 ## 第一次进入某个节点。
 signal node_entered(node: MapNode)
 ## 目标节点不可前往：已被探索、不是已探索节点的邻居，或本幕已经结束。
@@ -19,55 +15,28 @@ signal decay_changed(ratio: float)
 
 ## 地图生成参数。
 var config: MapConfig
-## 玩家状态。
-var player: MapPlayerState
 ## 当前幕的地图。
 var graph: MapGraph
 ## 当前幕使用的六边形布局。
 var layout: HexLayout
-## 当前幕的序号，从 0 开始。
-var act_index: int = 0
 ## 玩家当前所在节点编号。
 var current_id: int = -1
 
 var _visited_ids := {}
-var _rng := RandomNumberGenerator.new()
-var _run_seed: int = 0
 
 
-func _init(
-		map_config: MapConfig = null,
-		player_state: MapPlayerState = null,
-		seed_value: int = -1,
-		hex_layout: HexLayout = null,
-) -> void:
-	config = map_config if map_config != null else MapConfig.new()
-	layout = hex_layout if hex_layout != null else HexLayout.from_config(config)
-	player = player_state if player_state != null else MapPlayerState.new()
-	if seed_value >= 0:
-		_run_seed = seed_value
-		_rng.seed = seed_value
-	else:
-		_rng.randomize()
-		_run_seed = _rng.randi()
-	start_act(0)
+func _init(map_config: MapConfig, hex_layout: HexLayout) -> void:
+	config = map_config
+	layout = hex_layout
 
 
-## 开始指定幕，生成新地图并重置崩解度。
-func start_act(index: int) -> void:
-	act_index = maxi(index, 0)
-	graph = MapGenerator.new(config, layout).generate(_run_seed + act_index * 7919)
+## 根据本幕种子重新生成地图，清空幕内探索记录。
+func generate(act_seed: int) -> void:
+	graph = MapGenerator.new(config, layout).generate(act_seed)
 	_visited_ids.clear()
 	current_id = graph.start_id
 	_mark_visited(current_id)
-	act_started.emit(act_index, graph)
 	decay_changed.emit(get_decay_ratio())
-
-
-## 结束当前幕并进入下一幕。
-func advance_act() -> void:
-	act_completed.emit(act_index, get_decay_ratio())
-	start_act(act_index + 1)
 
 
 ## 当前所在节点。
