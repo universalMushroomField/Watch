@@ -8,8 +8,12 @@ func _init() -> void:
 	var config := MapConfig.new()
 	var signatures := {}
 
-	for seed_value in range(200):
-		var run := MapRun.new(config, MapPlayerState.new(70, 50), seed_value)
+	for seed_value in range(1, 201):
+		var session := RunState.new()
+		session.run_seed = seed_value
+		session.map_config = config
+		var run := session.create_map(HexLayout.from_config(config))
+		session.queue_free()
 		var graph := run.graph
 		var label := "seed %d: " % seed_value
 
@@ -74,8 +78,8 @@ func _init() -> void:
 			failures.append(label + "本幕结束后仍可移动")
 
 		var old_graph := graph
-		run.advance_act()
-		if run.act_index != 1:
+		session.advance_act()
+		if session.act_index != 1:
 			failures.append(label + "进入下一幕失败")
 		if run.graph == old_graph or run.get_visited_count() != 1 or not is_zero_approx(run.get_decay_ratio()):
 			failures.append(label + "下一幕未重置")
@@ -85,7 +89,7 @@ func _init() -> void:
 			failures.append(label + "不同种子生成了相同地图")
 		signatures[signature] = true
 
-	var player := MapPlayerState.new(50, 10)
+	var player := RunPlayerState.new(50, 10)
 	var choice := MapEventChoice.new()
 	choice.gold_delta = 15
 	choice.health_delta = -5
@@ -96,7 +100,7 @@ func _init() -> void:
 	var deck := CardDeck.new()
 	deck.turn_draw_count = 5
 	deck.cards.append(CardData.new())
-	var state := MapPlayerState.new(40, 0, deck)
+	var state := RunPlayerState.new(40, 0, deck)
 	if state.deck == deck or state.get_deck_size() != 1 or state.deck.turn_draw_count != 5:
 		failures.append("卡组复制失败")
 

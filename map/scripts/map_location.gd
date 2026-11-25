@@ -1,8 +1,6 @@
 class_name MapLocation
 extends Node3D
 
-@export var content_scene: PackedScene
-
 @onready var attachment: Node3D = $AttachmentPoint
 @onready var interaction: Node3D = $InteractionPoint
 @onready var label: Label3D = $InteractionPoint/Label

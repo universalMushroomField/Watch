@@ -1,18 +1,16 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bevnx52wgl3t"]
 
-[ext_resource type="Script" path="res://map/scripts/map_path.gd" id="1"]
+[ext_resource type="Script" uid="uid://dim0jl8ci5i5n" path="res://map/scripts/map_path.gd" id="1"]
+[ext_resource type="Shader" uid="uid://cxldgopg15quj" path="res://map/shaders/path/interaction_path_pixelate.gdshader" id="1_x3ise"]
 
-[sub_resource type="StandardMaterial3D" id="PathMaterial"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_h3kya"]
 render_priority = 0
-transparency = 1
-shading_mode = 0
-cull_mode = 2
-depth_draw_mode = 2
-vertex_color_use_as_albedo = true
-albedo_color = Color(1, 0.78, 0.4, 1)
+shader = ExtResource("1_x3ise")
+shader_parameter/pixel_size = 4.0
+shader_parameter/pixel_color = Color(0.12, 0.75, 0.7, 0.65)
 
-[node name="edge_beautify_vertical" type="MeshInstance3D"]
-material_override = SubResource("PathMaterial")
+[node name="edge_beautify_vertical" type="MeshInstance3D" unique_id=611856949]
+material_override = SubResource("ShaderMaterial_h3kya")
 cast_shadow = 0
 script = ExtResource("1")
 width = 0.035

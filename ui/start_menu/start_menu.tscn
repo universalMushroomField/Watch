@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://6nksrhx61ep5"]
 
 [ext_resource type="Script" uid="uid://dsyrw463wtbrc" path="res://ui/start_menu/start_menu.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://run/templates/run.tscn" id="2_dbk64"]
+[ext_resource type="PackedScene" path="res://ui/character_select/character_select.tscn" id="2_dbk64"]
 
 [node name="StartMenu" type="Control" unique_id=907568525]
 layout_mode = 3

@@ -9,7 +9,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var scene: PackedScene = load("res://map/templates/map_view.tscn")
+	var scene: PackedScene = load("res://ui/gui_map/map_view.tscn")
 	_check(scene != null, "地图场景可以加载")
 	if scene == null:
 		_finish()
@@ -37,7 +37,7 @@ func _run() -> void:
 	var locations_valid := true
 	for node in view.run.graph.nodes:
 		var location := layer.get_location(node.id)
-		locations_valid = locations_valid and location != null and location.scene_file_path == layer.LOCATION_SCENES[node.type].resource_path and location.content_scene != null
+		locations_valid = locations_valid and location != null and location.scene_file_path == layer.LOCATION_SCENES[node.type].resource_path and view.content_scenes.has(node.type)
 	_check(locations_valid, "每个地点加载对应类型的独立场景及内容资源")
 	var attached := true
 	var planar := true
@@ -87,26 +87,26 @@ func _run() -> void:
 	_check(pick_holder.global_position.is_equal_approx(original_position), "缩放复位后恢复节点高度")
 	var path := _find_path(view.run, view.run.current_id, view.run.graph.boss_id)
 	_check(path.size() > 1, "起点到 Boss 存在路径")
-	var initial_gold: int = view.run.player.gold
+	var initial_gold: int = view.run_state.player.gold
 	for node_id in path:
 		if node_id == view.run.current_id:
 			continue
 		view.run.travel_to(node_id)
 		await process_frame
-		var expected := layer.get_location(node_id).content_scene.resource_path
+		var expected := "res://ui/gui_map/content/%s.tscn" % str(MapNode.Type.find_key(view.run.graph.get_node_by_id(node_id).type)).to_lower()
 		_check(view._choices.get_child_count() > 0 and view._choices.get_child(0).scene_file_path == expected, "进入地点挂载已配置的内容场景")
 		view._close_panel()
 		await process_frame
 
 	_check(view.run.graph.get_node_by_id(view.run.graph.boss_id).visited, "可以走到 Boss")
-	_check(view.run.player.gold == initial_gold, "地点占位内容不结算金币")
+	_check(view.run_state.player.gold == initial_gold, "地点占位内容不结算金币")
 	_check(view.run.is_act_cleared(), "Boss 节点标记本幕完成")
 	_check(view.run.get_decay_ratio() > 0.0, "探索后崩解度上升")
 
-	var first_act: int = view.run.act_index
-	view.run.advance_act()
+	var first_act: int = view.run_state.act_index
+	view.run_state.advance_act()
 	await process_frame
-	_check(view.run.act_index == first_act + 1, "进入下一幕")
+	_check(view.run_state.act_index == first_act + 1, "进入下一幕")
 	_check(view.run.current_id == view.run.graph.start_id, "新一幕从起点开始")
 	_check(view.run.get_visited_count() == 1, "新一幕只访问了起点")
 	_check(is_zero_approx(view.run.get_decay_ratio()), "新一幕崩解度重置")

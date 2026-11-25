@@ -1,5 +1,5 @@
 ## 一局游戏中随地图推进的玩家状态：生命、金币和卡组。
-class_name MapPlayerState
+class_name RunPlayerState
 extends RefCounted
 
 ## 生命上限。
@@ -20,6 +20,7 @@ func _init(initial_max_health: int = 70, starting_gold: int = 50, starting_deck:
 	if starting_deck != null:
 		deck.turn_draw_count = starting_deck.turn_draw_count
 		deck.sequence_limit = starting_deck.sequence_limit
+		deck.sequence_carryover = starting_deck.sequence_carryover
 		deck.cards.assign(starting_deck.cards)
 		deck.reward_pool.assign(starting_deck.reward_pool)
 

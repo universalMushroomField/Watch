@@ -5,10 +5,17 @@
 ## 使用，也可以单独运行调试（此时会自己创建一份 [RunState]）。
 extends Control
 
-## 地图生成参数，留空时使用默认配置。
-@export var map_config: MapConfig
-## 本局使用的角色卡组，会在开局时复制一份。
-@export var starting_deck: CardDeck
+@export var content_scenes: Dictionary[MapNode.Type, PackedScene] = {
+	MapNode.Type.BATTLE: preload("res://ui/gui_map/content/battle.tscn"),
+	MapNode.Type.BOSS: preload("res://ui/gui_map/content/boss.tscn"),
+	MapNode.Type.ELITE: preload("res://ui/gui_map/content/elite.tscn"),
+	MapNode.Type.EVENT: preload("res://ui/gui_map/content/event.tscn"),
+	MapNode.Type.REST: preload("res://ui/gui_map/content/rest.tscn"),
+	MapNode.Type.SHOP: preload("res://ui/gui_map/content/shop.tscn"),
+	MapNode.Type.START: preload("res://ui/gui_map/content/start.tscn"),
+	MapNode.Type.TREASURE: preload("res://ui/gui_map/content/treasure.tscn"),
+}
+
 ## 单局状态。留空时自己创建一份，方便单独运行地图场景调试。
 @export var run_state: RunState
 
@@ -18,7 +25,7 @@ extends Control
 @onready var _deck_label: Label = %DeckLabel
 @onready var _decay_label: Label = %DecayLabel
 @onready var _decay_bar: ProgressBar = %DecayBar
-@onready var _hex_layer: MapHexLayer = $SubViewportContainer/SubViewport/MapLayer0
+@onready var _hex_layer: MapHexLayer = %MapLayer0
 @onready var _board_input: MapBoardInput = %BoardInput
 @onready var _status_label: Label = %StatusLabel
 @onready var _overlay: Control = %Overlay
@@ -32,53 +39,29 @@ var _panel_open := false
 
 
 func _ready() -> void:
-	if map_config == null:
-		map_config = MapConfig.new()
-
-	if run_state == null:
-		# 作为单局场景的一部分时，向上找 RunState；单独运行地图场景时自己建一份。
-		run_state = _find_run_state()
 	if run_state == null:
 		run_state = RunState.new()
 		run_state.name = "RunState"
 		add_child(run_state)
-		run_state.map_config = map_config
-		run_state.starting_deck = starting_deck
-	elif run_state.map_config == null:
-		run_state.map_config = map_config
-	if run_state.starting_deck == null:
-		run_state.starting_deck = starting_deck
 
+	run_state.prepare()
 	var layout := _hex_layer.make_layout(run_state.map_config)
 	run = run_state.create_map(layout)
 
-	run.act_started.connect(_on_act_started)
+	run_state.act_started.connect(_on_act_started)
 	run.node_entered.connect(_on_node_entered)
 	run.node_travel_rejected.connect(_on_node_travel_rejected)
-	_board_input.hex_layer = _hex_layer
-	_board_input.viewport_container = $SubViewportContainer
-	_board_input.sub_viewport = $SubViewportContainer/SubViewport
 	_board_input.node_pressed.connect(_on_node_pressed)
 	_hex_layer.show_run(run)
 	_board_input.set_run(run)
 	_refresh()
 
 
-## 向上查找所属的单局节点，找不到时返回 null。
-func _find_run_state() -> RunState:
-	var ancestor := get_parent()
-	while ancestor != null:
-		if ancestor is RunState:
-			return ancestor as RunState
-		ancestor = ancestor.get_parent()
-	return null
-
-
 func _refresh() -> void:
-	_act_label.text = "第 %d 幕" % (run.act_index + 1)
-	_health_label.text = "生命 %d/%d" % [run.player.health, run.player.max_health]
-	_gold_label.text = "金币 %d" % run.player.gold
-	_deck_label.text = "卡组 %d 张" % run.player.get_deck_size()
+	_act_label.text = "第 %d 幕" % (run_state.act_index + 1)
+	_health_label.text = "生命 %d/%d" % [run_state.player.health, run_state.player.max_health]
+	_gold_label.text = "金币 %d" % run_state.player.gold
+	_deck_label.text = "卡组 %d 张" % run_state.player.get_deck_size()
 	var percent := roundi(run.get_decay_ratio() * 100.0)
 	_decay_label.text = "崩解度 %d%%（%d/%d）" % [percent, run.get_decay_visited_count(), run.get_decay_total_count()]
 	_decay_bar.value = run.get_decay_ratio()
@@ -89,15 +72,15 @@ func _on_act_started(_act_index: int, _graph: MapGraph) -> void:
 	_hex_layer.show_run(run)
 	_board_input.set_run(run)
 	_refresh()
-	_show_status("第 %d 幕开始，崩解度已重置。" % (run.act_index + 1))
+	_show_status("第 %d 幕开始，崩解度已重置。" % (run_state.act_index + 1))
 
 
 func _on_node_entered(node: MapNode) -> void:
 	_refresh()
 	_open_panel(node.get_type_label())
-	var location := _hex_layer.get_location(node.id)
-	if location != null and location.content_scene != null:
-		_choices.add_child(location.content_scene.instantiate())
+	var content: PackedScene = content_scenes.get(node.type)
+	if content != null:
+		_choices.add_child(content.instantiate())
 	if node.type == MapNode.Type.BOSS:
 		_add_action("进入下一幕", _advance_act)
 	else:
@@ -114,7 +97,7 @@ func _on_node_pressed(node: MapNode) -> void:
 
 
 func _advance_act() -> void:
-	run.advance_act()
+	run_state.advance_act()
 	_close_panel()
 
 
