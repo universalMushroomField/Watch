@@ -32,6 +32,7 @@ func _init(map_config: MapConfig, hex_layout: HexLayout) -> void:
 
 ## 根据本幕种子重新生成地图，清空幕内探索记录。
 func generate(act_seed: int) -> void:
+	assert(layout != null, "创建地图前必须提供拟合后的棋盘布局。")
 	graph = MapGenerator.new(config, layout).generate(act_seed)
 	_visited_ids.clear()
 	current_id = graph.start_id

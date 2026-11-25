@@ -1,8 +1,9 @@
 ## 地图生成参数。
 ##
 ## 棋盘是六边形蜂巢：中间是 [member max_columns] × [member max_rows] 的完整
-## 矩形，起点和 Boss 各占最左/最右一列。实际列数和行数会按地形与相机可视
-## 范围缩小，见 [MapHexLayer.make_layout]。
+## 矩形，起点和 Boss 各占最左/最右一列。这两个值只是**上限**，不是目标值：
+## 实际列数和行数由 [method HexLayout.fit] 按地形与相机可视范围缩小，见
+## [MapHexLayer.make_layout]。
 class_name MapConfig
 extends Resource
 
@@ -11,9 +12,9 @@ const DEFAULT_ROWS := 4
 const DEFAULT_HEX_RADIUS := 4.2
 
 @export_group("Hex Board")
-## 中间区域的最大列数。
+## 中间区域的最大列数，由 [method HexLayout.fit] 按可用矩形向下缩，不是目标值。
 @export_range(2, 24) var max_columns: int = DEFAULT_COLUMNS
-## 中间区域的最大行数。
+## 中间区域的最大行数，由 [method HexLayout.fit] 按可用矩形向下缩，不是目标值。
 @export_range(2, 12) var max_rows: int = DEFAULT_ROWS
 ## 六边形外接圆半径的目标值，单位与世界坐标一致。
 @export var hex_radius: float = DEFAULT_HEX_RADIUS

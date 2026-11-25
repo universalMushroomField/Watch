@@ -13,11 +13,13 @@ var _rng := RandomNumberGenerator.new()
 
 func _init(map_config: MapConfig = null, hex_layout: HexLayout = null) -> void:
 	config = map_config if map_config != null else MapConfig.new()
-	layout = hex_layout if hex_layout != null else HexLayout.from_config(config)
+	layout = hex_layout
 
 
 ## 生成一张地图。[param seed_value] 小于 0 时随机取种子。
+## 必须显式传入拟合后的布局（[method HexLayout.fit]），没有默认回退值。
 func generate(seed_value: int = -1) -> MapGraph:
+	assert(layout != null, "MapGenerator 需要显式传入拟合后的棋盘布局。")
 	if seed_value >= 0:
 		_rng.seed = seed_value
 	else:
