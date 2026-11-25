@@ -27,6 +27,12 @@ func _run() -> void:
 	_check(view.run.get_visited_count() == 1, "开局只访问了起点")
 	_check(is_zero_approx(view.run.get_decay_ratio()), "开局崩解度为 0")
 	_check(view.run_state != null, "单局状态已接入")
+	var copy := GameText.shared()
+	_check(copy.currency_name != "" and copy.currency_icon != null, "文案资源配了货币名与图标")
+	_check(view._gold_label.text == copy.currency_amount_format % [copy.currency_name, view.run_state.player.gold],
+		"顶栏货币按文案资源显示名称与数量")
+	_check(not view._gold_label.text.contains("金币"), "顶栏不再有写死的旧货币名")
+	_check(view._currency_icon.texture == copy.currency_icon and view._currency_icon.visible, "顶栏货币图标来自文案资源")
 	_check(view.run.layout != null, "地图使用六边形布局")
 	_check(view._hex_layer != null, "六边形层已创建")
 	var board: HexLayout = view.run.layout

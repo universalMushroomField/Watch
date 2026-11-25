@@ -3,6 +3,7 @@
 [ext_resource type="Theme" uid="uid://dhh77svvkoqgy" path="res://ui/theme/main_theme.tres" id="1_tlr4o"]
 [ext_resource type="Script" uid="uid://f1hv8w8jc082" path="res://ui/gui_map/map_view.gd" id="2_ev6oa"]
 [ext_resource type="PackedScene" uid="uid://4bln64glqcwl" path="res://map/templates/map_layer_0.tscn" id="6_8nppi"]
+[ext_resource type="Texture2D" uid="uid://4vrruuxjlc4t" path="res://ui/art/currency_icon.png" id="4_icon"]
 [ext_resource type="Script" uid="uid://4y47wixti8gt" path="res://ui/gui_map/map_board_input.gd" id="7_board"]
 
 [node name="MapView" type="Control" unique_id=806389364]
@@ -74,10 +75,24 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "生命 70/70"
 
-[node name="GoldLabel" type="Label" parent="Margin/VBox/Header" unique_id=1876610143]
+[node name="Currency" type="HBoxContainer" parent="Margin/VBox/Header" unique_id=1876610143]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="CurrencyIcon" type="TextureRect" parent="Margin/VBox/Header/Currency" unique_id=1876610144]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("4_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GoldLabel" type="Label" parent="Margin/VBox/Header/Currency" unique_id=1876610145]
 unique_name_in_owner = true
 layout_mode = 2
-text = "金币 50"
+text = "活性晶珀 50"
 
 [node name="DeckLabel" type="Label" parent="Margin/VBox/Header" unique_id=1256438593]
 unique_name_in_owner = true
