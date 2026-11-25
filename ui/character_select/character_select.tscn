@@ -1,0 +1,63 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/character_select/character_select.gd" id="1"]
+[ext_resource type="Theme" path="res://ui/theme/main_theme.tres" id="2"]
+
+[node name="CharacterSelect" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("2")
+script = ExtResource("1")
+
+[node name="Layout" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = 40.0
+offset_right = -48.0
+offset_bottom = -40.0
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="Layout"]
+theme_override_font_sizes/font_size = 36
+text = "选择角色"
+
+[node name="Body" type="HBoxContainer" parent="Layout"]
+size_flags_vertical = 3
+theme_override_constants/separation = 40
+
+[node name="Roster" type="VBoxContainer" parent="Layout/Body"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 0)
+
+[node name="Preview" type="VBoxContainer" parent="Layout/Body"]
+size_flags_horizontal = 3
+
+[node name="DeckTitle" type="Label" parent="Layout/Body/Preview"]
+unique_name_in_owner = true
+text = "点击角色查看初始卡组"
+
+[node name="Scroll" type="ScrollContainer" parent="Layout/Body/Preview"]
+unique_name_in_owner = true
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Cards" type="HFlowContainer" parent="Layout/Body/Preview/Scroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+
+[node name="Actions" type="HBoxContainer" parent="Layout"]
+alignment = 2
+theme_override_constants/separation = 16
+
+[node name="Back" type="Button" parent="Layout/Actions"]
+unique_name_in_owner = true
+text = "返回主菜单"
+
+[node name="Confirm" type="Button" parent="Layout/Actions"]
+unique_name_in_owner = true
+disabled = true
+text = "确认开始"

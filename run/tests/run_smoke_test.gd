@@ -61,11 +61,17 @@ func _run() -> void:
 			var before := run_state.map.get_visited_count()
 			run_state.map.travel_to(target.id)
 			_check(run_state.map.get_visited_count() == before + 1, "前往邻居后探索计数增加")
+			run_state.create_map(run_state.map.layout)
+			_check(run_state.map.current_id == target.id, "再次进入地图保留当前位置")
+			run_state.player.add_gold(7)
+			var gold := run_state.player.gold
+			run_state.advance_act()
+			_check(run_state.act_index == 1 and run_state.player.gold == gold, "换幕后保留单局玩家资源")
 
 	var menu_scene: PackedScene = load("res://ui/start_menu/start_menu.tscn")
 	var menu := menu_scene.instantiate()
 	var configured: PackedScene = menu.get("game_scene")
-	_check(configured != null and configured.resource_path.ends_with("run/templates/run.tscn"), "开始菜单进入单局场景")
+	_check(configured != null and configured.resource_path.ends_with("character_select.tscn"), "开始菜单进入角色选择场景")
 	menu.free()
 
 	run.queue_free()
