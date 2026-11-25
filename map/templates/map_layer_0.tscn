@@ -65,8 +65,12 @@ material_override = SubResource("ShaderMaterial_edge")
 extra_cull_margin = 3.0
 script = ExtResource("6_model")
 source_mesh = ExtResource("1_st031")
+voxel_size = 0.2
+erosion_strength = 0.5
+intact_depth = 0.1
 
 [node name="ParticleFog" type="MultiMeshInstance3D" parent="MeshInstance3D" unique_id=2002054581]
+visible = false
 material_override = SubResource("FogMaterial")
 cast_shadow = 0
 script = ExtResource("8_cloud")
