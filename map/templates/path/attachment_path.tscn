@@ -1,18 +1,16 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cfetck2o8ia82"]
 
-[ext_resource type="Script" path="res://map/scripts/map_path.gd" id="1"]
+[ext_resource type="Script" uid="uid://dim0jl8ci5i5n" path="res://map/scripts/map_path.gd" id="1"]
+[ext_resource type="Shader" uid="uid://cxldgopg15quj" path="res://map/shaders/path/interaction_path_pixelate.gdshader" id="1_ad3b5"]
 
-[sub_resource type="StandardMaterial3D" id="PathMaterial"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_x3ise"]
 render_priority = 0
-transparency = 1
-shading_mode = 0
-cull_mode = 2
-depth_draw_mode = 2
-vertex_color_use_as_albedo = false
-albedo_color = Color(0.28, 0.66, 0.75, 0.25)
+shader = ExtResource("1_ad3b5")
+shader_parameter/pixel_size = 4.0
+shader_parameter/pixel_color = Color(0.12, 0.75, 0.7, 0.65)
 
-[node name="AttachmentPaths" type="MeshInstance3D"]
-material_override = SubResource("PathMaterial")
+[node name="AttachmentPaths" type="MeshInstance3D" unique_id=680850952]
+material_override = SubResource("ShaderMaterial_x3ise")
 cast_shadow = 0
 script = ExtResource("1")
 width = 0.035
