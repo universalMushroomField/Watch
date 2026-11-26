@@ -1,6 +1,6 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bg7foon1bd61b"]
 
-[ext_resource type="Script" path="res://map/scripts/map_location.gd" id="1"]
+[ext_resource type="Script" uid="uid://dw4hvqrbqtejt" path="res://map/scripts/map_location.gd" id="1"]
 
 [sub_resource type="StandardMaterial3D" id="GroundMaterial"]
 shading_mode = 0
@@ -20,29 +20,29 @@ material = SubResource("InteractionMaterial")
 radius = 0.22
 height = 0.44
 
-[node name="EventLocation" type="Node3D"]
+[node name="EventLocation" type="Node3D" unique_id=1030963173]
 script = ExtResource("1")
 palette_index = 30
 
-[node name="AttachmentPoint" type="Node3D" parent="."]
+[node name="AttachmentPoint" type="Node3D" parent="." unique_id=265596418]
 
-[node name="Marker" type="MeshInstance3D" parent="AttachmentPoint"]
+[node name="Marker" type="MeshInstance3D" parent="AttachmentPoint" unique_id=612364827]
+cast_shadow = 0
 mesh = SubResource("GroundMesh")
+
+[node name="InteractionPoint" type="Node3D" parent="." unique_id=1791410418]
+
+[node name="Marker" type="MeshInstance3D" parent="InteractionPoint" unique_id=1503181582]
 cast_shadow = 0
-
-[node name="InteractionPoint" type="Node3D" parent="."]
-
-[node name="Marker" type="MeshInstance3D" parent="InteractionPoint"]
 mesh = SubResource("InteractionMesh")
-cast_shadow = 0
 
-[node name="Label" type="Label3D" parent="InteractionPoint"]
-position = Vector3(0, 0.62, 0)
+[node name="Label" type="Label3D" parent="InteractionPoint" unique_id=308437912]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, 0)
+pixel_size = 0.02
 billboard = 1
 no_depth_test = true
 render_priority = 2
 outline_render_priority = 1
+modulate = Color(0.607843, 0.819608, 0.878431, 1)
 font_size = 56
 outline_size = 14
-pixel_size = 0.02
-modulate = Color(0.607843, 0.819608, 0.878431, 1)

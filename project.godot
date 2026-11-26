@@ -31,6 +31,7 @@ project/assembly_name="Watch"
 
 [gui]
 
+theme/custom="res://ui/theme/main_theme.tres"
 theme/custom_font="res://ui/fonts/fusion-pixel-12px-proportional-zh_hans.otf"
 
 [physics]
@@ -40,3 +41,4 @@ theme/custom_font="res://ui/fonts/fusion-pixel-12px-proportional-zh_hans.otf"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+environment/defaults/default_clear_color=Color(0.015686, 0, 0.145098, 1)

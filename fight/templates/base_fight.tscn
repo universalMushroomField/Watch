@@ -24,12 +24,10 @@ script = ExtResource("3_p2c5i")
 metadata/_custom_type_script = "uid://ctot6ggi73n7b"
 
 [node name="PlayerPosition" type="Node2D" parent="." unique_id=868441030]
-visible = false
-position = Vector2(225, 354)
+position = Vector2(289, 701)
 
 [node name="EnemyPosition" type="Node2D" parent="." unique_id=591698675]
-visible = false
-position = Vector2(877, 205)
+position = Vector2(1319, 212)
 
 [node name="CharacterA" parent="." unique_id=147786586 instance=ExtResource("4_plm6p")]
 

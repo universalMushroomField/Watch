@@ -54,19 +54,26 @@ func _initialize() -> void:
 	var positions: PackedVector3Array = fragments[Mesh.ARRAY_VERTEX]
 	var flags: PackedColorArray = fragments[Mesh.ARRAY_COLOR]
 	var underside := false
+	var interior_fragment := false
+	var tilted_fragment := false
 	var sides := 0
+	var fragment_normals: PackedVector3Array = fragments[Mesh.ARRAY_NORMAL]
 	for i in range(positions.size()):
 		if flags[i].g < 0.5:
 			continue
 		var p := positions[i]
-		if p.y < 0.0 and absf(p.x) < 12 and absf(p.z) < 5:
-			underside = true
+		interior_fragment = interior_fragment or (absf(p.x) < 12 and absf(p.z) < 4)
+		underside = underside or p.y < 0.0
+		var normal := fragment_normals[i].abs()
+		tilted_fragment = tilted_fragment or normal[normal.max_axis_index()] < 0.99
 		if p.y > 1.0:
 			if p.x < -14: sides |= 1
 			if p.x > 14: sides |= 2
 			if p.z < -6: sides |= 4
 			if p.z > 6: sides |= 8
-	_check(underside and sides == 15, "底面下方和四边都有独立的动态碎块")
+	_check(underside and sides == 15, "崖脚和四边都有独立碎块")
+	_check(not interior_fragment, "模型内部无侵蚀碎块")
+	_check(tilted_fragment, "边缘碎块具有非轴对齐的断面")
 	var repeat := MapVoxelTerrain.build(source, VOXEL_SIZE, EROSION, SEED_VALUE)
 	_check(faces == repeat.get_faces(), "同种子生成相同碎块")
 	var other := MapVoxelTerrain.build(source, VOXEL_SIZE, EROSION, SEED_VALUE + 1)
@@ -83,8 +90,25 @@ func _initialize() -> void:
 			var rim_height := surface.height_at(point)
 			_check(rim_height > 0.0 and rim_height < height, "四周边缘向下形成台阶")
 		_check(lower > upper, "崖脚堆积的覆盖范围大于完整上层")
+	_check_slope()
 	print("VOXEL TERRAIN TEST ", "PASSED" if failures == 0 else "FAILED")
 	quit(0 if failures == 0 else 1)
+
+
+func _check_slope() -> void:
+	var box := BoxMesh.new()
+	box.size = Vector3(20.0, 6.0, 12.0)
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	tool.append_from(box, 0, Transform3D(Basis(Vector3.BACK, 0.2), Vector3.ZERO))
+	var source := MapSurfaceSampler.new()
+	source.build_mesh(tool.commit())
+	var surface := MapSurfaceSampler.new()
+	surface.build_mesh(MapVoxelTerrain.build(source, VOXEL_SIZE, EROSION, SEED_VALUE))
+	for x in [-3.25, -0.25, 0.25, 3.25]:
+		var point := Vector2(x, 0.0)
+		_check(absf(surface.height_at(point) - source.height_at(point)) < 0.001,
+			"斜坡 %s: %s / %s" % [point, surface.height_at(point), source.height_at(point)])
 
 
 ## 累计切面上方水平三角形的有向投影面积，得到闭合体素在该高度的实体截面积。

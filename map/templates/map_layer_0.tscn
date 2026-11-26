@@ -19,7 +19,9 @@ resource_local_to_scene = true
 render_priority = 0
 next_pass = SubResource("TerrainPixelate")
 shader = ExtResource("2_edge")
-shader_parameter/terrain_color = Color(0.945098, 0.901961, 0.882353, 1)
+shader_parameter/region_transition_width = 2.0
+shader_parameter/region_flow_speed = 0.65
+shader_parameter/region_node_count = 0
 shader_parameter/edge_width = 0.17
 shader_parameter/block_size = 2.0
 shader_parameter/breakup = 1.0
@@ -41,7 +43,8 @@ shader_parameter/fog_opacity = 0.4450000211375
 [sub_resource type="Environment" id="Environment_3g44r"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s4i45"]
-albedo_color = Color(0.015686, 0, 0.145098, 1)
+albedo_color = Color(0, 0, 0, 1)
+metallic_specular = 0.0
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_6vd2c"]
 material = SubResource("StandardMaterial3D_s4i45")
@@ -65,9 +68,7 @@ material_override = SubResource("ShaderMaterial_edge")
 extra_cull_margin = 3.0
 script = ExtResource("6_model")
 source_mesh = ExtResource("1_st031")
-voxel_size = 0.2
-erosion_strength = 0.5
-intact_depth = 0.1
+voxelize_terrain = true
 
 [node name="ParticleFog" type="MultiMeshInstance3D" parent="MeshInstance3D" unique_id=2002054581]
 material_override = SubResource("FogMaterial")
@@ -75,8 +76,9 @@ cast_shadow = 0
 script = ExtResource("8_cloud")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=210431350]
-transform = Transform3D(0.6156615, 0.59471923, 0.5169815, 0, -0.65605897, 0.7547096, 0.7880107, -0.46464565, -0.40391025, 0, 12.13, 33.631336)
+transform = Transform3D(0.6156616, 0.6824375, -0.39400497, 0, 0.49999955, 0.8660257, 0.78801066, -0.5331788, 0.30783054, 0, 0, 0)
 light_color = Color(0.945098, 0.901961, 0.882353, 1)
+shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1687985104]
 environment = SubResource("Environment_3g44r")

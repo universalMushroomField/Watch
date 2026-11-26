@@ -4,7 +4,7 @@ render_mode unshaded, cull_disabled, blend_mix, depth_draw_never, shadows_disabl
 /** 屏幕采样格边长，单位为像素。 */
 uniform float pixel_size : hint_range(1.0, 16.0, 1.0) = 4.0;
 /** 交互路径的颜色，透明通道控制路线的不透明度。 */
-uniform vec4 pixel_color : source_color = vec4(0.12, 0.75, 0.70, 0.65);
+uniform vec4 pixel_color : source_color = vec4(0.27451, 0.619608, 0.807843, 0.65);
 
 // 扩大线带在裁剪空间的边距，为像素格采样留出空间。
 void vertex() {
