@@ -61,12 +61,24 @@ emm....少女折寿中
 | `map/` | 地图生成、节点、内容资源与地图界面 |
 | `run/` | 单局状态（种子、配置、生命、金币） |
 | `shop/` | 商店条目与库存数据 |
-| `public/` | 跨模块共享的资源（当前只有 `color_palette_neutral.tres` 中性色板，尚未被引用） |
+| `public/` | 跨模块共享的资源：美术 32 色色板 `color_palette_art.tres`（唯一真源，在编辑器里改），与尚未被引用的 `color_palette_neutral.tres` 中性色板 |
 | `components/` | 通用组件（网格生成、种子生成、地形噪声） |
 | `ui/` | 开始菜单、设置、确认弹窗、字体、主题、界面文案（`ui/text/`）与图标（`ui/art/`） |
 | `shaders/` | 通用着色器与光照 |
 | `docs/` | 设计文档、协作与命名规范 |
 | `project.godot` | Godot 项目配置 |
+
+## 调色板
+
+美术限色是**全局 32 色**（是预算，测试不再强制），唯一真源是 `public/color_palette_art.tres`（Godot `ColorPalette`），直接在编辑器的调色板面板里改。六条明度阶按索引排列：`0–4` 亮暖肤色、`5–7` 暗暖棕、`8–13` 红、`14–19` 蓝紫、`20–25` 绿→黄、`26–31` 青；顺序与美术本地的 `color.ase` 一致，改色只替换同位置的色值，不要重排。
+
+改完跑一次检查：
+
+```bash
+godot --headless --path . -s res://public/tests/art_palette_test.gd
+```
+
+它只查手改最容易出的两类低级错：色值重复、误填半透明。**UI 是这套预算的例外**：面板与文字另用中性灰阶，不占这 32 色；候选文件是 `public/color_palette_neutral.tres`，尚未接入主题。
 
 ## 文档
 
