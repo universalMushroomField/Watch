@@ -4,6 +4,16 @@ extends MeshInstance3D
 @export_range(0.005, 0.5, 0.005, "or_greater") var width: float = 0.05
 
 
+## 折线颜色取自色板，模板里的 `pixel_color` 只作编辑器预览。
+func _ready() -> void:
+	var material := material_override as ShaderMaterial
+	if material == null:
+		return
+	var line := ArtPalette.color(ArtPalette.PATH_LINE)
+	line.a = ArtPalette.PATH_LINE_ALPHA
+	material.set_shader_parameter("pixel_color", line)
+
+
 func add_segment(surface: SurfaceTool, a: Vector3, b: Vector3, view_depth: Vector3,
 		width_scale: float, end_alpha: float = 1.0) -> void:
 	var perpendicular := (b - a).cross(view_depth)

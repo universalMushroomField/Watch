@@ -7,7 +7,7 @@
 render_priority = 0
 shader = ExtResource("1_ad3b5")
 shader_parameter/pixel_size = 4.0
-shader_parameter/pixel_color = Color(0.12, 0.75, 0.7, 0.65)
+shader_parameter/pixel_color = Color(0.27451, 0.619608, 0.807843, 0.65)
 
 [node name="AttachmentPaths" type="MeshInstance3D" unique_id=680850952]
 material_override = SubResource("ShaderMaterial_x3ise")
