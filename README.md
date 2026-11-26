@@ -106,3 +106,7 @@ godot --headless --path . -s res://public/tests/art_palette_test.gd
 游戏界面与地图地点标签默认使用 [Fusion Pixel Font（缝合像素字体）](https://github.com/TakWolf/fusion-pixel-font)，采用 [2026.11.10 发行版](https://github.com/TakWolf/fusion-pixel-font/releases/tag/2026.11.10)的 12 px 比例简体中文 OTF。字体按 [SIL Open Font License 1.1](ui/fonts/LICENSE-OFL) 随项目分发。
 
 感谢 TakWolf 和 Fusion Pixel Font 的贡献者维护这套开源字体。
+
+## 许可证
+
+本项目采用 [Apache License 2.0](LICENSE)。带有独立许可声明的第三方资源适用各自的许可。
