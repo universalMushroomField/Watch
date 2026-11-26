@@ -2,6 +2,10 @@ class_name MapPath
 extends MeshInstance3D
 
 @export_range(0.005, 0.5, 0.005, "or_greater") var width: float = 0.05
+## 线色在色板里的下标；-1 表示用 [constant ArtPalette.PATH_LINE]。
+@export var palette_index: int = -1
+## 线的不透明度；负数表示用 [constant ArtPalette.PATH_LINE_ALPHA]。
+@export var line_alpha: float = -1.0
 
 
 ## 折线颜色取自色板，模板里的 `pixel_color` 只作编辑器预览。
@@ -9,8 +13,10 @@ func _ready() -> void:
 	var material := material_override as ShaderMaterial
 	if material == null:
 		return
-	var line := ArtPalette.color(ArtPalette.PATH_LINE)
-	line.a = ArtPalette.PATH_LINE_ALPHA
+	var index := palette_index if palette_index >= 0 else ArtPalette.PATH_LINE
+	var opacity := line_alpha if line_alpha >= 0.0 else ArtPalette.PATH_LINE_ALPHA
+	var line := ArtPalette.color(index)
+	line.a = opacity
 	material.set_shader_parameter("pixel_color", line)
 
 

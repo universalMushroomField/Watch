@@ -21,12 +21,22 @@ const FOG_MIST := 19
 const PATH_LINE := 28
 ## 折线透明度；色板色本身都是不透明的。
 const PATH_LINE_ALPHA := 0.65
-## 当前节点标签。
-const LABEL_CURRENT := 4
-## 悬停节点标签。
-const LABEL_HOVER := 24
-## 已访问且不是当前节点的标签。
-const LABEL_VISITED := 29
+## 悬停节点时高亮出来的那条路径。
+const PATH_HOVER := 25
+## 高亮路径的不透明度，比普通折线更实。
+const PATH_HOVER_ALPHA := 0.95
+## 当前节点标记：玩家所在节点的球、标签和玩家标记统一用这一色。
+const NODE_CURRENT := 10
+## 已访问节点（不是玩家所在处）：球与标签统一换成这一色，与所有地点类型色都不撞。
+const NODE_VISITED := 7
+## 可前往节点的环形标记。
+const NODE_REACHABLE := 24
+## 鼠标悬停节点的标签与环形标记。
+const NODE_HOVER := 4
+## 玩家所在节点标签的色：压在 NODE_CURRENT 的实心圆底上，要靠对比读字。
+const NODE_CURRENT_LABEL := 4
+## 未到达节点向地表色淡出的比例，越大越淡；只降饱和度、不动色相，保留类型辨识。
+const NODE_UNREACHED_FADE := 0.55
 
 static var _colors := PackedColorArray()
 static var _loaded := false
@@ -47,6 +57,6 @@ static func color(index: int) -> Color:
 	return _colors[index]
 
 
-## 比 [param index] 暗一阶的颜色，用于不可达状态；已是最暗一阶时返回原色。
-static func darker(index: int) -> Color:
-	return color(maxi(index - 1, 0))
+## 把第 [param index] 色向底模色淡出 [param amount]（0~1），用于「还没走到、先不抢眼」的状态。
+static func fade(index: int, amount: float) -> Color:
+	return color(index).lerp(color(TERRAIN), clampf(amount, 0.0, 1.0))

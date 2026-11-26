@@ -80,6 +80,52 @@ func can_travel_to(node_id: int) -> bool:
 	return false
 
 
+## 从当前节点走到目标节点的最短路径（节点编号序列），找不到时返回空数组。
+## 中间步骤只经过已探索节点；目标本身还没探索时，最后一步是从最近的已探索邻居跨过去。
+func find_path_to(node_id: int) -> Array[int]:
+	var result: Array[int] = []
+	if graph == null or graph.get_node_by_id(current_id) == null or graph.get_node_by_id(node_id) == null:
+		return result
+	if node_id == current_id:
+		result.append(current_id)
+		return result
+
+	var previous := {}
+	var depth := {current_id: 0}
+	var queue: Array[int] = [current_id]
+	var head := 0
+	while head < queue.size():
+		var from_id := queue[head]
+		head += 1
+		var from := graph.get_node_by_id(from_id)
+		if from == null:
+			continue
+		for neighbor_id in from.neighbor_ids:
+			if depth.has(neighbor_id):
+				continue
+			var neighbor := graph.get_node_by_id(neighbor_id)
+			if neighbor == null:
+				continue
+			if neighbor_id != node_id and not neighbor.visited:
+				continue
+			previous[neighbor_id] = from_id
+			depth[neighbor_id] = depth[from_id] + 1
+			if neighbor_id == node_id:
+				head = queue.size()
+				break
+			queue.append(neighbor_id)
+
+	if not depth.has(node_id):
+		return result
+	var step := node_id
+	while true:
+		result.push_front(step)
+		if step == current_id:
+			break
+		step = previous[step]
+	return result
+
+
 ## 移动到某个已探索节点的相邻节点。新节点会触发 node_entered 并提高崩解度。
 func travel_to(node_id: int) -> bool:
 	if not can_travel_to(node_id):

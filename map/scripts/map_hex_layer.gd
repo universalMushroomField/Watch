@@ -4,9 +4,16 @@ extends Node3D
 
 const SQRT3 := 1.7320508075688772
 const PATH_LIFT := 0.035
+## 悬停路径比基础折线再抬高一点，避免两层线在斜视时穿插闪烁。
+const HOVER_PATH_LIFT := 0.012
+## 玩家所在节点标签上下浮动的幅度与速度。
+const LABEL_BOB_HEIGHT := 0.07
+const LABEL_BOB_SPEED := 3.2
 const ATTACHMENT_PATH := preload("res://map/templates/path/attachment_path.tscn")
 const INTERACTION_PATH := preload("res://map/templates/path/interaction_path.tscn")
+const HOVER_PATH := preload("res://map/templates/path/hover_path.tscn")
 const VERTICAL_TRIM := preload("res://map/templates/path/vertical_trim.tscn")
+const HIGHLIGHT := preload("res://map/templates/node/highlight.tscn")
 
 const LOCATION_SCENES := {
 	MapNode.Type.START: preload("res://map/templates/node/start.tscn"),
@@ -39,8 +46,13 @@ var _path_view_depth := Vector3.BACK
 var _interaction_plane := 0.0
 var _attachment_paths: MapPath
 var _interaction_paths: MapPath
+var _hover_attached_path: MapPath
+var _hover_plane_path: MapPath
 var _vertical_trim: MapPath
 var _paths: Array[PackedVector3Array] = []
+## 悬停节点时额外画出的「走过去」路径。
+var _hover_paths: Array[PackedVector3Array] = []
+var _bob_time := 0.0
 
 func _ready() -> void:
 	if terrain == null:
@@ -83,8 +95,10 @@ func show_run(map_run: MapRun) -> void:
 	_update_node_positions()
 	refresh()
 
-## 按当前进度刷新标签和可达状态。
+## 按当前进度刷新每个地点的状态，并让玩家所在节点的标签缓缓浮动。
 func _process(delta: float) -> void:
+	_bob_time += delta
+	_update_label_bob()
 	if run == null or not camera is MapCamera:
 		return
 	var target: float = camera.get_zoom_progress()
@@ -109,6 +123,7 @@ func _update_node_positions() -> void:
 	_update_paths()
 	_update_vertical_trim()
 
+## 按当前进度刷新每个地点的状态：球体、标签与标记环一起换色。
 func refresh() -> void:
 	if run == null or run.graph == null:
 		return
@@ -120,23 +135,29 @@ func refresh() -> void:
 		var location := get_location(node.id)
 		if location == null:
 			continue
-		var label_color: Color = location.label_color
-		if node.visited and node.id != run.current_id:
-			label_color = ArtPalette.color(ArtPalette.LABEL_VISITED)
-		elif not reachable.has(node.id):
-			label_color = ArtPalette.darker(location.palette_index)
-
-		if node.id == run.current_id:
-			label_color = ArtPalette.color(ArtPalette.LABEL_CURRENT)
-		elif node.id == _hover_id:
-			label_color = ArtPalette.color(ArtPalette.LABEL_HOVER)
-
-		var label: Label3D = location.label
-		label.text = node.get_short_label()
-		label.modulate = label_color
-		label.scale = Vector3.ONE * (1.22 if node.id == run.current_id else 1.0)
+		location.label.text = node.get_short_label()
+		location.apply_state(_node_state(node, reachable), node.id == _hover_id)
 
 
+## 节点此刻的状态，优先级：玩家所在 > 已访问 > 可前往 > 还没连过来。
+func _node_state(node: MapNode, reachable: Dictionary) -> MapLocation.State:
+	if node.id == run.current_id:
+		return MapLocation.State.CURRENT
+	if node.visited:
+		return MapLocation.State.VISITED
+	if reachable.has(node.id):
+		return MapLocation.State.REACHABLE
+	return MapLocation.State.UNREACHED
+
+
+## 玩家所在节点的标签上下浮动，配合旋转虚线环强调「你在这里」。
+func _update_label_bob() -> void:
+	if run == null:
+		return
+	var current := get_location(run.current_id)
+	var offset := sin(_bob_time * LABEL_BOB_SPEED) * LABEL_BOB_HEIGHT
+	for location in _locations.values():
+		location.set_label_offset(offset if location == current else 0.0)
 
 ## 把场景里写死的灰阶换成色板色：底模、粒子雾、平行光与背景板。
 func _apply_palette() -> void:
@@ -162,12 +183,28 @@ func _apply_palette() -> void:
 		background.material_override = background_material
 
 
-## 设置鼠标悬停的节点编号，-1 表示没有。
+## 设置鼠标悬停的节点编号，-1 表示没有。悬停已探索节点时会亮出从玩家位置走过去的路径。
 func set_hover_id(node_id: int) -> void:
 	if _hover_id == node_id:
 		return
 	_hover_id = node_id
+	_rebuild_hover_path()
 	refresh()
+
+
+## 悬停节点时高亮「从玩家脚下走过去」的整条路径：沿已探索节点走，最后一步进目标。
+func _rebuild_hover_path() -> void:
+	_hover_paths.clear()
+	if run != null and run.graph != null and _hover_id >= 0 and _hover_id != run.current_id:
+		var ids := run.find_path_to(_hover_id)
+		for index in range(ids.size() - 1):
+			var from := get_location(ids[index])
+			var to := get_location(ids[index + 1])
+			if from == null or to == null:
+				_hover_paths.clear()
+				break
+			_hover_paths.append(_surface.trace(from.attachment.global_position, to.attachment.global_position))
+	_update_paths()
 
 
 ## 当前悬停的节点编号。
@@ -309,12 +346,18 @@ func _create_tiles() -> void:
 		location.attachment.global_position = Vector3(center.x, ground, center.y)
 		if location.label.font == null:
 			location.label.font = project_font
+		var highlight := HIGHLIGHT.instantiate() as MapHighlight
+		location.interaction.add_child(highlight)
+		highlight.position = location.label.position
+		location.highlight = highlight
 		_locations[node.id] = location
 
 
 func _create_paths() -> void:
 	_attachment_paths = _instantiate_path(ATTACHMENT_PATH)
 	_interaction_paths = _instantiate_path(INTERACTION_PATH)
+	_hover_attached_path = _instantiate_path(HOVER_PATH, ArtPalette.PATH_HOVER, ArtPalette.PATH_HOVER_ALPHA)
+	_hover_plane_path = _instantiate_path(HOVER_PATH, ArtPalette.PATH_HOVER, ArtPalette.PATH_HOVER_ALPHA)
 	_vertical_trim = _instantiate_path(VERTICAL_TRIM)
 	if camera != null:
 		_path_view_depth = camera.global_basis.z.normalized()
@@ -329,8 +372,12 @@ func _create_paths() -> void:
 			_paths.append(_surface.trace(a, b))
 
 
-func _instantiate_path(scene: PackedScene) -> MapPath:
+func _instantiate_path(scene: PackedScene, palette_index: int = -1, line_alpha: float = -1.0) -> MapPath:
 	var path := scene.instantiate() as MapPath
+	if palette_index >= 0:
+		path.palette_index = palette_index
+	if line_alpha >= 0.0:
+		path.line_alpha = line_alpha
 	tiles_root.add_child(path)
 	return path
 
@@ -344,20 +391,37 @@ func _update_paths() -> void:
 		return
 	var attached := SurfaceTool.new()
 	var interaction := SurfaceTool.new()
-	attached.begin(Mesh.PRIMITIVE_TRIANGLES)
-	interaction.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var hover_attached := SurfaceTool.new()
+	var hover_plane := SurfaceTool.new()
+	for surface in [attached, interaction, hover_attached, hover_plane]:
+		surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var factor := _zoom_scale()
-	var lift := Vector3.UP * PATH_LIFT
 	for path in _paths:
-		for i in range(path.size() - 1):
-			_attachment_paths.add_segment(attached, path[i] + lift, path[i + 1] + lift, _path_view_depth, factor)
-		var a := path[0]
-		var b := path[path.size() - 1]
-		a.y = lerpf(_interaction_plane, a.y + PATH_LIFT, _zoom_height_blend)
-		b.y = lerpf(_interaction_plane, b.y + PATH_LIFT, _zoom_height_blend)
-		_interaction_paths.add_segment(interaction, a, b, _path_view_depth, factor)
+		_draw_path(path, _attachment_paths, _interaction_paths, attached, interaction, factor, 0.0)
+	for path in _hover_paths:
+		_draw_path(path, _hover_attached_path, _hover_plane_path, hover_attached, hover_plane, factor, HOVER_PATH_LIFT)
 	_attachment_paths.mesh = attached.commit()
 	_interaction_paths.mesh = interaction.commit()
+	if _hover_attached_path != null and _hover_plane_path != null:
+		var has_hover := not _hover_paths.is_empty()
+		_hover_attached_path.mesh = hover_attached.commit() if has_hover else null
+		_hover_plane_path.mesh = hover_plane.commit() if has_hover else null
+
+
+## 一条贴地折线画两层：贴地表的一层，和俯视时抬到交互平面的那一层。
+func _draw_path(path: PackedVector3Array, attached_path: MapPath, plane_path: MapPath,
+		attached: SurfaceTool, plane: SurfaceTool, factor: float, height_bias: float) -> void:
+	if path.size() < 2 or attached_path == null or plane_path == null:
+		return
+	var lift := PATH_LIFT + height_bias
+	for i in range(path.size() - 1):
+		attached_path.add_segment(attached, path[i] + Vector3.UP * lift, path[i + 1] + Vector3.UP * lift,
+			_path_view_depth, factor)
+	var a := path[0]
+	var b := path[path.size() - 1]
+	a.y = lerpf(_interaction_plane, a.y + lift, _zoom_height_blend)
+	b.y = lerpf(_interaction_plane, b.y + lift, _zoom_height_blend)
+	plane_path.add_segment(plane, a, b, _path_view_depth, factor)
 
 
 func _update_vertical_trim() -> void:
@@ -375,10 +439,14 @@ func _clear_tiles() -> void:
 	for location in _locations.values():
 		location.free()
 	_locations.clear()
-	for node in [_attachment_paths, _interaction_paths, _vertical_trim]:
+	for node in [_attachment_paths, _interaction_paths, _hover_attached_path, _hover_plane_path, _vertical_trim]:
 		if is_instance_valid(node):
 			node.free()
 	_attachment_paths = null
 	_interaction_paths = null
+	_hover_attached_path = null
+	_hover_plane_path = null
 	_vertical_trim = null
 	_paths.clear()
+	_hover_paths.clear()
+	_hover_id = -1

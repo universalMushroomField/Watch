@@ -68,6 +68,24 @@ func _run() -> void:
 	_check(attached, "附着点位于真实地表")
 	_check(planar, "交互点初始共面")
 	_check(layer._paths.size() * 2 == edges and layer._attachment_paths.mesh != null and layer._interaction_paths.mesh != null, "两组路径覆盖图的每条边")
+	var reachable_ids := {}
+	for node in view.run.get_reachable_nodes():
+		reachable_ids[node.id] = true
+	var colors_match := true
+	var marks_match := true
+	for node in view.run.graph.nodes:
+		var location := layer.get_location(node.id)
+		colors_match = colors_match and location.label.modulate.is_equal_approx(location.get_label_color(location.state))
+		if node.id == view.run.current_id:
+			marks_match = marks_match and location.highlight.visible and location.highlight.kind == MapHighlight.Kind.CURRENT
+		elif node.visited:
+			marks_match = marks_match and not location.highlight.visible
+		elif reachable_ids.has(node.id):
+			marks_match = marks_match and location.highlight.visible and location.highlight.kind == MapHighlight.Kind.REACHABLE
+		else:
+			marks_match = marks_match and not location.highlight.visible
+	_check(colors_match, "球体和标签用同一个状态色（玩家所在节点的标签是压在红底上的近白色）")
+	_check(marks_match, "只有玩家所在节点和可前往节点带标记环")
 	var start_node: MapNode = view.run.graph.get_node_by_id(view.run.graph.start_id)
 	var pick_target: MapNode = view.run.graph.get_node_by_id(start_node.neighbor_ids[0])
 	var pick_holder: Node3D = layer.get_location(pick_target.id).interaction
@@ -75,6 +93,13 @@ func _run() -> void:
 	var pick_screen: Vector2 = view._hex_layer.camera.unproject_position(pick_top)
 	_check(view._hex_layer.node_at_screen(pick_screen) == pick_target, "屏幕拾取命中正确的顶点")
 	_check(view._board_input._node_at(pick_screen - view._board_input.get_global_rect().position) == pick_target, "覆盖层坐标换算正确")
+	layer.set_hover_id(pick_target.id)
+	_check(not layer._hover_paths.is_empty() and layer._hover_plane_path.mesh != null,
+		"悬停可前往节点时亮出从玩家位置走的路径")
+	_check(layer.get_location(pick_target.id).highlight.kind == MapHighlight.Kind.HOVER,
+		"悬停的可前往节点换成悬停环")
+	layer.set_hover_id(-1)
+	_check(layer._hover_paths.is_empty(), "鼠标移开后收起悬停路径")
 
 	var camera := view._hex_layer.camera as MapCamera
 	var original_position := pick_holder.global_position
@@ -117,6 +142,13 @@ func _run() -> void:
 	_check(view.run_state.player.gold == initial_gold, "地点占位内容不结算金币")
 	_check(view.run.is_act_cleared(), "Boss 节点标记本幕完成")
 	_check(view.run.get_decay_ratio() > 0.0, "探索后崩解度上升")
+	var back: Array[int] = view.run.find_path_to(view.run.graph.start_id)
+	_check(back.size() > 1 and back[0] == view.run.current_id and back[back.size() - 1] == view.run.graph.start_id,
+		"已探索节点之间能算出走过的路径")
+	layer.set_hover_id(view.run.graph.start_id)
+	_check(not layer._hover_paths.is_empty(), "悬停已访问节点时标出走过的路径")
+	layer.set_hover_id(-1)
+	_check(view.run.find_path_to(view.run.current_id) == [view.run.current_id], "悬停自己时不画路径")
 
 	var first_act: int = view.run_state.act_index
 	view.run_state.advance_act()
