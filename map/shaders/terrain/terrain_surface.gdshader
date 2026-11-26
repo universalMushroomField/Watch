@@ -1,8 +1,12 @@
-// 白模的主绘制通道，在视口边带内按流动噪声裁剪片元。
+// 白模的主绘制通道：在视口边带内按流动噪声裁剪片元，并把受光强度量化成分阶亮度。
 shader_type spatial;
-render_mode cull_disabled, specular_disabled;
+render_mode cull_disabled, specular_disabled, ambient_light_disabled;
 /** 底模的基础颜色，也用于背光面的补光。 */
 uniform vec4 terrain_color : source_color = vec4(1.0);
+/** 直接光照划分的亮度级数，值越小阴影分界越明显；与 `shaders/lighting/stepped_shadow.gdshader` 同义。 */
+uniform int shadow_steps : hint_range(2, 8, 1) = 6;
+/** 暗部补光比例，也就是最暗一档的亮度。 */
+uniform float shadow_floor : hint_range(0.0, 1.0, 0.01) = 0.22;
 /** 崩解边带占视口短边的比例，值越大，效果越靠近画面中央。 */
 uniform float edge_width : hint_range(0.02, 0.45, 0.01) = 0.17;
 /** 边缘噪声方格的边长，单位为屏幕像素。 */
@@ -30,5 +34,14 @@ void fragment() {
     }
 
     ALBEDO = terrain_color.rgb;
-    EMISSION = terrain_color.rgb * 0.14;
+    EMISSION = terrain_color.rgb * shadow_floor;
+}
+
+// 将当前光源的受光强度量化成 `shadow_steps` 档，再累加到漫反射光照。
+void light() {
+    float diffuse = max(dot(NORMAL, LIGHT), 0.0);
+    float illumination = clamp(diffuse * ATTENUATION, 0.0, 1.0);
+    float steps = float(shadow_steps);
+    float band = min(floor(illumination * steps), steps - 1.0) / (steps - 1.0);
+    DIFFUSE_LIGHT += ALBEDO * (LIGHT_COLOR / PI) * band * (1.0 - shadow_floor);
 }
