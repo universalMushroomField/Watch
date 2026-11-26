@@ -1,6 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
-<head>
+<html lang="zh-CN"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>色板编辑器</title>
@@ -44,7 +43,7 @@ h2{font-size:20px;margin:0 0 14px}
 <main>
 <header><h1>色板编辑器</h1><p>每行一个色系，色阶从左到右排列。点击色块改色，点击色系名称可重命名或在其下方插入新色系。</p></header>
 <div class="toolbar">
-<label for="levels">色阶数 <input id="levels" type="number" min="1" max="48" required></label>
+<label for="levels">色阶数 <input id="levels" type="number" min="1" max="48" required=""></label>
 <button type="button" class="primary" id="add">添加色系</button>
 <button type="button" id="export">导出 HTML</button>
 <p id="status" role="status"></p>
@@ -55,20 +54,20 @@ h2{font-size:20px;margin:0 0 14px}
 </main>
 <dialog id="editor" aria-labelledby="editor-title">
 <form id="edit-form">
-<h2 id="editor-title"></h2>
+<h2 id="editor-title">编辑色块</h2>
 <div class="fields">
 <input id="picker" type="color" aria-label="取色器">
-<input id="value" type="text" required autocomplete="off">
+<input id="value" type="text" required="" autocomplete="off" maxlength="7" aria-label="HEX 颜色">
 </div>
 <div class="actions">
-<button type="button" id="insert">在下方插入</button>
-<button type="button" id="remove" class="danger">删除色系</button>
+<button type="button" id="insert" hidden="">在下方插入</button>
+<button type="button" id="remove" class="danger" hidden="">删除色系</button>
 <button type="button" id="cancel">取消</button>
 <button class="primary" type="submit">保存</button>
 </div>
 </form>
 </dialog>
-<script id="palette-data" type="application/json">null</script>
+<script id="palette-data" type="application/json">{"id":"snapshot-1795693499944-09h7y08v3to","levels":5,"rows":[{"name":"新色系","colors":["#104500","#10672A","#68E94E","#9DEC8D","#C5F797","#5B172B","#82253A","#C02434","#F75D48","#F59C76","#F1BD9F","#040025","#00044E","#1B3687","#3D57BD","#7F8EBA","#BAC4D5","#237057","#438F39","#83B939","#C8C73A","#DEDD51","#5D5416","#A38C21","#D4B866","#DCC583","#2E6FA2","#51A0E1","#7ACEE5","#B0DED9","#893295","#CB6CC1"]},{"name":"新色系","colors":["#293800","#617118","#9EBA00","#F2F000","#FFF76B"]},{"name":"新色系","colors":["#421700","#712C00","#D65600","#E29E60","#F0B58B"]},{"name":"新色系","colors":["#3E0010","#8A0018","#CE0013","#E65151","#FF9985"]},{"name":"新色系","colors":["#34002D","#680068","#AF0398","#ED53CF","#E796D2"]},{"name":"新色系","colors":["#2D0044","#5900B1","#7253CA","#A58CED","#B2A9D2"]},{"name":"新色系","colors":["#000746","#0613A4","#3C29FF","#7791E4","#A7B4ED"]},{"name":"新色系","colors":["#002659","#0062BB","#25A3FF","#56E4FF","#A5D2D6"]},{"name":"新色系","colors":["#0C0C0C","#373737","#787878","#B2B2B2","#E3E3E3"]}]}</script>
 <script>
 'use strict';
 const $ = selector => document.querySelector(selector);
@@ -291,5 +290,6 @@ $('#export').onclick = () => {
 };
 render();
 </script>
-</body>
-</html>
+
+
+</body></html>
