@@ -19,7 +19,7 @@ resource_local_to_scene = true
 render_priority = 0
 next_pass = SubResource("TerrainPixelate")
 shader = ExtResource("2_edge")
-shader_parameter/terrain_color = Color(1, 1, 1, 1)
+shader_parameter/terrain_color = Color(0.945098, 0.901961, 0.882353, 1)
 shader_parameter/edge_width = 0.17
 shader_parameter/block_size = 2.0
 shader_parameter/breakup = 1.0
@@ -31,8 +31,8 @@ shader_parameter/contrast = 2.40000002831228
 [sub_resource type="ShaderMaterial" id="FogMaterial"]
 render_priority = 0
 shader = ExtResource("7_fog")
-shader_parameter/surface_tint = Color(0.72, 0.72, 0.72, 1)
-shader_parameter/mist_tint = Color(0.65, 0.65, 0.65, 1)
+shader_parameter/surface_tint = Color(0.901961, 0.835294, 0.815686, 1)
+shader_parameter/mist_tint = Color(0.556863, 0.639216, 0.784314, 1)
 shader_parameter/particle_size = 0.24000000814012
 shader_parameter/pixels_per_particle = 6
 shader_parameter/flow_speed = 0.65
@@ -41,7 +41,7 @@ shader_parameter/fog_opacity = 0.4450000211375
 [sub_resource type="Environment" id="Environment_3g44r"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s4i45"]
-albedo_color = Color(0, 0, 0, 1)
+albedo_color = Color(0.015686, 0, 0.145098, 1)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_6vd2c"]
 material = SubResource("StandardMaterial3D_s4i45")
@@ -76,6 +76,7 @@ script = ExtResource("8_cloud")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=210431350]
 transform = Transform3D(0.6156615, 0.59471923, 0.5169815, 0, -0.65605897, 0.7547096, 0.7880107, -0.46464565, -0.40391025, 0, 12.13, 33.631336)
+light_color = Color(0.945098, 0.901961, 0.882353, 1)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1687985104]
 environment = SubResource("Environment_3g44r")

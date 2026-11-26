@@ -4,7 +4,7 @@
 
 [sub_resource type="StandardMaterial3D" id="GroundMaterial"]
 shading_mode = 0
-albedo_color = Color(0.96, 0.78, 0.41, 1)
+albedo_color = Color(0.823529, 0.819608, 0.364706, 1)
 
 [sub_resource type="SphereMesh" id="GroundMesh"]
 material = SubResource("GroundMaterial")
@@ -13,7 +13,7 @@ height = 0.18
 
 [sub_resource type="StandardMaterial3D" id="InteractionMaterial"]
 shading_mode = 0
-albedo_color = Color(0.96, 0.78, 0.41, 1)
+albedo_color = Color(0.823529, 0.819608, 0.364706, 1)
 
 [sub_resource type="SphereMesh" id="InteractionMesh"]
 material = SubResource("InteractionMaterial")
@@ -22,6 +22,7 @@ height = 0.44
 
 [node name="TreasureLocation" type="Node3D"]
 script = ExtResource("1")
+palette_index = 25
 
 [node name="AttachmentPoint" type="Node3D" parent="."]
 
@@ -44,4 +45,4 @@ outline_render_priority = 1
 font_size = 56
 outline_size = 14
 pixel_size = 0.02
-modulate = Color(0.96, 0.78, 0.41, 1)
+modulate = Color(0.823529, 0.819608, 0.364706, 1)

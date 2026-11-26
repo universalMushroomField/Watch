@@ -53,6 +53,7 @@ func _ready() -> void:
 		tiles_root = Node3D.new()
 		tiles_root.name = "Tiles"
 		add_child(tiles_root)
+	_apply_palette()
 
 
 func _on_terrain_rebuilt() -> void:
@@ -119,23 +120,46 @@ func refresh() -> void:
 		var location := get_location(node.id)
 		if location == null:
 			continue
-		var type_color: Color = location.label_color
-		var label_color := type_color.lightened(0.55)
+		var label_color: Color = location.label_color
 		if node.visited and node.id != run.current_id:
-			label_color = Color(0.62, 0.65, 0.70)
+			label_color = ArtPalette.color(ArtPalette.LABEL_VISITED)
 		elif not reachable.has(node.id):
-			label_color = type_color.lightened(0.05)
+			label_color = ArtPalette.darker(location.palette_index)
 
 		if node.id == run.current_id:
-			label_color = Color(1.0, 1.0, 1.0)
+			label_color = ArtPalette.color(ArtPalette.LABEL_CURRENT)
 		elif node.id == _hover_id:
-			label_color = Color(1.0, 0.95, 0.72)
+			label_color = ArtPalette.color(ArtPalette.LABEL_HOVER)
 
 		var label: Label3D = location.label
 		label.text = node.get_short_label()
 		label.modulate = label_color
 		label.scale = Vector3.ONE * (1.22 if node.id == run.current_id else 1.0)
 
+
+
+## 把场景里写死的灰阶换成色板色：底模、粒子雾、平行光与背景板。
+func _apply_palette() -> void:
+	if terrain != null:
+		var terrain_material := terrain.material_override as ShaderMaterial
+		if terrain_material != null:
+			terrain_material.set_shader_parameter("terrain_color", ArtPalette.color(ArtPalette.TERRAIN))
+		var fog := terrain.get_node_or_null("ParticleFog") as MultiMeshInstance3D
+		if fog != null:
+			var fog_material := fog.material_override as ShaderMaterial
+			if fog_material != null:
+				fog_material.set_shader_parameter("surface_tint", ArtPalette.color(ArtPalette.FOG_SURFACE))
+				fog_material.set_shader_parameter("mist_tint", ArtPalette.color(ArtPalette.FOG_MIST))
+
+	var light := get_node_or_null("DirectionalLight3D") as DirectionalLight3D
+	if light != null:
+		light.light_color = ArtPalette.color(ArtPalette.LIGHT)
+
+	var background := get_node_or_null("MeshInstance3D2") as MeshInstance3D
+	if background != null:
+		var background_material := StandardMaterial3D.new()
+		background_material.albedo_color = ArtPalette.color(ArtPalette.BACKGROUND)
+		background.material_override = background_material
 
 
 ## 设置鼠标悬停的节点编号，-1 表示没有。

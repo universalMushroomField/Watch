@@ -7,7 +7,7 @@
 render_priority = 1
 shader = ExtResource("2_pixel")
 shader_parameter/pixel_size = 2.0
-shader_parameter/pixel_color = Color(0.12, 0.75, 0.7, 0.65)
+shader_parameter/pixel_color = Color(0.27451, 0.619608, 0.807843, 0.65)
 
 [node name="InteractionPaths" type="MeshInstance3D" unique_id=1855731854]
 material_override = SubResource("ShaderMaterial_hqx1j")
