@@ -9,6 +9,10 @@ const HOVER_PATH_LIFT := 0.012
 ## 玩家所在节点标签上下浮动的幅度与速度。
 const LABEL_BOB_HEIGHT := 0.07
 const LABEL_BOB_SPEED := 3.2
+const TERRAIN_RED_START := 8
+const TERRAIN_BLUE_START := 14
+const TERRAIN_LIGHT_BANDS := 6
+const TERRAIN_TRANSITIONS := preload("res://public/color_palette_red_blue_transition.tres")
 const ATTACHMENT_PATH := preload("res://map/templates/path/attachment_path.tscn")
 const INTERACTION_PATH := preload("res://map/templates/path/interaction_path.tscn")
 const HOVER_PATH := preload("res://map/templates/path/hover_path.tscn")
@@ -85,6 +89,7 @@ func show_run(map_run: MapRun) -> void:
 	_clear_tiles()
 	run = map_run
 	if run == null or run.graph == null:
+		_update_terrain_regions()
 		return
 	layout = run.layout
 	_board_angle = _camera_board_angle()
@@ -127,6 +132,7 @@ func _update_node_positions() -> void:
 func refresh() -> void:
 	if run == null or run.graph == null:
 		return
+	_update_terrain_regions()
 	var reachable := {}
 	for node in run.get_reachable_nodes():
 		reachable[node.id] = true
@@ -159,12 +165,38 @@ func _update_label_bob() -> void:
 	for location in _locations.values():
 		location.set_label_offset(offset if location == current else 0.0)
 
-## 把场景里写死的灰阶换成色板色：底模、粒子雾、平行光与背景板。
+## 按地表附着点划分区域，避免节点悬浮高度影响配色。
+func _update_terrain_regions() -> void:
+	var material := terrain.material_override as ShaderMaterial if terrain != null else null
+	if material == null:
+		return
+	if run == null or run.graph == null or run.graph.nodes.is_empty():
+		material.set_shader_parameter("region_node_count", 0)
+		return
+	var nodes := run.graph.nodes
+	var image := Image.create_empty(nodes.size(), 1, false, Image.FORMAT_RGBAF)
+	for i in range(nodes.size()):
+		var node = nodes[i]
+		var point: Vector3 = _locations[node.id].attachment.global_position
+		image.set_pixel(i, 0, Color(point.x, point.z, float(node.visited), 1.0))
+	material.set_shader_parameter("region_nodes", ImageTexture.create_from_image(image))
+	material.set_shader_parameter("region_node_count", nodes.size())
+
+
+## 将地图材质与灯光接入美术色板。
 func _apply_palette() -> void:
 	if terrain != null:
 		var terrain_material := terrain.material_override as ShaderMaterial
 		if terrain_material != null:
-			terrain_material.set_shader_parameter("terrain_color", ArtPalette.color(ArtPalette.TERRAIN))
+			var row_count := TERRAIN_TRANSITIONS.colors.size() / TERRAIN_LIGHT_BANDS + 2
+			var ramps := Image.create_empty(TERRAIN_LIGHT_BANDS, row_count, false, Image.FORMAT_RGBA8)
+			for band in range(TERRAIN_LIGHT_BANDS):
+				ramps.set_pixel(band, 0, ArtPalette.color(TERRAIN_RED_START + band))
+				for row in range(1, row_count - 1):
+					var index := (row - 1) * TERRAIN_LIGHT_BANDS + band
+					ramps.set_pixel(band, row, TERRAIN_TRANSITIONS.colors[index])
+				ramps.set_pixel(band, row_count - 1, ArtPalette.color(TERRAIN_BLUE_START + band))
+			terrain_material.set_shader_parameter("region_palette", ImageTexture.create_from_image(ramps))
 		var fog := terrain.get_node_or_null("ParticleFog") as MultiMeshInstance3D
 		if fog != null:
 			var fog_material := fog.material_override as ShaderMaterial

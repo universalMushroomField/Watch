@@ -3,9 +3,9 @@ shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_never, shadows_disabled;
 
 /** 地表附近雾粒的颜色。 */
-uniform vec4 surface_tint : source_color = vec4(0.29, 0.66, 0.72, 1.0);
+uniform vec4 surface_tint : source_color = vec4(0.901961, 0.835294, 0.815686, 1.0);
 /** 深层雾粒的颜色，按相对深度与地表颜色混合。 */
-uniform vec4 mist_tint : source_color = vec4(0.22, 0.47, 0.65, 1.0);
+uniform vec4 mist_tint : source_color = vec4(0.556863, 0.639216, 0.784314, 1.0);
 /** 粒子面片在模型空间的基础尺寸，实例之间还会有大小差异。 */
 uniform float particle_size : hint_range(0.1, 2.0) = 0.85;
 /** 每个粒子横纵方向的采样格数，值越小，轮廓台阶越粗。 */

@@ -47,8 +47,14 @@ func _run() -> void:
 	_check(view._hex_layer.get_tile_count() == view.run.graph.get_node_count(), "每个节点都生成了六边形")
 	var layer: MapHexLayer = view._hex_layer
 	var model := layer.terrain as MapTerrainModel
-	_check(model != null and model.source_mesh != null and model.mesh != null and model.mesh != model.source_mesh, "地图显示从源模型生成的体素地形")
-	_check(model.is_visible_in_tree() and (model.layers & layer.camera.cull_mask) != 0, "地图相机能绘制粒子雾下的白模")
+	_check(model != null and model.source_mesh != null and model.mesh != null
+		and (model.mesh != model.source_mesh) == model.voxelize_terrain,
+		"地图网格与体素生成开关一致")
+	var terrain_material := model.material_override as ShaderMaterial
+	_check(terrain_material != null and terrain_material.next_pass != null,
+		"地形保留像素化后处理")
+	_check(model.is_visible_in_tree() and (model.layers & layer.camera.cull_mask) != 0,
+		"地图相机能绘制白模")
 	var locations_valid := true
 	for node in view.run.graph.nodes:
 		var location := layer.get_location(node.id)

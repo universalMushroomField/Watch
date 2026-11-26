@@ -1,5 +1,5 @@
 @tool
-## 地图底模。编辑器使用固定种子预览，运行时使用本局的地形子种子。
+## 地图底模默认使用源网格，像素尺度由屏幕后处理控制。
 class_name MapTerrainModel
 extends MeshInstance3D
 
@@ -16,8 +16,8 @@ signal terrain_rebuilt
 		_queue_rebuild()
 
 @export_group("Voxel Erosion")
-## 关闭时直接显示源地形，可用于对照。
-@export var voxelize_terrain := true:
+## 可选的实体侵蚀模式，用于需要真实阶梯断面和碎岩的场景。
+@export var voxelize_terrain := false:
 	set(value):
 		voxelize_terrain = value
 		_queue_rebuild()

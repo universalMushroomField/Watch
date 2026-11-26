@@ -13,6 +13,9 @@ const TERRAIN := 4
 const BACKGROUND := 14
 ## 平行光颜色，与底模同色。
 const LIGHT := 4
+const SHADOW_DEEP := 14
+const SHADOW_MIDDLE := 15
+const SHADOW_EDGE := 16
 ## 粒子雾贴近地表的颜色，沿用暖色阶。
 const FOG_SURFACE := 3
 ## 粒子雾远端颜色，冷色与暖底模分层。
