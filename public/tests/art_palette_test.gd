@@ -1,12 +1,12 @@
 extends SceneTree
 
-## 色板检查：`public/color_palette_art.tres` 是美术限色的唯一真源，在编辑器里直接改。
+## 色板检查：`public/color_base.tres` 是美术限色的唯一真源，在编辑器里直接改。
 ##
 ##     godot --headless --path . -s res://public/tests/art_palette_test.gd
 ##
 ## 只查手改最容易出的两类低级错：色值重复、误填半透明。色数与明度分配由人工把握。
 
-const TRES_PATH := "res://public/color_palette_art.tres"
+const TRES_PATH := "res://public/color_base.tres"
 ## 像素画色板按不透明用，出现半透明说明误填了 alpha。
 const OPAQUE_EPSILON := 0.001
 
@@ -20,6 +20,7 @@ func _init() -> void:
 		_report()
 		return
 	var colors := palette.colors
+	_check(colors.size() == 45, "Expected 45 base colors")
 	_check_unique(colors)
 	_check_opaque(colors)
 	_report(colors)
