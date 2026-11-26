@@ -42,7 +42,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.015686, 0, 0.145098, 0.3137255)
+color = Color(0.12549020, 0.12156863, 0.13725490, 0.3137255)
 
 [node name="Margin" type="MarginContainer" parent="." unique_id=2058827322]
 layout_mode = 1
@@ -149,7 +149,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.015686, 0, 0.145098, 0.62)
+color = Color(0.12549020, 0.12156863, 0.13725490, 0.62)
 
 [node name="Panel" type="PanelContainer" parent="Overlay" unique_id=1806141376]
 layout_mode = 1

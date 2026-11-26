@@ -41,4 +41,4 @@ theme/custom_font="res://ui/fonts/fusion-pixel-12px-proportional-zh_hans.otf"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
-environment/defaults/default_clear_color=Color(0.015686, 0, 0.145098, 1)
+environment/defaults/default_clear_color=Color(0.1254902, 0.12156863, 0.1372549, 1)
