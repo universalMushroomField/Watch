@@ -9,10 +9,6 @@ const HOVER_PATH_LIFT := 0.012
 ## 玩家所在节点标签上下浮动的幅度与速度。
 const LABEL_BOB_HEIGHT := 0.07
 const LABEL_BOB_SPEED := 3.2
-const TERRAIN_RED_START := 8
-const TERRAIN_BLUE_START := 14
-const TERRAIN_LIGHT_BANDS := 6
-const TERRAIN_TRANSITIONS := preload("res://public/color_palette_red_blue_transition.tres")
 const ATTACHMENT_PATH := preload("res://map/templates/path/attachment_path.tscn")
 const INTERACTION_PATH := preload("res://map/templates/path/interaction_path.tscn")
 const HOVER_PATH := preload("res://map/templates/path/hover_path.tscn")
@@ -171,39 +167,48 @@ func _update_terrain_regions() -> void:
 	if material == null:
 		return
 	if run == null or run.graph == null or run.graph.nodes.is_empty():
-		material.set_shader_parameter("region_node_count", 0)
+		material.set_shader_parameter("region_span_count", 0)
 		return
 	var nodes := run.graph.nodes
-	var image := Image.create_empty(nodes.size(), 1, false, Image.FORMAT_RGBAF)
-	for i in range(nodes.size()):
-		var node = nodes[i]
-		var point: Vector3 = _locations[node.id].attachment.global_position
-		image.set_pixel(i, 0, Color(point.x, point.z, float(node.visited), 1.0))
-	material.set_shader_parameter("region_nodes", ImageTexture.create_from_image(image))
-	material.set_shader_parameter("region_node_count", nodes.size())
+	var spans: Array[Color] = []
+	var metadata: Array[Color] = []
+	var seen := {}
+	for seed: MapNode in nodes:
+		if seen.has(seed.id):
+			continue
+		var pending: Array[MapNode] = [seed]
+		var points := PackedVector2Array()
+		seen[seed.id] = true
+		while not pending.is_empty():
+			var node: MapNode = pending.pop_back()
+			var point: Vector3 = _locations[node.id].attachment.global_position
+			points.append(Vector2(point.x, point.z))
+			spans.append(Color(point.x, point.z, point.x, point.z))
+			metadata.append(Color(float(seed.visited), 0, 0, 1))
+			for neighbor_id in node.neighbor_ids:
+				if seen.has(neighbor_id):
+					continue
+				var neighbor := run.graph.get_node_by_id(neighbor_id)
+				if neighbor.visited == seed.visited:
+					seen[neighbor_id] = true
+					pending.append(neighbor)
+		if points.size() >= 2:
+			var hull := Geometry2D.convex_hull(points)
+			for i in range(hull.size() - 1):
+				var a := hull[i]
+				var b := hull[i + 1]
+				spans.append(Color(a.x, a.y, b.x, b.y))
+				metadata.append(Color(float(seed.visited), 1, float(i == hull.size() - 2), 1))
+	var image := Image.create_empty(spans.size(), 2, false, Image.FORMAT_RGBAF)
+	for i in range(spans.size()):
+		image.set_pixel(i, 0, spans[i])
+		image.set_pixel(i, 1, metadata[i])
+	material.set_shader_parameter("region_spans", ImageTexture.create_from_image(image))
+	material.set_shader_parameter("region_span_count", spans.size())
 
 
 ## 将地图材质与灯光接入美术色板。
 func _apply_palette() -> void:
-	if terrain != null:
-		var terrain_material := terrain.material_override as ShaderMaterial
-		if terrain_material != null:
-			var row_count := TERRAIN_TRANSITIONS.colors.size() / TERRAIN_LIGHT_BANDS + 2
-			var ramps := Image.create_empty(TERRAIN_LIGHT_BANDS, row_count, false, Image.FORMAT_RGBA8)
-			for band in range(TERRAIN_LIGHT_BANDS):
-				ramps.set_pixel(band, 0, ArtPalette.color(TERRAIN_RED_START + band))
-				for row in range(1, row_count - 1):
-					var index := (row - 1) * TERRAIN_LIGHT_BANDS + band
-					ramps.set_pixel(band, row, TERRAIN_TRANSITIONS.colors[index])
-				ramps.set_pixel(band, row_count - 1, ArtPalette.color(TERRAIN_BLUE_START + band))
-			terrain_material.set_shader_parameter("region_palette", ImageTexture.create_from_image(ramps))
-		var fog := terrain.get_node_or_null("ParticleFog") as MultiMeshInstance3D
-		if fog != null:
-			var fog_material := fog.material_override as ShaderMaterial
-			if fog_material != null:
-				fog_material.set_shader_parameter("surface_tint", ArtPalette.color(ArtPalette.FOG_SURFACE))
-				fog_material.set_shader_parameter("mist_tint", ArtPalette.color(ArtPalette.FOG_MIST))
-
 	var light := get_node_or_null("DirectionalLight3D") as DirectionalLight3D
 	if light != null:
 		light.light_color = ArtPalette.color(ArtPalette.LIGHT)
@@ -211,6 +216,8 @@ func _apply_palette() -> void:
 	var background := get_node_or_null("MeshInstance3D2") as MeshInstance3D
 	if background != null:
 		var background_material := StandardMaterial3D.new()
+		background_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+
 		background_material.albedo_color = ArtPalette.color(ArtPalette.BACKGROUND)
 		background.material_override = background_material
 

@@ -1,32 +1,24 @@
-// 白模的主绘制通道：在视口边带内按流动噪声裁剪片元，并把受光强度量化成分阶亮度。
 shader_type spatial;
 render_mode cull_disabled, ambient_light_disabled, specular_disabled;
-// Columns are lighting bands; rows run from red through four mixes to blue.
+// Columns are lighting bands; rows select neutral, biological or human colors.
 uniform sampler2D region_palette : source_color, filter_nearest, repeat_disable;
-uniform float region_transition_width : hint_range(0.1, 8.0, 0.1) = 2.0;
-uniform float region_flow_speed : hint_range(0.0, 4.0, 0.05) = 0.65;
-// Each texel stores a node's world XZ and its visited flag.
-uniform sampler2D region_nodes : filter_nearest, repeat_disable;
-uniform int region_node_count = 0;
+uniform float region_radius : hint_range(0.1, 8.0, 0.1) = 1.8;
+uniform float root_reach : hint_range(0.0, 24.0, 0.25) = 12.0;
+uniform float root_spacing : hint_range(1.0, 8.0, 0.1) = 3.8;
+// Row 0 stores world XZ endpoints; row 1 stores the team. Isolated nodes have coincident endpoints.
+uniform sampler2D region_spans : filter_nearest, repeat_disable;
+uniform int region_span_count = 0;
 varying vec2 world_xz;
 varying flat int palette_row;
-/** 崩解边带占视口短边的比例，值越大，效果越靠近画面中央。 */
-uniform float edge_width : hint_range(0.02, 0.45, 0.01) = 0.17;
-/** 边缘噪声方格的边长，单位为屏幕像素。 */
-uniform float block_size : hint_range(1.0, 64.0, 1.0) = 12.0;
-/** 从逐像素采样过渡到方格中心采样的比例，设为 1 时整格同时显隐。 */
-uniform float breakup : hint_range(0.0, 1.0, 0.01) = 0.8;
-
-// —— 流动控制 ——
-/** 噪声在屏幕平面中的采样方向，两个分量对应横向和纵向。 */
-uniform vec2 flow_direction = vec2(0.6, 0.8);           // 流动方向（自动归一化）
-/** 动画时间倍率，设为 0 可静止预览。 */
-uniform float flow_speed : hint_range(0.0, 5.0, 0.01) = 0.5;
-/** 叠加的噪声层数，较多层会增加细节和采样开销。 */
-uniform float noise_detail : hint_range(1.0, 4.0, 1.0) = 2.0;
-/** 噪声围绕中间值的对比度，值越大，亮暗分区越明显。 */
-uniform float contrast : hint_range(0.5, 4.0, 0.1) = 1.5;
-
+group_uniforms ViewportBreakup;
+/** Width of each side band as a fraction of the viewport width. */
+uniform float breakup_width : hint_range(0.0, 0.5, 0.01) = 0.25;
+uniform float breakup_strength : hint_range(0.0, 1.0, 0.01) = 0.85;
+/** Size of a breakup cell in viewport pixels. */
+uniform float fragment_pixels : hint_range(1.0, 32.0, 1.0) = 4.0;
+/** 噪声每秒移动的格数。 */
+uniform float flow_speed : hint_range(0.0, 3.0, 0.05) = 0.25;
+group_uniforms;
 #include "res://map/shaders/terrain/terrain_surface.gdshaderinc"
 
 void vertex() {
@@ -38,33 +30,88 @@ vec3 region_color(int band, int row) {
 }
 
 // 在边带内比较覆盖率与流动噪声，保留的白模片元接受光照和补光。
+// Bent cell boundaries form continuous filaments with three-way junctions.
+float root_edge_distance(vec2 position) {
+    vec2 p = position / root_spacing;
+    p += 0.27 * sin(p.yx * 2.3) + 0.11 * sin(p.yx * 4.7 + 1.3);
+    vec2 closest = vec2(8.0);
+    for (int y = -1; y <= 1; y++) {
+        for (int x = -1; x <= 1; x++) {
+            vec2 offset = vec2(float(x), float(y));
+            vec2 id = floor(p) + offset;
+            vec2 jitter = fract(sin(vec2(dot(id, vec2(127.1, 311.7)),
+                    dot(id, vec2(269.5, 183.3)))) * 4375.5);
+            vec2 delta = offset + 0.25 + 0.5 * jitter - fract(p);
+            float d = dot(delta, delta);
+            closest = vec2(min(closest.x, d), min(closest.y, max(closest.x, d)));
+        }
+    }
+    return closest.y - closest.x;
+}
+
 void fragment() {
-    if (terrain_edge_missing(SCREEN_UV, VIEWPORT_SIZE, TIME, edge_width, block_size, breakup,
-            flow_direction, flow_speed, noise_detail, contrast)) {
+    if (side_cell_missing(SCREEN_UV, VIEWPORT_SIZE, TIME)) {
         discard;
     }
 
     vec2 nearest = vec2(1e20);
-    for (int i = 0; i < region_node_count; i++) {
-        vec3 node = texelFetch(region_nodes, ivec2(i, 0), 0).rgb;
-        vec2 offset = world_xz - node.xy;
-        int team = int(node.z);
-        nearest[team] = min(nearest[team], dot(offset, offset));
+    vec2 node_distance = vec2(1e20);
+    bool inside = false;
+    for (int i = 0; i < region_span_count; i++) {
+        vec4 span = texelFetch(region_spans, ivec2(i, 0), 0);
+        vec2 axis = span.zw - span.xy;
+        vec2 offset = world_xz - span.xy;
+        float along = clamp(dot(offset, axis) / max(dot(axis, axis), 0.00001), 0.0, 1.0);
+        offset -= along * axis;
+        vec3 metadata = texelFetch(region_spans, ivec2(i, 1), 0).rgb;
+        int team = int(metadata.r);
+        float d2 = dot(offset, offset);
+        nearest[team] = min(nearest[team], d2);
+        if (metadata.g < 0.5) {
+            node_distance[team] = min(node_distance[team], d2);
+        } else {
+            if ((span.y > world_xz.y) != (span.w > world_xz.y)) {
+                float crossing = span.x + (world_xz.y - span.y) * axis.x / axis.y;
+                if (world_xz.x < crossing) { inside = !inside; }
+            }
+            if (metadata.b > 0.5) {
+                if (inside) { nearest[team] = 0.0; }
+                inside = false;
+            }
+        }
     }
-    float signed_distance = sqrt(nearest.x) - sqrt(nearest.y);
-    float phase = TIME * region_flow_speed;
-    float wave = sin(dot(world_xz, vec2(1.35, 0.85)) - phase);
-    wave += 0.45 * sin(dot(world_xz, vec2(-0.65, 1.6)) + phase * 0.7);
-    float half_width = region_transition_width * 0.5;
-    float blend = smoothstep(-half_width, half_width,
-            signed_distance + wave * half_width * 0.3);
-    palette_row = region_node_count == 0 ? 0 : int(floor(blend * 5.0 + 0.5));
+    vec2 dist = sqrt(nearest);
+    float human = 1.0 - smoothstep(region_radius * 0.35, region_radius, dist.y);
+    float biological = 1.0 - smoothstep(0.0, region_radius, dist.x);
+    if (dist.x > 0.0 && dist.x < region_radius + root_reach && root_reach > 0.0) {
+        float clearance = smoothstep(0.0, region_radius * 2.0, dist.y - dist.x);
+        float reach = region_radius + root_reach * clearance;
+        float taper = 1.0 - smoothstep(0.0, reach, dist.x);
+        float edge = root_edge_distance(world_xz);
+        float trunk = 1.0 - smoothstep(0.016, 0.21, edge);
+        float fine_edge = root_edge_distance(world_xz * 2.1 + vec2(7.3, 2.9));
+        float branch = 1.0 - smoothstep(0.012, 0.18, fine_edge);
+        branch *= 0.85 * (1.0 - smoothstep(0.22, 0.78, edge));
+        biological = max(biological, max(trunk, branch) * taper * clearance);
+    }
+    if (max(dist.x, dist.y) < region_radius) {
+        float front = sqrt(node_distance.y) - sqrt(node_distance.x);
+        biological *= smoothstep(0.0, region_radius, front);
+        human *= smoothstep(0.0, region_radius, -front);
+    }
+    palette_row = 0;
+    if (human > 0.08) {
+        palette_row = human > 0.58 ? 5 : 4;
+    } else if (biological > 0.08) {
+        palette_row = biological > 0.7 ? 3 : (biological > 0.32 ? 2 : 1);
+    }
     ALBEDO = vec3(1.0);
     EMISSION = region_color(0, palette_row);
 }
 
 void light() {
     float illumination = clamp(dot(NORMAL, LIGHT) * ATTENUATION, 0.0, 1.0);
-    int band = min(int(illumination * 6.0), 5);
+    // Reserve the brightest palette entries for markers over the terrain.
+    int band = min(int(illumination * 4.5), 4);
     DIFFUSE_LIGHT += region_color(band, palette_row) - region_color(0, palette_row);
 }

@@ -40,7 +40,7 @@ varying vec3 intact_position;
 
 // 沿真实断面外扩一层，深度测试保留露在实体轮廓外的部分。
 /** 外扩轮廓的颜色和不透明度。 */
-uniform vec4 outline_color : source_color = vec4(0.607843, 0.819608, 0.878431, 0.48);
+uniform vec4 outline_color : source_color = vec4(0.64705882, 0.82352941, 0.83921569, 0.48);
 /** 沿模型法线外扩的宽度，体素表层使用较窄的轮廓。 */
 uniform float outline_width : hint_range(0.0, 0.3, 0.005) = 0.045;
 /** 无光照轮廓的颜色亮度倍率。 */
