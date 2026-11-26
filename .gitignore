@@ -10,5 +10,5 @@ run/tests/*.png
 run/tests/*.png.import
 
 ohmygame.json
-.ohmygame/
+.ohmygame/*
 canvas/
