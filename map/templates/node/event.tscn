@@ -4,7 +4,7 @@
 
 [sub_resource type="StandardMaterial3D" id="GroundMaterial"]
 shading_mode = 0
-albedo_color = Color(0.607843, 0.819608, 0.878431, 1)
+albedo_color = Color(0.75686275, 0.78823529, 0.71372549, 1)
 
 [sub_resource type="SphereMesh" id="GroundMesh"]
 material = SubResource("GroundMaterial")
@@ -13,7 +13,7 @@ height = 0.18
 
 [sub_resource type="StandardMaterial3D" id="InteractionMaterial"]
 shading_mode = 0
-albedo_color = Color(0.607843, 0.819608, 0.878431, 1)
+albedo_color = Color(0.75686275, 0.78823529, 0.71372549, 1)
 
 [sub_resource type="SphereMesh" id="InteractionMesh"]
 material = SubResource("InteractionMaterial")
@@ -22,7 +22,7 @@ height = 0.44
 
 [node name="EventLocation" type="Node3D" unique_id=1030963173]
 script = ExtResource("1")
-palette_index = 30
+palette_index = 39
 
 [node name="AttachmentPoint" type="Node3D" parent="." unique_id=265596418]
 
@@ -43,6 +43,6 @@ billboard = 1
 no_depth_test = true
 render_priority = 2
 outline_render_priority = 1
-modulate = Color(0.607843, 0.819608, 0.878431, 1)
+modulate = Color(0.75686275, 0.78823529, 0.71372549, 1)
 font_size = 56
 outline_size = 14
