@@ -4,7 +4,7 @@ render_mode ambient_light_disabled, specular_disabled;
 /** 表面的基础着色，用于计算受光颜色和暗部补光。 */
 uniform vec4 base_color : source_color = vec4(1.0);
 /** 直接光照划分的亮度级数，值越小，阴影分界越明显。 */
-uniform int shadow_steps : hint_range(2, 8, 1) = 3;
+uniform int shadow_steps : hint_range(2, 8, 1) = 6;
 /** 暗部补光比例，提高后背光面更亮。 */
 uniform float shadow_floor : hint_range(0.0, 1.0, 0.01) = 0.22;
 
