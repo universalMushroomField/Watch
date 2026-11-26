@@ -142,6 +142,10 @@ git push
 git push --force-with-lease origin feature/<功能名>
 ```
 
+## 新增非程序素材
+
+每次添加非程序素材（如图标、插画、模型、音频、字体、色板，或嵌入 Godot 场景的美术资源），都必须在同一个 PR 更新[素材权利声明](../LICENSE-ASSETS.md)。注明素材路径或内嵌位置、来源和适用许可。项目原创素材按 All Rights Reserved 记录，第三方素材注明原始许可，并保留其要求的署名与许可文本。
+
 ## 常用命令
 
 ```bash
