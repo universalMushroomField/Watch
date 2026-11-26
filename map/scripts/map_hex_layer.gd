@@ -90,6 +90,7 @@ func show_run(map_run: MapRun) -> void:
 	run = map_run
 	if run == null or run.graph == null:
 		_update_terrain_regions()
+		_update_terrain_regions()
 		return
 	layout = run.layout
 	_board_angle = _camera_board_angle()
@@ -132,6 +133,7 @@ func _update_node_positions() -> void:
 func refresh() -> void:
 	if run == null or run.graph == null:
 		return
+	_update_terrain_regions()
 	_update_terrain_regions()
 	var reachable := {}
 	for node in run.get_reachable_nodes():
@@ -188,6 +190,15 @@ func _apply_palette() -> void:
 	if terrain != null:
 		var terrain_material := terrain.material_override as ShaderMaterial
 		if terrain_material != null:
+			var row_count := TERRAIN_TRANSITIONS.colors.size() / TERRAIN_LIGHT_BANDS + 2
+			var ramps := Image.create_empty(TERRAIN_LIGHT_BANDS, row_count, false, Image.FORMAT_RGBA8)
+			for band in range(TERRAIN_LIGHT_BANDS):
+				ramps.set_pixel(band, 0, ArtPalette.color(TERRAIN_RED_START + band))
+				for row in range(1, row_count - 1):
+					var index := (row - 1) * TERRAIN_LIGHT_BANDS + band
+					ramps.set_pixel(band, row, TERRAIN_TRANSITIONS.colors[index])
+				ramps.set_pixel(band, row_count - 1, ArtPalette.color(TERRAIN_BLUE_START + band))
+			terrain_material.set_shader_parameter("region_palette", ImageTexture.create_from_image(ramps))
 			var row_count := TERRAIN_TRANSITIONS.colors.size() / TERRAIN_LIGHT_BANDS + 2
 			var ramps := Image.create_empty(TERRAIN_LIGHT_BANDS, row_count, false, Image.FORMAT_RGBA8)
 			for band in range(TERRAIN_LIGHT_BANDS):
