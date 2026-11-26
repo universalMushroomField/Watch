@@ -7,8 +7,10 @@ signal changed
 ## Index 0 is the top of the sequence (the most recently added symbol).
 
 
-## YI 可代替攻击或防守符号。
-enum Symbol { ATTACK, DEFENSE, YI }
+## 序列符号。代码里一律用 RED / BLUE 指代红蓝两色；卡面与界面显示什么字由文案资源
+## [GameText]（`ui/text/game_text.tres`）决定，改叫法不用动代码。
+## YI 可代替红或蓝符号。
+enum Symbol { RED, BLUE, YI }
 
 ## 最大序列长度，-1 表示不限。
 var max_length: int = -1

@@ -45,6 +45,14 @@
 - 动画使用 `snake_case`，例如 `idle`、`run`、`attack_heavy`。引用时保持与编辑器中的名称及大小写一致。
 - 自定义项目设置使用 `分类/设置名`，每段采用 `snake_case`，例如 `gameplay/combat/default_damage`。
 
+## 代码标识与显示名
+
+- 代码里的标识符一律用英文，不用中文、拼音或界面文案，例如 `CardSequence.Symbol.RED`、`CardData.Kind.SPECIAL`。枚举下标会被 `.tres` 直接序列化成整数（`kind = 0`、`sequence_cost = Array[int]([0, 1])`），重排等于悄悄改掉数据。
+- 玩家看到的文字不写死在脚本里，集中在文案资源 `ui/text/game_text.tres`（脚本类 `GameText`，经 `GameText.shared()` 读取）。改叫法、改措辞只改这个文件。
+- 需要“代码标识 → 显示名”映射时（例如序列符号），在 `GameText` 上提供取名字的方法（`symbol_name()`），界面统一调用它，不在 UI 脚本里再维护第二份对照表。
+
+符号命名的回归测试：`godot --headless --path . -s res://cards/tests/symbol_text_test.gd`，它校验枚举下标、文案配置与基础卡资源三者一致。
+
 ## C# 补充
 
 C# 脚本文件使用 `PascalCase`，文件名与 Godot 脚本类同名，例如 `PlayerController.cs` 对应 `PlayerController`。类型、方法、公开属性和事件使用 `PascalCase`，局部变量和参数使用 `camelCase`，私有字段可使用 `_camelCase`。使用 `[Signal]` 声明信号时，委托名称以 `EventHandler` 结尾，例如 `HealthChangedEventHandler`。

@@ -3,8 +3,9 @@
 class_name CardData
 extends Resource
 
-## 卡牌类型，决定打出时是否向序列顶加入攻防符号。
-enum Kind { ATTACK, DEFENSE, SPECIAL }
+## 卡牌类型，决定打出时是否向序列顶加入红或蓝符号。
+## 枚举顺序与 `.tres` 里存的 `kind = 0/1/2` 绑定，不要调换。
+enum Kind { RED, BLUE, SPECIAL }
 
 ## 卡牌标识。
 @export var id: StringName
