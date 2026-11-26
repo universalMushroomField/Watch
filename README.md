@@ -109,4 +109,10 @@ godot --headless --path . -s res://public/tests/art_palette_test.gd
 
 ## 许可证
 
-本项目采用 [Apache License 2.0](LICENSE)。带有独立许可声明的第三方资源适用各自的许可。
+本仓库按内容适用不同的许可：
+
+- **代码和技术文件**适用 [Apache License 2.0](LICENSE)，包括脚本、着色器、构建配置、场景的程序逻辑及技术文档。遵守许可条款即可修改、分发和商业使用这些内容。
+- **原创素材**保留所有权利。素材目录、内嵌资产及授权范围见[素材权利声明](LICENSE-ASSETS.md)。复用代码时，可移除或替换尚未取得授权的素材。
+- **第三方资源**适用各自的许可。随仓库分发的 Fusion Pixel Font 适用 [SIL Open Font License 1.1](ui/fonts/LICENSE-OFL)。
+
+如果要分发含有原创素材的游戏构建，须同时满足代码许可和素材授权。

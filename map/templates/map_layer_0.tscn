@@ -43,7 +43,8 @@ shader_parameter/fog_opacity = 0.4450000211375
 [sub_resource type="Environment" id="Environment_3g44r"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s4i45"]
-albedo_color = Color(0.015686, 0, 0.145098, 1)
+albedo_color = Color(0, 0, 0, 1)
+metallic_specular = 0.0
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_6vd2c"]
 material = SubResource("StandardMaterial3D_s4i45")
