@@ -41,7 +41,7 @@ func _run() -> void:
 
 	# 连续压入超过上限的符号，验证上限真的在裁剪序列。
 	for index in range(10):
-		manager.sequence.push(CardSequence.Symbol.ATTACK)
+		manager.sequence.push(CardSequence.Symbol.RED)
 	_check(manager.sequence.get_symbols().size() == 6, "序列长度被限制在 6（实际 %d）" % manager.sequence.get_symbols().size())
 
 	manager.free()

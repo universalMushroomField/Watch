@@ -39,6 +39,27 @@ static var _shared: GameText
 ## 节点面板里返回地图的按钮文字。
 @export var close_panel_action: String
 
+## 序列符号在界面上的显示名。代码里是 `RED` / `BLUE` / `YI`，玩家看到什么字只取决于
+## 这三个字段，改叫法只改这里。
+@export var symbol_red_name: String
+@export var symbol_blue_name: String
+@export var symbol_yi_name: String
+## 序列为空时的提示。
+@export var sequence_empty_text: String
+
+
+## 符号的显示名。没有配置时返回空串并报警告，避免把代码标识符泄露到界面上。
+func symbol_name(symbol: CardSequence.Symbol) -> String:
+	match symbol:
+		CardSequence.Symbol.RED:
+			return symbol_red_name
+		CardSequence.Symbol.BLUE:
+			return symbol_blue_name
+		CardSequence.Symbol.YI:
+			return symbol_yi_name
+	push_warning("文案资源没有为符号 %d 配置显示名。" % symbol)
+	return ""
+
 
 ## 取共享的文案资源。所有文案字段都没有脚本默认值，唯一来源是 [code]game_text.tres[/code]；
 ## 资源缺失时退回一份空实例并报警告，免得界面直接报错，但这时界面会缺文字。

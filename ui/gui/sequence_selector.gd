@@ -3,7 +3,6 @@ extends HBoxContainer
 
 signal position_selected(index: int)
 
-const SYMBOL_TEXT := ["攻", "守", "易"]
 const AVAILABLE_COLOR := Color(0.95, 0.73, 0.32)
 const SELECTED_COLOR := Color(0.38, 0.84, 0.77)
 
@@ -14,7 +13,7 @@ func display(symbols: Array[CardSequence.Symbol], starts: Array[int], cost: int,
 		child.queue_free()
 	if symbols.is_empty():
 		var empty := Label.new()
-		empty.text = "序列为空"
+		empty.text = GameText.shared().sequence_empty_text
 		add_child(empty)
 		return
 
@@ -25,7 +24,7 @@ func display(symbols: Array[CardSequence.Symbol], starts: Array[int], cost: int,
 
 	for index in range(symbols.size()):
 		var button := Button.new()
-		button.text = SYMBOL_TEXT[symbols[index]]
+		button.text = GameText.shared().symbol_name(symbols[index])
 		button.custom_minimum_size = Vector2(38, 38)
 		button.disabled = not (index in starts if start < 0 else index == start + selected)
 		if start >= 0 and index >= start and index < start + selected:

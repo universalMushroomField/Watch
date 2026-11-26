@@ -4,7 +4,7 @@ extends Node
 
 signal hand_changed
 
-## 当前回合的攻防序列。
+## 当前回合的红蓝序列。
 var sequence := CardSequence.new()
 var effect_processor := EffectProcessor.new()
 ## 玩家战斗状态，敌人行动时也通过此对象结算伤害。
@@ -132,7 +132,7 @@ func _resolve_play_position(hand_index: int, start: int) -> int:
 	return start if sequence.can_consume(card.sequence_cost, start) else -1
 
 
-## 消耗序列，加入攻防符号并执行卡牌效果，最后将牌移入弃牌堆或除外堆。
+## 消耗序列，加入红蓝符号并执行卡牌效果，最后将牌移入弃牌堆或除外堆。
 ## 序列位置为 -1 时消耗第一个匹配，校验失败时返回 false。
 func play(hand_index: int, context: Dictionary = {}, sequence_start: int = -1) -> bool:
 	var start := _resolve_play_position(hand_index, sequence_start)
@@ -150,10 +150,10 @@ func play(hand_index: int, context: Dictionary = {}, sequence_start: int = -1) -
 	sequence.consume(card.sequence_cost, start)
 	sequence.insert_symbols(start, card.sequence_replacement)
 	match card.kind:
-		CardData.Kind.ATTACK:
-			sequence.push(CardSequence.Symbol.ATTACK)
-		CardData.Kind.DEFENSE:
-			sequence.push(CardSequence.Symbol.DEFENSE)
+		CardData.Kind.RED:
+			sequence.push(CardSequence.Symbol.RED)
+		CardData.Kind.BLUE:
+			sequence.push(CardSequence.Symbol.BLUE)
 
 	effect_processor.submit(card.effects, sequence, effect_context)
 
