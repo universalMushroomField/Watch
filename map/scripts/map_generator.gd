@@ -27,13 +27,24 @@ func generate(seed_value: int = -1) -> MapGraph:
 
 	var graph := MapGraph.new()
 	graph.layout = layout
+	var board := layout
+	var target := maxi(config.node_count, 2)
+	# 内部蜂巢至少有 2 * columns * rows 个角点；两端额外提供角点。
+	if config.node_count > 0:
+		var columns := layout.columns
+		while 2 * (columns * layout.rows + columns + layout.rows) + (7 if layout.rows == 2 else 6) < target:
+			columns += 1
+		if columns > layout.columns:
+			var radius := layout.hex_radius * (layout.columns + 2.5) / (columns + 2.5)
+			board = HexLayout.new(columns, layout.rows, radius)
+			graph.layout = board
 
 	var vertices := {}
 	var edges: Array[Vector2i] = []
 	var seen_edges := {}
-	for column in range(layout.get_total_columns()):
-		for row in range(layout.rows):
-			if (column == 0 or column == layout.get_total_columns() - 1) and row != layout.get_middle_row():
+	for column in range(board.get_total_columns()):
+		for row in range(board.rows):
+			if (column == 0 or column == board.get_total_columns() - 1) and row != board.get_middle_row():
 				continue
 			var center := Vector2i(2 * column + (row & 1), 3 * row)
 			var ids: Array[int] = []
@@ -52,6 +63,9 @@ func generate(seed_value: int = -1) -> MapGraph:
 					seen_edges[edge] = true
 					edges.append(edge)
 
+	if config.node_count > 0 and target < graph.nodes.size():
+		graph = _take_connected_nodes(graph, edges, target)
+
 	var left: Array[MapNode] = []
 	var right: Array[MapNode] = []
 	var min_x := graph.nodes[0].vertex.x
@@ -66,6 +80,8 @@ func generate(seed_value: int = -1) -> MapGraph:
 			right.append(node)
 	var start := left[_rng.randi_range(0, left.size() - 1)]
 	var boss := right[_rng.randi_range(0, right.size() - 1)]
+	if start == boss:
+		boss = right[(right.find(start) + 1) % right.size()]
 	start.type = MapNode.Type.START
 	boss.type = MapNode.Type.BOSS
 	graph.start_id = start.id
@@ -73,6 +89,41 @@ func generate(seed_value: int = -1) -> MapGraph:
 	_connect_network(graph, edges)
 	_assign_types(graph)
 	return graph
+
+
+## 从左端沿相邻边扩展。每个新地点都有一个已入选的邻居。
+func _take_connected_nodes(source: MapGraph, edges: Array[Vector2i], count: int) -> MapGraph:
+	var neighbors := {}
+	var first := source.nodes[0]
+	for node in source.nodes:
+		neighbors[node.id] = []
+		if node.vertex.x < first.vertex.x:
+			first = node
+	for edge in edges:
+		neighbors[edge.x].append(edge.y)
+		neighbors[edge.y].append(edge.x)
+	var result := MapGraph.new()
+	result.layout = source.layout
+	var pending: Array[int] = [first.id]
+	var queued := {first.id: true}
+	var ids := {}
+	for index in range(count):
+		var node := source.nodes[pending[index]]
+		var copy := result.add_node(node.type, node.column, node.row)
+		copy.vertex = node.vertex
+		ids[node.id] = copy.id
+		var adjacent: Array = neighbors[node.id]
+		_shuffle(adjacent)
+		for neighbor in adjacent:
+			if not queued.has(neighbor):
+				queued[neighbor] = true
+				pending.append(neighbor)
+	var retained: Array[Vector2i] = []
+	for edge in edges:
+		if ids.has(edge.x) and ids.has(edge.y):
+			retained.append(Vector2i(ids[edge.x], ids[edge.y]))
+	edges.assign(retained)
+	return result
 
 
 ## 随机生成树保证全图连通，再补回部分边形成可选路线。
