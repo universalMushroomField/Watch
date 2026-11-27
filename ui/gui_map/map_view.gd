@@ -11,6 +11,7 @@ extends Control
 	MapNode.Type.ELITE: preload("res://ui/gui_map/content/elite.tscn"),
 	MapNode.Type.EVENT: preload("res://ui/gui_map/content/event.tscn"),
 	MapNode.Type.REST: preload("res://ui/gui_map/content/rest.tscn"),
+	MapNode.Type.HUB: preload("res://ui/gui_map/content/hub.tscn"),
 	MapNode.Type.SHOP: preload("res://ui/gui_map/content/shop.tscn"),
 	MapNode.Type.START: preload("res://ui/gui_map/content/start.tscn"),
 	MapNode.Type.TREASURE: preload("res://ui/gui_map/content/treasure.tscn"),
@@ -68,9 +69,8 @@ func _refresh() -> void:
 	_currency_icon.texture = copy.currency_icon
 	_currency_icon.visible = copy.currency_icon != null
 	_deck_label.text = copy.deck_label_format % run_state.player.get_deck_size()
-	var percent := roundi(run.get_decay_ratio() * 100.0)
-	_decay_label.text = copy.decay_label_format % [
-		percent, run.get_decay_visited_count(), run.get_decay_total_count()]
+	var stage := run.get_extreme_stage()
+	_decay_label.text = copy.decay_label_format % [run.extreme_steps, stage, MapRun.STAGE_NAMES[stage]]
 	_decay_bar.value = run.get_decay_ratio()
 	_hex_layer.refresh()
 

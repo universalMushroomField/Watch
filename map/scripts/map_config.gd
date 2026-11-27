@@ -26,6 +26,8 @@ const DEFAULT_HEX_RADIUS := 4.2
 @export var board_margin: float = 0.5
 
 @export_group("Node Types")
+## 枢纽占位数量。
+@export var hub_count: int = 2
 ## 精英战数量。
 @export var elite_count: int = 2
 ## 商店数量。

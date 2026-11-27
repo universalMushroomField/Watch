@@ -12,6 +12,7 @@ enum Type {
 	SHOP,
 	REST,
 	BOSS,
+	HUB,
 }
 
 const TYPE_LABELS := {
@@ -23,6 +24,7 @@ const TYPE_LABELS := {
 	Type.SHOP: "商店",
 	Type.REST: "休息点",
 	Type.BOSS: "本幕 Boss",
+	Type.HUB: "枢纽",
 }
 
 const TYPE_SHORT_LABELS := {
@@ -34,6 +36,7 @@ const TYPE_SHORT_LABELS := {
 	Type.SHOP: "商",
 	Type.REST: "息",
 	Type.BOSS: "Boss",
+	Type.HUB: "枢",
 }
 
 ## 节点编号，在一张图内唯一。

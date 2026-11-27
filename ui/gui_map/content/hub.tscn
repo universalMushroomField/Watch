@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[node name="HubContent" type="Label"]
+text = "枢纽已激活 · 转移与支援占位"
+horizontal_alignment = 1
+autowrap_mode = 3

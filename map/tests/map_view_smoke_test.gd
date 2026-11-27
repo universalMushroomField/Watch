@@ -162,7 +162,7 @@ func _run() -> void:
 	_check(view.run_state.act_index == first_act + 1, "进入下一幕")
 	_check(view.run.current_id == view.run.graph.start_id, "新一幕从起点开始")
 	_check(view.run.get_visited_count() == 1, "新一幕只访问了起点")
-	_check(is_zero_approx(view.run.get_decay_ratio()), "新一幕崩解度重置")
+	_check(view.run.extreme_steps > 0, "新一幕继承极端度")
 
 	view.queue_free()
 	await process_frame

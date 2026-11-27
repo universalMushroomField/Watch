@@ -11,7 +11,7 @@ extends SceneTree
 ## 实机可用矩形（Godot 4.7.2 headless 下 map_view 的 _available_rect() 实测值）。
 const DEVICE_RECT := Rect2(Vector2(-39.40317, -20.34126), Vector2(36.14, 50.2))
 ## 实机顶点数，应与运行入口打印的数值对照；改地形或 map_config.tres 后同步这里。
-const DEVICE_NODE_COUNT := 23
+const DEVICE_NODE_COUNT := 32
 const GAME_CONFIG: MapConfig = preload("res://map/res/data/map_config.tres")
 
 var _failures: Array[String] = []
@@ -111,7 +111,7 @@ func _run_generation_suite(name: String, layout: HexLayout, config: MapConfig, e
 			_failures.append(label + "访问数 %d 与路径长度 %d 不符" % [run.get_visited_count(), path.size()])
 		if run.get_decay_visited_count() != path.size() - 1:
 			_failures.append(label + "崩解度访问数未排除起点")
-		if not is_equal_approx(run.get_decay_ratio(), float(path.size() - 1) / float(graph.get_node_count() - 1)):
+		if not is_equal_approx(run.get_decay_ratio(), float(path.size() - 1) / 64.0):
 			_failures.append(label + "崩解度计算不符")
 		if run.can_travel_to(graph.start_id):
 			_failures.append(label + "本幕结束后仍可移动")
@@ -120,7 +120,7 @@ func _run_generation_suite(name: String, layout: HexLayout, config: MapConfig, e
 		session.advance_act()
 		if session.act_index != 1:
 			_failures.append(label + "进入下一幕失败")
-		if run.graph == old_graph or run.get_visited_count() != 1 or not is_zero_approx(run.get_decay_ratio()):
+		if run.graph == old_graph or run.get_visited_count() != 1 or run.extreme_steps != path.size() - 1:
 			_failures.append(label + "下一幕未重置")
 
 		var signature := _signature(run.graph)

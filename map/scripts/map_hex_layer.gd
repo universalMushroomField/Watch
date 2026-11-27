@@ -23,6 +23,7 @@ const LOCATION_SCENES := {
 	MapNode.Type.TREASURE: preload("res://map/templates/node/treasure.tscn"),
 	MapNode.Type.SHOP: preload("res://map/templates/node/shop.tscn"),
 	MapNode.Type.REST: preload("res://map/templates/node/rest.tscn"),
+	MapNode.Type.HUB: preload("res://map/templates/node/hub.tscn"),
 	MapNode.Type.BOSS: preload("res://map/templates/node/boss.tscn"),
 }
 

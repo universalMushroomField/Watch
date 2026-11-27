@@ -156,6 +156,7 @@ func _assign_types(graph: MapGraph) -> void:
 		pool.append(node)
 	_shuffle(pool)
 
+	pool = _assign_type(pool, MapNode.Type.HUB, config.hub_count)
 	pool = _assign_type(pool, MapNode.Type.SHOP, config.shop_count)
 	pool = _assign_type(pool, MapNode.Type.REST, config.rest_count)
 	pool = _assign_type(pool, MapNode.Type.TREASURE, config.treasure_count)
