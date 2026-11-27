@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://bffkkoks4odyo" path="res://effect/effect.gd" id="3"]
 [ext_resource type="Script" uid="uid://cmuto234tnna5" path="res://effect/damage_effect.gd" id="4"]
 [ext_resource type="Script" uid="uid://bp2abdjtxv0ra" path="res://effect/armor_effect.gd" id="5"]
-[ext_resource type="Texture2D" uid="uid://bp5riably1qnm" path="res://icon.svg" id="6_qhgh8"]
+[ext_resource type="Texture2D" uid="uid://bp5riably1qnm" path="res://public/ui/icon.svg" id="6_qhgh8"]
 
 [sub_resource type="Resource" id="Damage"]
 script = ExtResource("4")

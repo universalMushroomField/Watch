@@ -19,7 +19,7 @@ uniform float fragment_pixels : hint_range(1.0, 32.0, 1.0) = 4.0;
 /** 噪声每秒移动的格数。 */
 uniform float flow_speed : hint_range(0.0, 3.0, 0.05) = 0.25;
 group_uniforms;
-#include "res://map/shaders/terrain/terrain_surface.gdshaderinc"
+#include "res://public/shaders/terrain/terrain_surface.gdshaderinc"
 
 void vertex() {
     world_xz = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xz;

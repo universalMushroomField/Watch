@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://ce84gdwudyg0n"
-path="res://.godot/imported/fusion-pixel-12px-proportional-zh_hans.otf-73bdcab0404ab730eb5d1f456fd3ffea.fontdata"
+path="res://.godot/imported/fusion-pixel-12px-proportional-zh_hans.otf-43ce895e106850bd14578a58f693525a.fontdata"
 
 [deps]
 
-source_file="res://ui/fonts/fusion-pixel-12px-proportional-zh_hans.otf"
-dest_files=["res://.godot/imported/fusion-pixel-12px-proportional-zh_hans.otf-73bdcab0404ab730eb5d1f456fd3ffea.fontdata"]
+source_file="res://public/fonts/fusion-pixel-12px-proportional-zh_hans.otf"
+dest_files=["res://.godot/imported/fusion-pixel-12px-proportional-zh_hans.otf-43ce895e106850bd14578a58f693525a.fontdata"]
 
 [params]
 

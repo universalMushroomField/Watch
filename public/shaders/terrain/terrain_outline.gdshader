@@ -36,7 +36,7 @@ uniform float breakup_speed : hint_range(0.0, 3.0) = 0.45;
 group_uniforms;
 varying vec3 intact_position;
 
-#include "res://map/shaders/terrain/terrain_breakup.gdshaderinc"
+#include "res://public/shaders/terrain/terrain_breakup.gdshaderinc"
 
 // 沿真实断面外扩一层，深度测试保留露在实体轮廓外的部分。
 /** 外扩轮廓的颜色和不透明度。 */

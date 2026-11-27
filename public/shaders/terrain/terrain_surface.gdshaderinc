@@ -1,4 +1,4 @@
-#include "res://shaders/include/viewport_edge_noise.gdshaderinc"
+#include "res://public/shaders/include/viewport_edge_noise.gdshaderinc"
 
 bool side_cell_missing(vec2 uv, vec2 viewport_size, float time) {
     float distance_x = min(uv.x, 1.0 - uv.x);

@@ -1,6 +1,6 @@
 extends Node
 
-const TEXT_SHADER := preload("res://ui/fonts/pixel_text.gdshader")
+const TEXT_SHADER := preload("res://public/shaders/ui/pixel_text.gdshader")
 var text_material := ShaderMaterial.new()
 
 func _ready() -> void:

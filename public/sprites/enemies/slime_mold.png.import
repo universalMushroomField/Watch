@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://4vrruuxjlc4t"
-path="res://.godot/imported/currency_icon.png-b7638e6763a41fa936bab475cf7243c4.ctex"
+uid="uid://bxvhc0o0vxv44"
+path="res://.godot/imported/slime_mold.png-efbf0459b080244b67af9d35927730a9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://ui/art/currency_icon.png"
-dest_files=["res://.godot/imported/currency_icon.png-b7638e6763a41fa936bab475cf7243c4.ctex"]
+source_file="res://public/sprites/enemies/slime_mold.png"
+dest_files=["res://.godot/imported/slime_mold.png-efbf0459b080244b67af9d35927730a9.ctex"]
 
 [params]
 

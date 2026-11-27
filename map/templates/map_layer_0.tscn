@@ -1,13 +1,13 @@
 [gd_scene format=3 uid="uid://4bln64glqcwl"]
 
-[ext_resource type="Shader" uid="uid://ccd3qyxoh8yrv" path="res://map/shaders/terrain/terrain_surface.gdshader" id="2_edge"]
+[ext_resource type="Shader" uid="uid://ccd3qyxoh8yrv" path="res://public/shaders/terrain/terrain_surface.gdshader" id="2_edge"]
 [ext_resource type="Script" uid="uid://bvgv55kuxw82a" path="res://map/scripts/map_hex_layer.gd" id="3_hex"]
 [ext_resource type="Script" uid="uid://dnbvsrsj08okk" path="res://map/scripts/map_camera.gd" id="4_camera"]
-[ext_resource type="ArrayMesh" uid="uid://dtbovrdt2nlwb" path="res://map/res/terrain_mesh_1.res" id="6_bsjo1"]
+[ext_resource type="ArrayMesh" uid="uid://dtbovrdt2nlwb" path="res://public/meshs/terrain_mesh_1.res" id="6_bsjo1"]
 [ext_resource type="Script" uid="uid://dhacqtgjng8e8" path="res://map/scripts/map_terrain_model.gd" id="6_model"]
-[ext_resource type="Shader" uid="uid://cxyfqtal2xfu0" path="res://map/shaders/terrain/particle_fog.gdshader" id="7_fog"]
+[ext_resource type="Shader" uid="uid://cxyfqtal2xfu0" path="res://public/shaders/terrain/particle_fog.gdshader" id="7_fog"]
 [ext_resource type="Script" uid="uid://0mri5ha6ciaj" path="res://map/scripts/map_particle_fog.gd" id="8_cloud"]
-[ext_resource type="Shader" uid="uid://x4mqgwpsbt7i" path="res://map/shaders/terrain/terrain_pixelate.gdshader" id="9_pixelate"]
+[ext_resource type="Shader" uid="uid://x4mqgwpsbt7i" path="res://public/shaders/terrain/terrain_pixelate.gdshader" id="9_pixelate"]
 
 [sub_resource type="ShaderMaterial" id="TerrainPixelate"]
 render_priority = -127

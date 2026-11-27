@@ -4,7 +4,7 @@ render_mode ambient_light_disabled, specular_disabled;
 
 uniform vec4 base_color : source_color = vec4(1.0);
 
-#include "res://shaders/lighting/palette_shadow.gdshaderinc"
+#include "res://public/shaders/lighting/palette_shadow.gdshaderinc"
 
 void fragment() {
 	ALBEDO = base_color.rgb;

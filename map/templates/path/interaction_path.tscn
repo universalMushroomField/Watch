@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bolwgj8rtubrf"]
 
 [ext_resource type="Script" uid="uid://dim0jl8ci5i5n" path="res://map/scripts/map_path.gd" id="1"]
-[ext_resource type="Shader" uid="uid://cxldgopg15quj" path="res://map/shaders/path/interaction_path_pixelate.gdshader" id="2_pixel"]
+[ext_resource type="Shader" uid="uid://cxldgopg15quj" path="res://public/shaders/path/interaction_path_pixelate.gdshader" id="2_pixel"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hqx1j"]
 render_priority = 1

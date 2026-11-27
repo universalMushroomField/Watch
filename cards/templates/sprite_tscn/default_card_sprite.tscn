@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://vr3wbp1durv7"]
 
-[ext_resource type="AnimationLibrary" uid="uid://csqmfeasdf7b6" path="res://cards/animation/card_animation.tres" id="2_fbw7b"]
+[ext_resource type="AnimationLibrary" uid="uid://csqmfeasdf7b6" path="res://public/animations/cards/card_animation.tres" id="2_fbw7b"]
 [ext_resource type="Script" uid="uid://b0y4anj681ef5" path="res://cards/scripts/card_view.gd" id="3_hover"]
 
 [sub_resource type="StyleBoxFlat" id="CardFace"]

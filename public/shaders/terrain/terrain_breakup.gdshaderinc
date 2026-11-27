@@ -1,4 +1,4 @@
-#include "res://shaders/include/noise_3d.gdshaderinc"
+#include "res://public/shaders/include/noise_3d.gdshaderinc"
 
 // 根据局部位置、相对埋深和时间判断当前样本是否进入侵蚀区。
 bool terrain_is_eroded(vec3 position, float depth, float time) {
