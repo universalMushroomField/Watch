@@ -5,6 +5,15 @@ extends MeshInstance3D
 
 signal terrain_rebuilt
 
+const TERRAIN_RAMPS := [
+	[40, 41, 41, 42, 43], # Neutral ground
+	[25, 26, 27, 28, 29], # Muted outer biological fringe
+	[20, 21, 22, 23, 24], # Inner biological fringe
+	[15, 16, 17, 18, 19], # Unexplored
+	[35, 36, 37, 38, 39], # Cool grey-green human fringe
+	[30, 31, 32, 33, 34], # Explored
+]
+
 ## 提供地表高度及底面位置的原始高度场网格。
 @export var source_mesh: Mesh:
 	set(value):
@@ -52,6 +61,7 @@ var _rebuild_queued := false
 
 
 func _ready() -> void:
+	_apply_palette()
 	_rebuild()
 
 
@@ -94,3 +104,13 @@ func _rebuild() -> void:
 		else:
 			fog.multimesh = null
 	terrain_rebuilt.emit()
+
+
+func _apply_palette() -> void:
+	var terrain_material := material_override as ShaderMaterial
+	if terrain_material != null:
+		var ramps := Image.create_empty(5, TERRAIN_RAMPS.size(), false, Image.FORMAT_RGBA8)
+		for row in range(TERRAIN_RAMPS.size()):
+			for band in range(TERRAIN_RAMPS[row].size()):
+				ramps.set_pixel(band, row, ArtPalette.color(TERRAIN_RAMPS[row][band]))
+		terrain_material.set_shader_parameter("region_palette", ImageTexture.create_from_image(ramps))

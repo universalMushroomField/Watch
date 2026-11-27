@@ -1,7 +1,7 @@
 @tool
 ## 全局界面文案。固定的界面文字集中在这一份资源里，改文案只改 [code]ui/text/game_text.tres[/code]。
 ##
-## 货币名也放在这里：以后把「活性晶珀」改名，连带范围只有这一个文件，不用翻脚本和场景。
+## 货币名也放在这里：以后把「活性精珀」改名，连带范围只有这一个文件，不用翻脚本和场景。
 ## 带 [code]%d[/code]/[code]%s[/code] 的字段是格式串，参数含义写在各自的注释里。
 class_name GameText
 extends Resource

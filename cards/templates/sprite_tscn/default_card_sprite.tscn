@@ -4,12 +4,12 @@
 [ext_resource type="Script" uid="uid://b0y4anj681ef5" path="res://cards/scripts/card_view.gd" id="3_hover"]
 
 [sub_resource type="StyleBoxFlat" id="CardFace"]
-bg_color = Color(0, 0.015686, 0.305882, 1)
+bg_color = Color(0.20392157, 0.27058824, 0.34901961, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.27451, 0.619608, 0.807843, 1)
+border_color = Color(0.38431373, 0.47058824, 0.44705882, 1)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -67,7 +67,7 @@ offset_left = 8.0
 offset_top = 8.0
 offset_right = 120.0
 offset_bottom = 34.0
-theme_override_colors/font_color = Color(0.752941, 0.933333, 0.964706, 1)
+theme_override_colors/font_color = Color(0.94509804, 0.91764706, 0.87450980, 1)
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 text_overrun_behavior = 3

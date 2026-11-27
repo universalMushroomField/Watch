@@ -3,8 +3,8 @@ extends HBoxContainer
 
 signal position_selected(index: int)
 
-const AVAILABLE_COLOR_INDEX := 25
-const SELECTED_COLOR_INDEX := 30
+const AVAILABLE_COLOR_INDEX := 9
+const SELECTED_COLOR_INDEX := 39
 
 
 func display(symbols: Array[CardSequence.Symbol], starts: Array[int], cost: int, start: int, selected: int) -> void:
@@ -37,7 +37,7 @@ func display(symbols: Array[CardSequence.Symbol], starts: Array[int], cost: int,
 
 func _outline(button: Button, color: Color) -> void:
 	var style := StyleBoxFlat.new()
-	style.bg_color = ArtPalette.color(15)
+	style.bg_color = ArtPalette.color(31)
 	style.border_color = color
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(5)

@@ -7,7 +7,7 @@
 render_priority = 3
 shader = ExtResource("2_pixel")
 shader_parameter/pixel_size = 2.0
-shader_parameter/pixel_color = Color(0.823529, 0.819608, 0.364706, 0.95)
+shader_parameter/pixel_color = Color(0.90980392, 0.91372549, 0.58823529, 0.95)
 
 [node name="HoverPath" type="MeshInstance3D"]
 material_override = SubResource("ShaderMaterial_hover")

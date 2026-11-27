@@ -15,7 +15,7 @@ uniform vec4 disc_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
 uniform float disc_radius = 0.0;
 uniform float disc_feather = 0.03;
 // 环外的深色描边，保证浅色地表上也能看清。
-uniform vec4 edge_color : source_color = vec4(0.235294, 0.203922, 0.156863, 0.75);
+uniform vec4 edge_color : source_color = vec4(0.25882353, 0.09019608, 0.00000000, 0.75);
 // 主环半径，单位是贴片 UV（中心 0，贴片边缘 0.5）。
 uniform float ring_radius = 0.4;
 // 主环线宽，单位同上。

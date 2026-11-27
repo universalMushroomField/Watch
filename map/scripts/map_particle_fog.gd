@@ -30,7 +30,8 @@ func rebuild(terrain_mesh: Mesh, terrain_seed: int) -> void:
 			var count := clampi(ceili(thickness / spacing), 2, 9)
 			for i in range(count):
 				var depth := pow((i + rng.randf()) / count, 2.8)
-				positions.append(Vector3(px, top - thickness * depth, pz))
+				var height := top + spacing * 0.25 if i == 0 else top - thickness * depth
+				positions.append(Vector3(px, height, pz))
 				var phase := fposmod(px * 0.045 + pz * 0.025 + 0.12 * rng.randf(), 1.0)
 				data.append(Color(depth, rng.randf(), rng.randf(), phase))
 

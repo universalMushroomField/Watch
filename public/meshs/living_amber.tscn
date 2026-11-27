@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://2x5lfmmxvwid"]
+
+[ext_resource type="ArrayMesh" uid="uid://b5yalvm1pw7sx" path="res://public/meshs/LivingAmber.obj" id="1"]
+[ext_resource type="Material" path="res://public/meshs/living_amber.tres" id="2"]
+
+[node name="LivingAmber" type="MeshInstance3D" unique_id=962216550]
+material_override = ExtResource("2")
+mesh = ExtResource("1")

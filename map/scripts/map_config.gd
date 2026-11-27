@@ -12,6 +12,8 @@ const DEFAULT_ROWS := 4
 const DEFAULT_HEX_RADIUS := 4.2
 
 @export_group("Hex Board")
+## 地点总数，包含起点和 Boss。0 使用完整棋盘；正数最少生成两个地点。
+@export_range(0, 256) var node_count: int = 0
 ## 中间区域的最大列数，由 [method HexLayout.fit] 按可用矩形向下缩，不是目标值。
 @export_range(2, 24) var max_columns: int = DEFAULT_COLUMNS
 ## 中间区域的最大行数，由 [method HexLayout.fit] 按可用矩形向下缩，不是目标值。

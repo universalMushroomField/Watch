@@ -1,14 +1,14 @@
 [gd_scene format=3]
 
 [sub_resource type="StyleBoxFlat" id="Background"]
-bg_color = Color(0.015686, 0, 0.145098, 1)
+bg_color = Color(0.12549020, 0.12156863, 0.13725490, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
 
 [sub_resource type="StyleBoxFlat" id="Fill"]
-bg_color = Color(0.509804, 0.666667, 0.309804, 1)
+bg_color = Color(0.56862745, 0.60000000, 0.16862745, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
@@ -26,7 +26,7 @@ show_percentage = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
-theme_override_colors/font_outline_color = Color(0.015686, 0, 0.145098, 1)
+theme_override_colors/font_outline_color = Color(0.12549020, 0.12156863, 0.13725490, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 13
 horizontal_alignment = 1
@@ -39,8 +39,8 @@ anchor_bottom = 1.0
 offset_left = 4.0
 offset_right = 48.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.752941, 0.933333, 0.964706, 1)
-theme_override_colors/font_outline_color = Color(0.015686, 0, 0.145098, 1)
+theme_override_colors/font_color = Color(0.94509804, 0.91764706, 0.87450980, 1)
+theme_override_colors/font_outline_color = Color(0.12549020, 0.12156863, 0.13725490, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 13
 text = "甲 0"
