@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.7", "Forward Plus")
 [autoload]
 
 SeedGenerator="*res://components/seed_generator.gd"
+PixelText="*res://ui/fonts/pixel_text.gd"
 
 [display]
 
