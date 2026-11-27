@@ -12,7 +12,7 @@
 [sub_resource type="ShaderMaterial" id="TerrainPixelate"]
 render_priority = -127
 shader = ExtResource("9_pixelate")
-shader_parameter/pixel_size = 4
+shader_parameter/pixel_size = 1
 
 [sub_resource type="Image" id="Image_bsjo1"]
 data = {
@@ -36,7 +36,7 @@ shader_parameter/region_radius = 1.8
 shader_parameter/root_reach = 12.0
 shader_parameter/root_spacing = 3.8
 shader_parameter/region_span_count = 0
-shader_parameter/breakup_width = 0.249999994412
+shader_parameter/breakup_width = 0.03999999910592
 shader_parameter/breakup_strength = 0.85
 shader_parameter/fragment_pixels = 4.0
 shader_parameter/flow_speed = 0.35000000521542
