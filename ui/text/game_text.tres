@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("1_script")
-currency_name = "活性晶珀"
+currency_name = "活性精珀"
 currency_icon = ExtResource("2_icon")
 currency_amount_format = "%s %d"
 act_label_format = "第 %d 幕"
