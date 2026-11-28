@@ -46,6 +46,7 @@ script = ExtResource("1")
 action_states = Array[ExtResource("2")]([SubResource("AttackState"), SubResource("DefenseState")])
 character_id = "test_enemy"
 character_name = "测试敌人"
+health = 1
 sprite = NodePath("AnimatedSprite2D")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2009500848]
