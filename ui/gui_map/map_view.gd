@@ -114,8 +114,13 @@ func _start_battle() -> void:
 func _on_battle_finished(victory: bool, battle: BaseFight) -> void:
 	run_state.player.health = maxi(0, battle.player_character.health)
 	run_state.fight_system = null
+	battle.hide()
+	battle.queue_free()
 	if victory:
-		_return_to_map()
+		var settlement := preload("res://ui/rewards/settlement.tscn").instantiate()
+		_battle_layer.add_child(settlement)
+		settlement.populate(run_state.player, run_state.run_seed + run_state.act_index * 7919 + run.current_id)
+		settlement.departed.connect(_return_to_map, CONNECT_ONE_SHOT)
 		return
 	_return_to_map()
 	_open_panel("战斗失败")

@@ -1,0 +1,9 @@
+[gd_resource type="AnimationLibrary" format=3]
+[sub_resource type="Animation" id="Clip"]
+resource_name = "slide"
+length = 0.34
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:slide_progress")
+tracks/0/keys = {"times": PackedFloat32Array(0,0.34), "transitions": PackedFloat32Array(1,1), "update": 0, "values": [0.0,1.0]}
+[resource]
+_data = {&"slide": SubResource("Clip")}
