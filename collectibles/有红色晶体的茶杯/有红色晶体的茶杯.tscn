@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://cxjy8ayh0cnsv"]
+
+[ext_resource type="PackedScene" uid="uid://dh1dqvgyaf2pd" path="res://collectibles/有红色晶体的茶杯/有红色晶体的茶杯.fbx" id="1_07j0q"]
+[ext_resource type="Texture2D" uid="uid://3xu3u1ws6jja" path="res://collectibles/有红色晶体的茶杯/无标题.png" id="2_7uf3f"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tc1a4"]
+albedo_color = Color(0.51907367, 0.46638724, 0.3942901, 1)
+albedo_texture = ExtResource("2_7uf3f")
+disable_receive_shadows = true
+
+[node name="有红色晶体的茶杯" unique_id=808787347 instance=ExtResource("1_07j0q")]
+
+[node name="球体" parent="." index="0" unique_id=141879754]
+surface_material_override/0 = SubResource("StandardMaterial3D_tc1a4")

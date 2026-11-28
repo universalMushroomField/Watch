@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://5jkoqodtg5qg"]
+
+[ext_resource type="PackedScene" uid="uid://cmbnfe088je2e" path="res://collectibles/纸/纸.fbx" id="1_60qfp"]
+[ext_resource type="Texture2D" uid="uid://5r7pgwa2kq4x" path="res://collectibles/纸/无标题.png" id="2_v7een"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ccdgq"]
+albedo_color = Color(0.59607846, 0.5294118, 0.4627451, 1)
+albedo_texture = ExtResource("2_v7een")
+albedo_texture_force_srgb = true
+texture_filter = 0
+
+[node name="纸" unique_id=1961449031 instance=ExtResource("1_60qfp")]
+
+[node name="栅格" parent="." index="0" unique_id=10491843]
+surface_material_override/0 = SubResource("StandardMaterial3D_ccdgq")
