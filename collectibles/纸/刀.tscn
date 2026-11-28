@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://bp1pk3jfe3s0h"]
+
+[ext_resource type="PackedScene" uid="uid://dsyea7ooucxt4" path="res://collectibles/刀/刀.fbx" id="1_my2jr"]
+[ext_resource type="Texture2D" uid="uid://dqxuyu6ne5ibj" path="res://collectibles/刀/无标题.png" id="2_m0etg"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8spmn"]
+albedo_texture = ExtResource("2_m0etg")
+texture_filter = 0
+
+[node name="刀" unique_id=821731392 instance=ExtResource("1_my2jr")]
+
+[node name="刀" parent="." index="0" unique_id=359041341]
+surface_material_override/0 = SubResource("StandardMaterial3D_8spmn")
