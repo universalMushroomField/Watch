@@ -6,7 +6,7 @@
 extends Control
 
 @export var content_scenes: Dictionary[MapNode.Type, PackedScene] = {
-	MapNode.Type.BATTLE: preload("res://ui/gui_map/content/battle.tscn"),
+	MapNode.Type.BATTLE: preload("res://fight/templates/base_fight.tscn"),
 	MapNode.Type.BOSS: preload("res://ui/gui_map/content/boss.tscn"),
 	MapNode.Type.ELITE: preload("res://ui/gui_map/content/elite.tscn"),
 	MapNode.Type.EVENT: preload("res://ui/gui_map/content/event.tscn"),
@@ -37,6 +37,7 @@ extends Control
 var run: MapRun
 var _status_tween: Tween
 var _panel_open := false
+var _battle_layer: CanvasLayer
 
 
 func _ready() -> void:
@@ -83,6 +84,9 @@ func _on_act_started(_act_index: int, _graph: MapGraph) -> void:
 
 func _on_node_entered(node: MapNode) -> void:
 	_refresh()
+	if node.type == MapNode.Type.BATTLE:
+		_start_battle()
+		return
 	_open_panel(node.get_type_label())
 	var content: PackedScene = content_scenes.get(node.type)
 	if content != null:
@@ -93,12 +97,45 @@ func _on_node_entered(node: MapNode) -> void:
 	else:
 		_add_action(GameText.shared().close_panel_action, _close_panel)
 
+func _start_battle() -> void:
+	var battle := content_scenes[MapNode.Type.BATTLE].instantiate() as BaseFight
+	battle.player_character.health = run_state.player.health
+	battle.player_character.deck = run_state.player.deck
+	battle.finished.connect(_on_battle_finished.bind(battle), CONNECT_ONE_SHOT | CONNECT_DEFERRED)
+	run_state.fight_system = battle
+	hide()
+	process_mode = Node.PROCESS_MODE_DISABLED
+	_battle_layer = CanvasLayer.new()
+	_battle_layer.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(_battle_layer)
+	_battle_layer.add_child(battle)
+
+
+func _on_battle_finished(victory: bool, battle: BaseFight) -> void:
+	run_state.player.health = maxi(0, battle.player_character.health)
+	run_state.fight_system = null
+	if victory:
+		_return_to_map()
+		return
+	_return_to_map()
+	_open_panel("战斗失败")
+	_add_action("返回主菜单", func(): get_tree().change_scene_to_file("res://ui/start_menu/start_menu.tscn"))
+
+
+func _return_to_map() -> void:
+	_battle_layer.queue_free()
+	_battle_layer = null
+	process_mode = Node.PROCESS_MODE_INHERIT
+	show()
+	_refresh()
+
+
 func _on_node_travel_rejected(_node_id: int) -> void:
 	_show_status(GameText.shared().travel_rejected_message)
 
 
 func _on_node_pressed(node: MapNode) -> void:
-	if _panel_open or node.id == run.current_id:
+	if _battle_layer != null or _panel_open or node.id == run.current_id:
 		return
 	run.travel_to(node.id)
 

@@ -2,6 +2,8 @@
 class_name BaseFight
 extends Node2D
 
+signal finished(victory: bool)
+
 const CARD_VIEW := preload("res://cards/templates/sprite_tscn/default_card_sprite.tscn")
 
 @export var card_manager: CardManager
@@ -137,7 +139,9 @@ func _begin_player_turn() -> void:
 func _finish_if_decided() -> bool:
 	if is_instance_valid(player_character) and player_character.health > 0 and _has_living_enemy():
 		return false
-	_enter_stage(BattlePhase.Stage.FINISHED)
+	if cur_stage != BattlePhase.Stage.FINISHED:
+		_enter_stage(BattlePhase.Stage.FINISHED)
+		finished.emit(is_instance_valid(player_character) and player_character.health > 0)
 	return true
 
 
