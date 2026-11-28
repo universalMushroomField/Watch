@@ -20,7 +20,6 @@ const LOCATION_SCENES := {
 	MapNode.Type.BATTLE: preload("res://map/templates/node/battle.tscn"),
 	MapNode.Type.ELITE: preload("res://map/templates/node/elite.tscn"),
 	MapNode.Type.EVENT: preload("res://map/templates/node/event.tscn"),
-	MapNode.Type.TREASURE: preload("res://map/templates/node/treasure.tscn"),
 	MapNode.Type.SHOP: preload("res://map/templates/node/shop.tscn"),
 	MapNode.Type.REST: preload("res://map/templates/node/rest.tscn"),
 	MapNode.Type.HUB: preload("res://map/templates/node/hub.tscn"),

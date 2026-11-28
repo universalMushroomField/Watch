@@ -14,7 +14,6 @@ extends Control
 	MapNode.Type.HUB: preload("res://ui/gui_map/content/hub.tscn"),
 	MapNode.Type.SHOP: preload("res://ui/gui_map/content/shop.tscn"),
 	MapNode.Type.START: preload("res://ui/gui_map/content/start.tscn"),
-	MapNode.Type.TREASURE: preload("res://ui/gui_map/content/treasure.tscn"),
 }
 
 ## 单局状态。留空时自己创建一份，方便单独运行地图场景调试。

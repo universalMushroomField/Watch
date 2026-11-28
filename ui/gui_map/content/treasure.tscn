@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[node name="TreasureContent" type="Label"]
-text = "宝箱场景占位"
-horizontal_alignment = 1
-autowrap_mode = 3

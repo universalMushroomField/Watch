@@ -34,7 +34,5 @@ const DEFAULT_HEX_RADIUS := 4.2
 @export var shop_count: int = 1
 ## 休息点数量。
 @export var rest_count: int = 1
-## 宝箱数量。
-@export var treasure_count: int = 1
 ## 普通战斗被替换成未知事件的概率。
 @export_range(0.0, 1.0) var event_ratio: float = 0.5
