@@ -25,6 +25,7 @@ var cur_stage: BattlePhase.Stage = BattlePhase.Stage.START
 
 
 func _ready() -> void:
+	add_to_group("active_battles")
 	if fight_ui != null:
 		var end_button := fight_ui.get_node_or_null("OverRoundButton") as Button
 		if end_button != null:
@@ -133,6 +134,15 @@ func _begin_player_turn() -> void:
 		if round_label != null:
 			round_label.text = "回合数 %d" % round_count
 	_enter_stage(BattlePhase.Stage.PLAYER)
+	_finish_if_decided()
+
+
+func debug_win() -> void:
+	if not ProjectSettings.get_setting("watch/debug/enabled", false) or cur_stage == BattlePhase.Stage.FINISHED:
+		return
+	for enemy in enemies:
+		if is_instance_valid(enemy):
+			enemy.health = 0
 	_finish_if_decided()
 
 
