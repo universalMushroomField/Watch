@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://bsnaqllahd70v"]
+
+[sub_resource type="StandardMaterial3D" id="Brass"]
+albedo_color = Color(0.78, 0.64, 0.41, 1)
+metallic = 0.45
+
+[sub_resource type="BoxMesh" id="Tag"]
+material = SubResource("Brass")
+size = Vector3(1.1, 1.7, 0.12)
+
+[node name="WatchTag" type="MeshInstance3D" unique_id=2130605550]
+transform = Transform3D(0.9274488, 0.15307425, -0.34118474, -0.19767681, 0.9751704, -0.09983342, 0.3174313, 0.16003469, 0.9346798, 0, 0.8, 0)
+mesh = SubResource("Tag")
+
+[node name="Stamp" type="Label3D" parent="." unique_id=904369831]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.07)
+pixel_size = 0.008
+modulate = Color(0.16, 0.15, 0.12, 1)
+text = "守望"

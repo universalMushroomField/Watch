@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://public/meshs/watch_tag.tscn" id="Model"]
+[ext_resource type="Script" path="res://collections/scripts/watch_tag.gd" id="TagScript"]
+
+[node name="WatchTag" instance=ExtResource("Model")]
+script = ExtResource("TagScript")

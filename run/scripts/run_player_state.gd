@@ -10,6 +10,7 @@ var health: int
 var gold: int
 ## 本局使用的卡组，从角色配置复制而来。
 var deck: CardDeck
+var collectibles: Array[PackedScene] = []
 
 
 func _init(initial_max_health: int = 70, starting_gold: int = 50, starting_deck: CardDeck = null) -> void:
