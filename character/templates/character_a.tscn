@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b73i3n7qwx06n" path="res://character/scripts/character_selectable.gd" id="1_r1ich"]
 [ext_resource type="Resource" uid="uid://d4bjheop27cpm" path="res://cards/templates/character_a/deck.tres" id="2_tepe0"]
-[ext_resource type="Texture2D" uid="uid://bp5riably1qnm" path="res://icon.svg" id="3_tepe0"]
+[ext_resource type="Texture2D" uid="uid://bp5riably1qnm" path="res://public/ui/icon.svg" id="3_tepe0"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_b7n5m"]
 atlas = ExtResource("3_tepe0")

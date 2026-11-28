@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://bklhhsb5ke0q0"]
 
-[ext_resource type="Theme" uid="uid://dhh77svvkoqgy" path="res://ui/theme/main_theme.tres" id="1_tlr4o"]
+[ext_resource type="Theme" uid="uid://dhh77svvkoqgy" path="res://public/ui/main_theme.tres" id="1_tlr4o"]
 [ext_resource type="Script" uid="uid://f1hv8w8jc082" path="res://ui/gui_map/map_view.gd" id="2_ev6oa"]
-[ext_resource type="Texture2D" uid="uid://4vrruuxjlc4t" path="res://ui/art/currency_icon.png" id="4_icon"]
+[ext_resource type="Texture2D" uid="uid://4vrruuxjlc4t" path="res://public/ui/currency_icon.png" id="4_icon"]
 [ext_resource type="PackedScene" uid="uid://4bln64glqcwl" path="res://map/templates/map_layer_0.tscn" id="6_8nppi"]
 [ext_resource type="Script" uid="uid://4y47wixti8gt" path="res://ui/gui_map/map_board_input.gd" id="7_board"]
 

@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="GameText" load_steps=3 format=3 uid="uid://blal61nc64ato"]
 
 [ext_resource type="Script" uid="uid://f6dqgavdh8cq" path="res://ui/text/game_text.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://4vrruuxjlc4t" path="res://ui/art/currency_icon.png" id="2_icon"]
+[ext_resource type="Texture2D" uid="uid://4vrruuxjlc4t" path="res://public/ui/currency_icon.png" id="2_icon"]
 
 [resource]
 script = ExtResource("1_script")
@@ -11,7 +11,7 @@ currency_amount_format = "%s %d"
 act_label_format = "第 %d 幕"
 health_label_format = "生命 %d/%d"
 deck_label_format = "卡组 %d 张"
-decay_label_format = "崩解度 %d%%（%d/%d）"
+decay_label_format = "极端度 %d 步 · 阶段 %d %s"
 travel_hint = "点击任意已探索节点的未探索邻居前进。"
 travel_rejected_message = "只能前往已探索节点的未探索邻居。"
 act_started_format = "第 %d 幕开始，崩解度已重置。"

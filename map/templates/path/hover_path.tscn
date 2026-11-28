@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://map/scripts/map_path.gd" id="1_path"]
-[ext_resource type="Shader" path="res://map/shaders/path/interaction_path_pixelate.gdshader" id="2_pixel"]
+[ext_resource type="Shader" path="res://public/shaders/path/interaction_path_pixelate.gdshader" id="2_pixel"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hover"]
 render_priority = 3

@@ -147,7 +147,7 @@ func _root(parents: Array[int], index: int) -> int:
 		index = parents[index]
 	return index
 
-## 随机分配精英、商店、休息、宝箱、事件和普通战斗。
+## 随机分配精英、商店、休息、事件和普通战斗。
 func _assign_types(graph: MapGraph) -> void:
 	var pool: Array[MapNode] = []
 	for node in graph.nodes:
@@ -156,9 +156,9 @@ func _assign_types(graph: MapGraph) -> void:
 		pool.append(node)
 	_shuffle(pool)
 
+	pool = _assign_type(pool, MapNode.Type.HUB, config.hub_count)
 	pool = _assign_type(pool, MapNode.Type.SHOP, config.shop_count)
 	pool = _assign_type(pool, MapNode.Type.REST, config.rest_count)
-	pool = _assign_type(pool, MapNode.Type.TREASURE, config.treasure_count)
 	pool = _assign_elites(pool, config.elite_count)
 
 	for node in pool:

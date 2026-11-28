@@ -6,14 +6,14 @@
 extends Control
 
 @export var content_scenes: Dictionary[MapNode.Type, PackedScene] = {
-	MapNode.Type.BATTLE: preload("res://ui/gui_map/content/battle.tscn"),
+	MapNode.Type.BATTLE: preload("res://fight/templates/base_fight.tscn"),
 	MapNode.Type.BOSS: preload("res://ui/gui_map/content/boss.tscn"),
 	MapNode.Type.ELITE: preload("res://ui/gui_map/content/elite.tscn"),
 	MapNode.Type.EVENT: preload("res://ui/gui_map/content/event.tscn"),
 	MapNode.Type.REST: preload("res://ui/gui_map/content/rest.tscn"),
+	MapNode.Type.HUB: preload("res://ui/gui_map/content/hub.tscn"),
 	MapNode.Type.SHOP: preload("res://ui/gui_map/content/shop.tscn"),
 	MapNode.Type.START: preload("res://ui/gui_map/content/start.tscn"),
-	MapNode.Type.TREASURE: preload("res://ui/gui_map/content/treasure.tscn"),
 }
 
 ## 单局状态。留空时自己创建一份，方便单独运行地图场景调试。
@@ -37,6 +37,7 @@ extends Control
 var run: MapRun
 var _status_tween: Tween
 var _panel_open := false
+var _battle_layer: CanvasLayer
 
 
 func _ready() -> void:
@@ -68,9 +69,8 @@ func _refresh() -> void:
 	_currency_icon.texture = copy.currency_icon
 	_currency_icon.visible = copy.currency_icon != null
 	_deck_label.text = copy.deck_label_format % run_state.player.get_deck_size()
-	var percent := roundi(run.get_decay_ratio() * 100.0)
-	_decay_label.text = copy.decay_label_format % [
-		percent, run.get_decay_visited_count(), run.get_decay_total_count()]
+	var stage := run.get_extreme_stage()
+	_decay_label.text = copy.decay_label_format % [run.extreme_steps, stage, MapRun.STAGE_NAMES[stage]]
 	_decay_bar.value = run.get_decay_ratio()
 	_hex_layer.refresh()
 
@@ -84,6 +84,9 @@ func _on_act_started(_act_index: int, _graph: MapGraph) -> void:
 
 func _on_node_entered(node: MapNode) -> void:
 	_refresh()
+	if node.type == MapNode.Type.BATTLE:
+		_start_battle()
+		return
 	_open_panel(node.get_type_label())
 	var content: PackedScene = content_scenes.get(node.type)
 	if content != null:
@@ -94,12 +97,50 @@ func _on_node_entered(node: MapNode) -> void:
 	else:
 		_add_action(GameText.shared().close_panel_action, _close_panel)
 
+func _start_battle() -> void:
+	var battle := content_scenes[MapNode.Type.BATTLE].instantiate() as BaseFight
+	battle.player_character.health = run_state.player.health
+	battle.player_character.deck = run_state.player.deck
+	battle.finished.connect(_on_battle_finished.bind(battle), CONNECT_ONE_SHOT | CONNECT_DEFERRED)
+	run_state.fight_system = battle
+	hide()
+	process_mode = Node.PROCESS_MODE_DISABLED
+	_battle_layer = CanvasLayer.new()
+	_battle_layer.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(_battle_layer)
+	_battle_layer.add_child(battle)
+
+
+func _on_battle_finished(victory: bool, battle: BaseFight) -> void:
+	run_state.player.health = maxi(0, battle.player_character.health)
+	run_state.fight_system = null
+	battle.hide()
+	battle.queue_free()
+	if victory:
+		var settlement := preload("res://ui/rewards/settlement.tscn").instantiate()
+		_battle_layer.add_child(settlement)
+		settlement.populate(run_state.player, run_state.run_seed + run_state.act_index * 7919 + run.current_id)
+		settlement.departed.connect(_return_to_map, CONNECT_ONE_SHOT)
+		return
+	_return_to_map()
+	_open_panel("战斗失败")
+	_add_action("返回主菜单", func(): get_tree().change_scene_to_file("res://ui/start_menu/start_menu.tscn"))
+
+
+func _return_to_map() -> void:
+	_battle_layer.queue_free()
+	_battle_layer = null
+	process_mode = Node.PROCESS_MODE_INHERIT
+	show()
+	_refresh()
+
+
 func _on_node_travel_rejected(_node_id: int) -> void:
 	_show_status(GameText.shared().travel_rejected_message)
 
 
 func _on_node_pressed(node: MapNode) -> void:
-	if _panel_open or node.id == run.current_id:
+	if _battle_layer != null or _panel_open or node.id == run.current_id:
 		return
 	run.travel_to(node.id)
 

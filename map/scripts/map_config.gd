@@ -26,13 +26,13 @@ const DEFAULT_HEX_RADIUS := 4.2
 @export var board_margin: float = 0.5
 
 @export_group("Node Types")
+## 枢纽占位数量。
+@export var hub_count: int = 2
 ## 精英战数量。
 @export var elite_count: int = 2
 ## 商店数量。
 @export var shop_count: int = 1
 ## 休息点数量。
 @export var rest_count: int = 1
-## 宝箱数量。
-@export var treasure_count: int = 1
 ## 普通战斗被替换成未知事件的概率。
 @export_range(0.0, 1.0) var event_ratio: float = 0.5

@@ -8,10 +8,10 @@ enum Type {
 	BATTLE,
 	ELITE,
 	EVENT,
-	TREASURE,
-	SHOP,
+	SHOP = 5,
 	REST,
 	BOSS,
+	HUB,
 }
 
 const TYPE_LABELS := {
@@ -19,10 +19,10 @@ const TYPE_LABELS := {
 	Type.BATTLE: "战斗",
 	Type.ELITE: "精英战斗",
 	Type.EVENT: "未知事件",
-	Type.TREASURE: "宝箱",
 	Type.SHOP: "商店",
 	Type.REST: "休息点",
 	Type.BOSS: "本幕 Boss",
+	Type.HUB: "枢纽",
 }
 
 const TYPE_SHORT_LABELS := {
@@ -30,10 +30,10 @@ const TYPE_SHORT_LABELS := {
 	Type.BATTLE: "战",
 	Type.ELITE: "精",
 	Type.EVENT: "事",
-	Type.TREASURE: "宝",
 	Type.SHOP: "商",
 	Type.REST: "息",
 	Type.BOSS: "Boss",
+	Type.HUB: "枢",
 }
 
 ## 节点编号，在一张图内唯一。

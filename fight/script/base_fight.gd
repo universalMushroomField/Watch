@@ -2,6 +2,8 @@
 class_name BaseFight
 extends Node2D
 
+signal finished(victory: bool)
+
 const CARD_VIEW := preload("res://cards/templates/sprite_tscn/default_card_sprite.tscn")
 
 @export var card_manager: CardManager
@@ -23,6 +25,7 @@ var cur_stage: BattlePhase.Stage = BattlePhase.Stage.START
 
 
 func _ready() -> void:
+	add_to_group("active_battles")
 	if fight_ui != null:
 		var end_button := fight_ui.get_node_or_null("OverRoundButton") as Button
 		if end_button != null:
@@ -134,10 +137,21 @@ func _begin_player_turn() -> void:
 	_finish_if_decided()
 
 
+func debug_win() -> void:
+	if not ProjectSettings.get_setting("watch/debug/enabled", false) or cur_stage == BattlePhase.Stage.FINISHED:
+		return
+	for enemy in enemies:
+		if is_instance_valid(enemy):
+			enemy.health = 0
+	_finish_if_decided()
+
+
 func _finish_if_decided() -> bool:
 	if is_instance_valid(player_character) and player_character.health > 0 and _has_living_enemy():
 		return false
-	_enter_stage(BattlePhase.Stage.FINISHED)
+	if cur_stage != BattlePhase.Stage.FINISHED:
+		_enter_stage(BattlePhase.Stage.FINISHED)
+		finished.emit(is_instance_valid(player_character) and player_character.health > 0)
 	return true
 
 

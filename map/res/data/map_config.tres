@@ -4,5 +4,6 @@
 
 [resource]
 script = ExtResource("1_config")
-max_columns = 2
-max_rows = 2
+node_count = 32
+max_columns = 3
+max_rows = 3

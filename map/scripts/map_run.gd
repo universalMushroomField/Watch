@@ -1,8 +1,3 @@
-## 推进一幕地图：当前位置、已探索节点和崩解度。
-##
-## 崩解度 = 已访问且非起点的节点数 / 非起点节点总数，每进入一个新节点上升，
-## 进入下一幕时随新地图一起重置。具体减益效果暂未实现，先通过
-## decay_changed 信号和 get_decay_ratio() 提供给后续系统使用。
 class_name MapRun
 extends RefCounted
 
@@ -22,6 +17,12 @@ var layout: HexLayout
 ## 玩家当前所在节点编号。
 var current_id: int = -1
 
+const STAGE_STEPS := [0, 12, 24, 32, 48, 64]
+const STAGE_NAMES := ["生境扩张", "菌核耐火化", "假性隐生化", "根系耗地化", "侵略性拟态", "自毁性利己"]
+
+signal first_hub_activated(node: MapNode)
+var extreme_steps := 0
+var _hub_support_used := false
 var _visited_ids := {}
 
 
@@ -35,6 +36,7 @@ func generate(act_seed: int) -> void:
 	assert(layout != null, "创建地图前必须提供拟合后的棋盘布局。")
 	graph = MapGenerator.new(config, layout).generate(act_seed)
 	_visited_ids.clear()
+	_hub_support_used = false
 	current_id = graph.start_id
 	_mark_visited(current_id)
 	decay_changed.emit(get_decay_ratio())
@@ -134,6 +136,10 @@ func travel_to(node_id: int) -> bool:
 	current_id = node_id
 	var node := graph.get_node_by_id(node_id)
 	_mark_visited(node_id)
+	extreme_steps += 1
+	if node.type == MapNode.Type.HUB and not _hub_support_used:
+		_hub_support_used = true
+		first_hub_activated.emit(node)
 	decay_changed.emit(get_decay_ratio())
 	node_entered.emit(node)
 	return true
@@ -168,12 +174,12 @@ func get_decay_total_count() -> int:
 	return maxi(get_total_node_count() - 1, 0)
 
 
-## 崩解度，范围 0~1。起点不参与计算，因此开局为 0。
+func get_extreme_stage() -> int:
+	return STAGE_STEPS.bsearch(extreme_steps, false) - 1
+
+
 func get_decay_ratio() -> float:
-	var total := get_decay_total_count()
-	if total <= 0:
-		return 0.0
-	return float(get_decay_visited_count()) / float(total)
+	return minf(float(extreme_steps) / STAGE_STEPS.back(), 1.0)
 
 
 func _mark_visited(node_id: int) -> void:

@@ -8,10 +8,10 @@ Watch 项目权利人有权许可的原创素材，包括图标、插画、纹�
 
 | 路径 | 权利范围 |
 | --- | --- |
-| `ui/art/` | 原创图标和界面美术素材 |
-| `map/res/terrain_mesh.res`、`components/templates/mesh_base.tscn` 内嵌的地形网格 | 地形美术资产 |
-| `public/color_base.tres`、`public/color_palette_*.tres`、`public/themecolor.aco`、`ui/theme/themecolor.aco` | 原创色板资源 |
+| `public/ui/` | 原创图标和界面美术素材 |
+| `public/meshs/terrain_mesh.res`、`components/templates/mesh_base.tscn` 内嵌的地形网格 | 地形美术资产 |
+| `public/color_base.tres`、`public/color_palette_*.tres`、`public/themecolor.aco` | 原创色板资源 |
 
 素材即使内嵌在 Godot 场景、资源或游戏构建中，也适用对应的素材授权。场景的程序逻辑与技术配置适用 [Apache License 2.0](LICENSE)。
 
-第三方素材适用各自的许可及署名要求。Fusion Pixel Font 按 [SIL Open Font License 1.1](ui/fonts/LICENSE-OFL) 分发。复用来源或授权尚未确认的素材前，应先核实其权利归属和许可条件。
+第三方素材适用各自的许可及署名要求。Fusion Pixel Font 按 [SIL Open Font License 1.1](public/fonts/LICENSE-OFL) 分发。复用来源或授权尚未确认的素材前，应先核实其权利归属和许可条件。

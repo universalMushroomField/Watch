@@ -6,10 +6,6 @@ extends Resource
 @export var events: Array[MapEventData] = []
 ## 商店库存。
 @export var shop_stock: ShopStockData
-## 宝箱金币下限。
-@export var treasure_gold_min: int = 20
-## 宝箱金币上限。
-@export var treasure_gold_max: int = 40
 ## 普通战斗金币下限。
 @export var battle_gold_min: int = 10
 ## 普通战斗金币上限。

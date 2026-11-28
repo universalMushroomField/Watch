@@ -63,7 +63,7 @@ emm....少女折寿中
 | `shop/` | 商店条目与库存数据 |
 | `public/` | 全局基础色板 `color_base.tres` 与运行时取色入口 `scripts/art_palette.gd` |
 | `components/` | 通用组件（网格生成、种子生成、地形噪声） |
-| `ui/` | 开始菜单、设置、确认弹窗、字体、主题、界面文案（`ui/text/`）与图标（`ui/art/`） |
+| `ui/` | 开始菜单、设置、确认弹窗、字体、主题、界面文案（`ui/text/`）与图标（`public/ui/`） |
 | `shaders/` | 通用着色器与光照 |
 | `docs/` | 设计文档、协作与命名规范 |
 | `project.godot` | Godot 项目配置 |
@@ -103,7 +103,7 @@ godot --headless --path . -s res://public/tests/art_palette_test.gd
 
 ## 字体与致谢
 
-游戏界面与地图地点标签默认使用 [Fusion Pixel Font（缝合像素字体）](https://github.com/TakWolf/fusion-pixel-font)，采用 [2026.11.10 发行版](https://github.com/TakWolf/fusion-pixel-font/releases/tag/2026.11.10)的 12 px 比例简体中文 OTF。字体按 [SIL Open Font License 1.1](ui/fonts/LICENSE-OFL) 随项目分发。
+游戏界面与地图地点标签默认使用 [Fusion Pixel Font（缝合像素字体）](https://github.com/TakWolf/fusion-pixel-font)，采用 [2026.11.10 发行版](https://github.com/TakWolf/fusion-pixel-font/releases/tag/2026.11.10)的 12 px 比例简体中文 OTF。字体按 [SIL Open Font License 1.1](public/fonts/LICENSE-OFL) 随项目分发。
 
 感谢 TakWolf 和 Fusion Pixel Font 的贡献者维护这套开源字体。
 
@@ -113,6 +113,6 @@ godot --headless --path . -s res://public/tests/art_palette_test.gd
 
 - **代码和技术文件**适用 [Apache License 2.0](LICENSE)，包括脚本、着色器、构建配置、场景的程序逻辑及技术文档。遵守许可条款即可修改、分发和商业使用这些内容。
 - **原创素材**适用 CC BY 4.0，遵守署名条件即可复制、改编、分发及商用。素材目录、内嵌资产和署名示例见[素材权利声明](LICENSE-ASSETS.md)。
-- **第三方资源**适用各自的许可。随仓库分发的 Fusion Pixel Font 适用 [SIL Open Font License 1.1](ui/fonts/LICENSE-OFL)。
+- **第三方资源**适用各自的许可。随仓库分发的 Fusion Pixel Font 适用 [SIL Open Font License 1.1](public/fonts/LICENSE-OFL)。
 
 如果要分发含有原创素材的游戏构建，须同时满足代码许可和素材授权。

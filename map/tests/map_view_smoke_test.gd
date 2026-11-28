@@ -137,15 +137,40 @@ func _run() -> void:
 	for node_id in path:
 		if node_id == view.run.current_id:
 			continue
-		view.run.travel_to(node_id)
+		view._on_node_pressed(view.run.graph.get_node_by_id(node_id))
 		await process_frame
+		if view.run.get_current_node().type == MapNode.Type.BATTLE:
+			var battle: BaseFight = view.run_state.fight_system
+			_check(battle != null and not view.visible, "普通战斗直接进入模板")
+			if battle != null:
+				for enemy in battle.enemies:
+					enemy.health = 0
+				battle._finish_if_decided()
+				await process_frame
+				var settlement = view._battle_layer.get_node("Settlement")
+				var reward = settlement.get_node("%Rewards").get_child(0)
+				var before: int = view.run_state.player.gold
+				reward.pressed.emit()
+				var after: int = view.run_state.player.gold
+				reward.pressed.emit()
+				_check(after > before and view.run_state.player.gold == after, "奖励只结算一次")
+				var rewards = settlement.get_node("%Rewards")
+				var deck_size: int = view.run_state.player.get_deck_size()
+				rewards.get_child(1).pressed.emit()
+				_check(view.run_state.player.get_deck_size() == deck_size + 1, "奖励卡加入本局卡组")
+				if rewards.get_child_count() == 3:
+					rewards.get_child(2).pressed.emit()
+				_check(view.run_state.player.collectibles.size() == 1, "铭牌加入本局收藏")
+				settlement.get_node("%Leave").pressed.emit()
+				_check(view.visible and view.run.current_id == node_id, "胜利返回原地图")
+			continue
 		var expected := "res://ui/gui_map/content/%s.tscn" % str(MapNode.Type.find_key(view.run.graph.get_node_by_id(node_id).type)).to_lower()
 		_check(view._choices.get_child_count() > 0 and view._choices.get_child(0).scene_file_path == expected, "进入地点挂载已配置的内容场景")
 		view._close_panel()
 		await process_frame
 
 	_check(view.run.graph.get_node_by_id(view.run.graph.boss_id).visited, "可以走到 Boss")
-	_check(view.run_state.player.gold == initial_gold, "地点占位内容不结算金币")
+	_check(view.run_state.player.gold >= initial_gold, "结算奖励保留")
 	_check(view.run.is_act_cleared(), "Boss 节点标记本幕完成")
 	_check(view.run.get_decay_ratio() > 0.0, "探索后崩解度上升")
 	var back: Array[int] = view.run.find_path_to(view.run.graph.start_id)
@@ -162,7 +187,7 @@ func _run() -> void:
 	_check(view.run_state.act_index == first_act + 1, "进入下一幕")
 	_check(view.run.current_id == view.run.graph.start_id, "新一幕从起点开始")
 	_check(view.run.get_visited_count() == 1, "新一幕只访问了起点")
-	_check(is_zero_approx(view.run.get_decay_ratio()), "新一幕崩解度重置")
+	_check(view.run.extreme_steps > 0, "新一幕继承极端度")
 
 	view.queue_free()
 	await process_frame
